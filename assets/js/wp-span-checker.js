@@ -1,0 +1,381 @@
+const wpSpanCheckerToast = Swal.mixin({
+    toast: true,
+    position: 'center',
+    showConfirmButton: false,
+    timer: 3000,
+    timerProgressBar: true,
+});
+
+jQuery(function ($) {
+    const settings = WPSpanChecker.settings;
+    const currentPageID = WPSpanChecker.pageID;
+    const ajaxUrl = WPSpanChecker.ajaxUrl;
+    const nonce = WPSpanChecker.nonce;
+
+    if (settings.length > 0) {
+        settings.forEach(function (setting) {
+            const is_webrisk = setting.is_webrisk ?? 0;
+            const is_virustotal = setting.is_virustotal ?? 0;
+            const options = [{is_webrisk: is_webrisk, is_virustotal: is_virustotal}];
+            const form_type = setting.form_type ?? '';
+            const page_id = setting.page_id ?? '';
+            const form_id = setting.form_id ?? '';
+            const form_class = setting.form_class ?? '';
+            const formSettings = setting.settings ? setting.settings : {};
+            const formSettingData = JSON.parse(formSettings);
+            const getFormClassId = generateFormClassId(form_id, form_class);
+
+            const getForm = $(`${getFormClassId}`);
+            if (getForm.length > 0) {
+                const submitButton = getForm.find('[type="submit"]');
+                for (let i = 0; i < formSettingData.length; i++) {
+                    const formSetting = formSettingData[i];
+                    const eventType = formSetting.event;
+                    const fieldType = formSetting.field_type;
+                    switch (eventType) {
+                        case 'change':
+                            const onChangeField = generateFieldClassId(getForm, formSetting.id, formSetting.class);
+                            if (onChangeField.length > 0) {
+                                addChangeEvent(onChangeField, fieldType, submitButton, options);
+                            }
+                            break;
+                        case 'submit':
+                            const onSubmitField = generateFieldClassId(getForm, formSetting.id, formSetting.class);
+                            if (onSubmitField.length > 0) {
+                                addSubmitEvent(onSubmitField, fieldType, submitButton);
+                            }
+                            break;
+                        case 'input':
+                            const onInputField = generateFieldClassId(getForm, formSetting.id, formSetting.class);
+                            if (onInputField.length > 0) {
+                                addInputEvent(onInputField, fieldType, submitButton);
+                            }
+                            break;
+                    }
+                }
+
+            } else {
+                wpSpanCheckerToast.fire({
+                    icon: 'error',
+                    title: "Form is undefined. Please provide a valid form class or id",
+                })
+            }
+        })
+    }
+
+    function addChangeEvent(element, field, submitButton, settings = []) {
+        element.on('change', async () => {
+            const inputVal = $(this).val();
+            if (inputVal.length > 0) {
+                switch (field) {
+                    case 'email':
+                        if (isValidEmail(inputVal)) {
+                            const domainName = getDomainFromEmail(inputVal);
+                            const validate = await validateUrlServer(domainName, field, settings);
+                            if (validate.status) {
+                                wpSpanCheckerToast.fire({
+                                    icon: 'success',
+                                    title: validate.message,
+                                })
+                            } else {
+                                wpSpanCheckerToast.fire({
+                                    icon: 'error',
+                                    title: "Email address is invalid",
+                                })
+                            }
+                        } else {
+                            wpSpanCheckerToast.fire({
+                                icon: 'error',
+                                title: "Email address is invalid",
+                            })
+                            disableSubmitButton(submitButton);
+                        }
+                        break;
+                }
+            } else {
+                disableSubmitButton(submitButton);
+            }
+        })
+    }
+
+    async function addInputEvent(element, field, submitButton) {
+
+    }
+
+    async function addSubmitEvent(element, field, submitButton) {
+
+    }
+
+    function disableSubmitButton(submitButton) {
+        submitButton.prop('disabled', true);
+    }
+
+    function enableSubmitButton(submitButton) {
+        submitButton.prop('disabled', false);
+    }
+
+    function generateFormClassId(formId, formClass) {
+        let formClassId;
+        const id = formId.trim().replace('#', '');
+        const className = formClass.trim().replace('.', '');
+        const allFormClass = className.split(' ')
+        if (id.length > 0) {
+            formClassId = $(`#${id}`);
+        } else if (className.length > 0) {
+            formClassId = $(`.${allFormClass.join('.')}`);
+        } else if (id.length > 0 && className.length > 0) {
+            formClassId = $(`#${id}.${allFormClass.join('.')}`);
+        }
+        return formClassId;
+    }
+
+    function generateFieldClassId(formName, fieldId, fieldClass) {
+        let formClassId;
+        const id = fieldId.trim().replace('#', '');
+        const className = fieldClass.trim().replace('.', '');
+        const allFormClass = className.split(' ')
+        if (id.length > 0) {
+            formClassId = $(formName).find(`#${id}`);
+        } else if (className.length > 0) {
+            formClassId = $(formName).find(`.${allFormClass.join('.')}`);
+        } else if (id.length > 0 && className.length > 0) {
+            formClassId = $(formName).find(`#${id}.${allFormClass.join('.')}`);
+        }
+        return formClassId;
+    }
+
+
+    // Regex for URL validation (scheme not mandatory)
+    function isValidUrl(value) {
+        let pattern = /^(https?:\/\/)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(\/\S*)?$/;
+        return pattern.test(value);
+    }
+
+    function isValidEmail(email) {
+        var regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return regex.test(email);
+    }
+
+    function getDomainFromEmail(email) {
+        // Split and return domain part
+        return email.split('@')[1];
+    }
+
+
+    async function validateUrlServer(domain, type, settings = []) {
+        try {
+
+            await jQuery.ajax({
+                url: ajaxUrl,
+                type: "POST",
+                data: {
+                    action: 'validateDomainName',
+                    domain: domain,
+                    type: type,
+                    settings: settings,
+                    nonce: nonce,
+                },
+                success: function (response) {
+                    console.log(response);
+                    if (response.data.status) {
+                        return response.data;
+                    } else {
+                        wpSpanCheckerToast.fire({
+                            icon: 'error',
+                            title: response.data.message,
+                        })
+                    }
+                }
+            });
+        } catch (err) {
+            wpSpanCheckerToast.fire({
+                icon: 'error',
+                title: err.message ?? String(err),
+            })
+            console.log(err);
+        }
+    }
+
+    // Handle form submission using the button click
+    $verifyTempEmailBtn.on("click", function (e) {
+        e.preventDefault(); // Prevent default form submission
+
+        let getEmail = $email.val().trim();
+        let password = $password.val().trim();
+
+        // Check for empty fields
+        if (getEmail === "") {
+            Toast.fire({icon: "error", title: "Email is required"});
+            return;
+        }
+
+        if (password === "") {
+            Toast.fire({icon: "error", title: "Password is required"});
+            return;
+        }
+
+        // Check for strong password using the single function
+        if (!isPasswordStrong(password)) {
+            Toast.fire({
+                icon: "error",
+                title: "Password must meet all requirements.",
+            });
+            return;
+        }
+
+        // All client-side checks passed, proceed with Ajax
+        $.ajax({
+            url: "/tempEmailValidator",
+            type: "POST",
+            data: {email: getEmail},
+            dataType: "json",
+            beforeSend: function () {
+                $verifyTempEmailBtn
+                    .prop("disabled", true)
+                    .html(
+                        `Verifying... <div class="spinner-border spinner-border-sm" role="status"></div>`
+                    );
+            },
+            success: function (res) {
+                if (res.data.status === true) {
+                    Toast.fire({
+                        icon: "success",
+                        title: res.data.message,
+                        timer: 2000,
+                    });
+                    $verifyTempEmailBtn.html(
+                        `Account Creating... <div class="spinner-border spinner-border-sm" role="status"></div>`
+                    );
+                    // Submit the form only after successful email validation
+                    $verifyTempEmailBtn.off().click();
+                } else {
+                    Toast.fire({
+                        icon: "error",
+                        title:
+                            res.data.message || "Email or domain is not valid",
+                    });
+                }
+            },
+            error: function (jqXHR, textStatus, errorThrown) {
+                Toast.fire({
+                    icon: "error",
+                    title: `Server Error: ${textStatus} - ${errorThrown}`,
+                });
+            },
+            complete: function () {
+                $verifyTempEmailBtn
+                    .prop("disabled", false)
+                    .html("Register Account");
+            },
+        });
+    });
+
+    $verifyLinkButton.on("click", async function () {
+        $urlInput = $("#link_location_url");
+        let url = $urlInput.val().trim();
+
+        if (url === "") {
+            $createShortLinkButton.prop("disabled", true);
+            Toast.fire({
+                icon: "error",
+                title: "URL is required",
+            });
+        }
+        // disable while typing
+        $createShortLinkButton.prop("disabled", true);
+
+        if (isValidUrl(url)) {
+            try {
+                const res = await validateUrlServer(url);
+                console.log(res);
+                if (res.data.status === true) {
+                    $createShortLinkButton.prop("disabled", false);
+                    Toast.fire({
+                        icon: "success",
+                        title: "URL is valid",
+                    });
+                    urlValidation.val(1);
+                } else {
+                    $createShortLinkButton.prop("disabled", true);
+                    Toast.fire({
+                        icon: "error",
+                        title: res.data.message || "URL not valid",
+                    });
+                    urlValidation.val(0);
+                }
+            } catch (err) {
+                $createShortLinkButton.prop("disabled", true);
+                Toast.fire({
+                    icon: "error",
+                    title: err.message || String(err),
+                });
+            }
+        } else {
+            $createShortLinkButton.prop("disabled", true);
+            Toast.fire({
+                icon: "error",
+                title: "URL not valid",
+            });
+        }
+    });
+
+    $createShortLinkButton.on("click", async function submitShortUrl(e) {
+        e.preventDefault();
+        $urlInput = $("#link_location_url");
+        const urlStatus = parseInt($("#urlValidation").val());
+        let urlValue = $urlInput.val().trim();
+
+        if (isValidUrl(urlValue)) {
+            if (!/^https?:\/\//i.test(urlValue)) {
+                urlValue = "https://" + urlValue;
+            }
+            if (!urlStatus) {
+                try {
+                    const res = await validateUrlServer(urlValue);
+                    console.log(res);
+
+                    if (res.data.status === true) {
+                        $(this).parent().closest("form").submit();
+                    } else {
+                        $createShortLinkButton.prop("disabled", true);
+                        Toast.fire({
+                            icon: "error",
+                            title: res.data?.message || "URL not valid",
+                        });
+                    }
+                } catch (err) {
+                    $createShortLinkButton.prop("disabled", true);
+                }
+            } else {
+                $(this).parent().closest("form").submit();
+            }
+        } else {
+            Toast.fire({
+                icon: "error",
+                title: res.data.message || "URL not valid",
+            });
+        }
+    });
+}); // End jQuery
+
+
+jQuery(document).on('wscFormSubmit', function (e, payload) {
+});
+
+function wscStopFormSubmit(payload) {
+    payload.originalEvent.preventDefault();
+    payload.originalEvent.stopImmediatePropagation();
+}
+
+jQuery('.quform-submit').on('click', function (e) {
+    let $form = jQuery(this).closest('form');
+
+    // Pass original click event too
+    jQuery(document).trigger('wscFormSubmit', {
+        originalEvent: e,
+        formId: $form.attr('id'),
+        action: $form.attr('action'),
+        data: $form.serializeArray(),
+        test: true // or true depending
+    });
+});
