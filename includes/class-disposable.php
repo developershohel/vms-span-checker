@@ -31,4 +31,31 @@ class Disposable {
 	public function count(): int {
 		return (int) $this->wpdb->get_var( "SELECT COUNT(*) FROM {$this->table}" );
 	}
+
+	/**
+	 * True if the email host (or a parent host) exists in the disposable list.
+	 *
+	 * @param string $domain Lowercase domain from the email address.
+	 */
+	public function email_domain_is_disposable( string $domain ): bool {
+		$domain = strtolower( trim( $domain ) );
+		if ( $domain === '' ) {
+			return false;
+		}
+		$labels = explode( '.', $domain );
+		$n      = count( $labels );
+		for ( $i = 0; $i < $n; $i++ ) {
+			$candidate = implode( '.', array_slice( $labels, $i ) );
+			if ( $candidate === '' ) {
+				continue;
+			}
+			$hit = (int) $this->wpdb->get_var(
+				$this->wpdb->prepare( "SELECT COUNT(*) FROM {$this->table} WHERE domain = %s", $candidate )
+			);
+			if ( $hit > 0 ) {
+				return true;
+			}
+		}
+		return false;
+	}
 }

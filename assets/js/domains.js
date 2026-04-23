@@ -7,6 +7,127 @@ const wpSpanCheckerToast = Swal.mixin({
 });
 
 jQuery(document).ready(function ($) {
+    const I = (typeof WPSpanChecker !== 'undefined' && WPSpanChecker.i18n) ? WPSpanChecker.i18n : {};
+    const wscT = function (key, fallback) {
+        return (I[key] !== undefined && I[key] !== '') ? I[key] : fallback;
+    };
+    const wscAjaxErr = function (data, fallback) {
+        if (data && typeof data === 'object' && data.message) {
+            return data.message;
+        }
+        if (typeof data === 'string' && data.length) {
+            return data;
+        }
+        return fallback;
+    };
+    const wscErrToast = function (msg) {
+        wpSpanCheckerToast.fire({ icon: 'error', title: msg });
+    };
+    const wscOkToast = function (msg) {
+        wpSpanCheckerToast.fire({ icon: 'success', title: msg });
+    };
+
+    const pageTargetLabels = (typeof WPSpanChecker !== 'undefined' && WPSpanChecker.pageTargetLabels) ? WPSpanChecker.pageTargetLabels : {};
+
+    function wscNormalizePageTargetsRaw(raw) {
+        if (raw === null || raw === undefined) {
+            return ['all-pages'];
+        }
+        if (Array.isArray(raw)) {
+            return raw.map(String).filter(Boolean);
+        }
+        const s = String(raw).trim();
+        if (!s) {
+            return ['all-pages'];
+        }
+        try {
+            const d = JSON.parse(s);
+            if (Array.isArray(d)) {
+                return d.map(String).filter(Boolean);
+            }
+        } catch (e) {
+            /* legacy single value */
+        }
+        return [s];
+    }
+
+    function wscCollectPageTargetsArray() {
+        const out = [];
+        $('.wsc-page-target:checked').each(function () {
+            const v = $(this).val();
+            if (v) {
+                out.push(String(v));
+            }
+        });
+        $('#wsc-target-pages option:selected').each(function () {
+            const v = $(this).val();
+            if (v) {
+                out.push(String(v));
+            }
+        });
+        $('#wsc-target-posts option:selected').each(function () {
+            const v = $(this).val();
+            if (v) {
+                out.push(String(v));
+            }
+        });
+        const uniq = [];
+        out.forEach(function (x) {
+            if (uniq.indexOf(x) === -1) {
+                uniq.push(x);
+            }
+        });
+        return uniq.length ? uniq : ['all-pages'];
+    }
+
+    function wscApplyPageTargetsFromRaw(raw) {
+        $('.wsc-page-target').prop('checked', false);
+        $('#wsc-target-pages option:selected').prop('selected', false);
+        $('#wsc-target-posts option:selected').prop('selected', false);
+        const list = wscNormalizePageTargetsRaw(raw);
+        list.forEach(function (token) {
+            const $cb = $('.wsc-page-target').filter(function () {
+                return $(this).val() === token;
+            });
+            if ($cb.length) {
+                $cb.prop('checked', true);
+                return;
+            }
+            if (/^\d+$/.test(token)) {
+                $('#wsc-target-pages option[value="' + token + '"], #wsc-target-posts option[value="' + token + '"]').prop('selected', true);
+            }
+        });
+        if (!list.length) {
+            $('.wsc-page-target[value="all-pages"]').prop('checked', true);
+        }
+    }
+
+    function wscResetPageTargetsForNew() {
+        wscApplyPageTargetsFromRaw(['all-pages']);
+    }
+
+    function wscFormatPageTargetsCell(raw) {
+        const list = wscNormalizePageTargetsRaw(raw);
+        const parts = list.slice(0, 4).map(function (t) {
+            if (pageTargetLabels[t]) {
+                return pageTargetLabels[t];
+            }
+            if (/^\d+$/.test(t)) {
+                const opt = document.querySelector('#wsc-target-pages option[value="' + t + '"], #wsc-target-posts option[value="' + t + '"]');
+                if (opt && opt.textContent) {
+                    return '#' + t + ' ' + opt.textContent.trim().slice(0, 28);
+                }
+                return 'ID ' + t;
+            }
+            return t;
+        });
+        let s = parts.join(', ');
+        if (list.length > 4) {
+            s += ' (+' + (list.length - 4) + ')';
+        }
+        return s || '—';
+    }
+
     let domainType = $('#add-domain-form input[name="domain_type"]').val();
 
     // Initialize advanced DataTable
@@ -28,7 +149,7 @@ jQuery(document).ready(function ($) {
             {data: 'domain'},
             {
                 data: null, render: function (data, type, row) {
-                    return '<button class="button delete-domain" data-id="' + row.id + '">Delete</button>';
+                    return '<button class="button delete-domain" data-id="' + row.id + '">' + wscT('delete', 'Delete') + '</button>';
                 }
             }
         ],
@@ -65,8 +186,9 @@ jQuery(document).ready(function ($) {
             if (response.success) {
                 table.ajax.reload(null, false);
                 $('#add-domain-form')[0].reset();
+                wscOkToast(wscT('domainAdded', 'Domain added.'));
             } else {
-                alert(response.data || 'Error adding domain');
+                wscErrToast(wscAjaxErr(response.data, wscT('errorAddingDomain', 'Error adding domain.')));
             }
         });
     });
@@ -74,19 +196,30 @@ jQuery(document).ready(function ($) {
     // Delete domain
     $('#domains-table').on('click', '.delete-domain', function () {
         let id = $(this).data('id');
-        if (!confirm('Are you sure you want to delete this domain?')) return;
-
-        $.post(WPSpanChecker.ajaxurl, {
-            action: 'delete_domain',
-            nonce: WPSpanChecker.nonce,
-            domain_type: domainType,
-            id: id
-        }, function (response) {
-            if (response.success) {
-                table.ajax.reload(null, false);
-            } else {
-                alert(response.data || 'Error deleting domain');
+        Swal.fire({
+            title: wscT('confirmDeleteDomainTitle', 'Remove this domain?'),
+            text: wscT('confirmDeleteDomain', 'Are you sure you want to delete this domain?'),
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: wscT('delete', 'Delete'),
+            cancelButtonText: wscT('cancel', 'Cancel'),
+        }).then(function (result) {
+            if (!result.isConfirmed) {
+                return;
             }
+            $.post(WPSpanChecker.ajaxurl, {
+                action: 'delete_domain',
+                nonce: WPSpanChecker.nonce,
+                domain_type: domainType,
+                id: id
+            }, function (response) {
+                if (response.success) {
+                    table.ajax.reload(null, false);
+                    wscOkToast(wscT('domainRemoved', 'Domain removed.'));
+                } else {
+                    wscErrToast(wscAjaxErr(response.data, wscT('errorDeletingDomain', 'Error deleting domain.')));
+                }
+            });
         });
     });
 
@@ -99,23 +232,23 @@ jQuery(document).ready(function ($) {
         let newField = `
         <div class="wsc-form-group">
         <span class="removeFormField dashicons dashicons-no-alt" onclick="jQuery(this).parent().remove()"></span>
-            <label class="wsc-form-label" for="form-field-${fieldCounter}">Form Field</label>
+            <label class="wsc-form-label" for="form-field-${fieldCounter}">${wscT('formField', 'Form field')}</label>
             <select id="form-field-${fieldCounter}"  class="wsc-input wsc-input-primary form-field" name="form-field-${fieldCounter}" data-id="${fieldCounter}" required>
-                <option value="">Select field type</option>
-                <option value="url">URL</option>
-                <option value="email">Email</option>
-                <option value="text">Text</option>
+                <option value="">${wscT('selectFieldType', 'Select field type')}</option>
+                <option value="url">${wscT('optionUrl', 'URL')}</option>
+                <option value="email">${wscT('optionEmail', 'Email')}</option>
+                <option value="text">${wscT('optionText', 'Text')}</option>
             </select>   
-            <label for="form-id-${fieldCounter}" class="wsc-form-label wsc-mt-4">Field ID</label>
-            <input id="form-id-${fieldCounter}" type="text" class="wsc-input wsc-input-primary field-id" name="form-field-id-${fieldCounter}" data-id="${fieldCounter}" placeholder="Field ID">
-            <label for="form-class-${fieldCounter}" class="wsc-form-label wsc-mt-4">Field Class</label>
-            <input id="form-class-${fieldCounter}" type="text" class="wsc-input wsc-input-primary field-class" name="form-field-class-${fieldCounter}" data-class="${fieldCounter}" placeholder="Field class">
-            <label class="wsc-form-label wsc-mt-4" for="form-event-${fieldCounter}">Javascript Event Type</label>
+            <label for="form-id-${fieldCounter}" class="wsc-form-label wsc-mt-4">${wscT('fieldId', 'Field ID')}</label>
+            <input id="form-id-${fieldCounter}" type="text" class="wsc-input wsc-input-primary field-id" name="form-field-id-${fieldCounter}" data-id="${fieldCounter}" placeholder="${wscT('fieldId', 'Field ID')}">
+            <label for="form-class-${fieldCounter}" class="wsc-form-label wsc-mt-4">${wscT('fieldClass', 'Field class')}</label>
+            <input id="form-class-${fieldCounter}" type="text" class="wsc-input wsc-input-primary field-class" name="form-field-class-${fieldCounter}" data-class="${fieldCounter}" placeholder="${wscT('fieldClass', 'Field class')}">
+            <label class="wsc-form-label wsc-mt-4" for="form-event-${fieldCounter}">${wscT('javascriptEvent', 'JavaScript event')}</label>
             <select class="wsc-input wsc-input-primary form-event wsc-mt-4" id="form-event-${fieldCounter}" name="form-event-${fieldCounter}"
                     data-id="${fieldCounter}">
-                <option value="change">Chance</option>
-                <option value="input">Input</option>
-                <option value="submit">Form Submit</option>
+                <option value="change">${wscT('optionChange', 'Change')}</option>
+                <option value="input">${wscT('optionInput', 'Input')}</option>
+                <option value="submit">${wscT('optionFormSubmit', 'Form submit')}</option>
             </select>
         </div>
         `;
@@ -152,7 +285,7 @@ jQuery(document).ready(function ($) {
             {
                 data: 'page_id',
                 render: function (data) {
-                    return data ?? '';
+                    return wscFormatPageTargetsCell(data);
                 }
             },
             {
@@ -179,7 +312,7 @@ jQuery(document).ready(function ($) {
                     }
                     if (!Array.isArray(formFields) || formFields.length === 0) return '';
                     return formFields.map(item =>
-                        `<div class="wsc-form-setting-field wsc-mb-2 wsc-p-2 wsc-text-left">Field Type: ${item.field ?? ''} <br>ID: ${item.id ?? ''} <br>Class: ${item.class ?? ''} <br> Event Name: ${item.event}</div>`
+                        `<div class="wsc-form-setting-field wsc-mb-2 wsc-p-2 wsc-text-left">${wscT('fieldType', 'Field type')}: ${item.field ?? ''} <br>${wscT('labelId', 'ID')}: ${item.id ?? ''} <br>${wscT('labelClass', 'Class')}: ${item.class ?? ''} <br> ${wscT('eventName', 'Event name')}: ${item.event}</div>`
                     ).join("");
                 }
             },
@@ -194,8 +327,8 @@ jQuery(document).ready(function ($) {
                 render: function (data, type, row) {
                     const rowId = row.id ?? '';
                     const jsonData = JSON.stringify(row) ?? '{}';
-                    return `<button class="wsc-btn wsc-btn-primary edit-form-setting" data-json='${jsonData}' data-id="${rowId}">Edit</button> 
-                    <button class="wsc-btn wsc-btn-danger delete-form-setting" data-id="${rowId}">Delete</button>`;
+                    return `<button class="wsc-btn wsc-btn-primary edit-form-setting" data-json='${jsonData}' data-id="${rowId}">${wscT('edit', 'Edit')}</button> 
+                    <button class="wsc-btn wsc-btn-danger delete-form-setting" data-id="${rowId}">${wscT('delete', 'Delete')}</button>`;
                 }
             }
         ],
@@ -213,20 +346,32 @@ jQuery(document).ready(function ($) {
     // Delete domain
     $('#form-setting-table').on('click', '.delete-form-setting', function () {
         let id = $(this).data('id');
-        if (!confirm('Are you sure you want to delete this domain?')) return;
         const formSettingForm = $('#form-setting-table');
-        formSettingForm.addClass('wsc-opacity');
-        $.post(WPSpanChecker.ajaxurl, {
-            action: 'delete_form_setting',
-            nonce: WPSpanChecker.nonce,
-            id: id
-        }, function (response) {
-            if (response.success) {
-                formSettingTable.ajax.reload(null, false);
-            } else {
-                alert(response.data || 'Error deleting domain');
+        Swal.fire({
+            title: wscT('confirmDeleteFormTitle', 'Remove this form mapping?'),
+            text: wscT('confirmDeleteFormSetting', 'Are you sure you want to delete this form setting?'),
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: wscT('delete', 'Delete'),
+            cancelButtonText: wscT('cancel', 'Cancel'),
+        }).then(function (result) {
+            if (!result.isConfirmed) {
+                return;
             }
-            formSettingForm.removeClass('wsc-opacity');
+            formSettingForm.addClass('wsc-opacity');
+            $.post(WPSpanChecker.ajaxurl, {
+                action: 'delete_form_setting',
+                nonce: WPSpanChecker.nonce,
+                id: id
+            }, function (response) {
+                if (response.success) {
+                    formSettingTable.ajax.reload(null, false);
+                    wscOkToast(wscT('formSettingRemoved', 'Form setting removed.'));
+                } else {
+                    wscErrToast(wscAjaxErr(response.data, wscT('errorDeletingSetting', 'Error deleting form setting.')));
+                }
+                formSettingForm.removeClass('wsc-opacity');
+            });
         });
     });
 
@@ -237,11 +382,14 @@ jQuery(document).ready(function ($) {
         const fields = $('#wsc-form-fields');
         const formError = $('#wsc-form-error-message');
         formError.html('');
-        const pageId = formData.page_id;
-        console.log(pageId);
-        $('#page_id').val(pageId);
-        $('#wsc-webrisk-status').val(formData.is_webrisk)
-        $('#wsc-virustotal-status').val(formData.is_virustotal)
+        wscApplyPageTargetsFromRaw(formData.page_id);
+        function wscSetToggleRadios($wrap, val) {
+            const v = String(parseInt(val, 10) || 0);
+            $wrap.find('input[type="radio"]').prop('checked', false);
+            $wrap.find('input[type="radio"][value="' + v + '"]').prop('checked', true);
+        }
+        wscSetToggleRadios($('#wsc-webrisk-status'), formData.is_webrisk);
+        wscSetToggleRadios($('#wsc-virustotal-status'), formData.is_virustotal);
         $('#form_type').val(formData.form_type !== '' ? formData.form_type : '');
         $('#form_id').val(formData.form_id !== '' ? formData.form_id : '');
         $('#form_class').val(formData.form_class !== '' ? formData.form_class : '');
@@ -254,21 +402,21 @@ jQuery(document).ready(function ($) {
                 let newField = `
                     <div class="wsc-form-group">
                     <span class="removeFormField dashicons dashicons-no-alt" onclick="jQuery(this).parent().remove()"></span>
-                        <label class="wsc-form-label" for="form-field-${fieldCounter + 1}">Form Field</label>
+                        <label class="wsc-form-label" for="form-field-${fieldCounter + 1}">${wscT('formField', 'Form field')}</label>
                         <select id="form-field-${fieldCounter + 1}"  class="wsc-input wsc-input-primary form-field" name="form-field-${fieldCounter + 1}" data-id="${fieldCounter + 1}">
-                            <option value="url" ${item.field === 'url' ? 'selected="selected"' : ''}>URL</option>
-                            <option value="email" ${item.field === 'email' ? 'selected="selected"' : ''}>Email</option>
-                            <option value="text" ${item.field === 'text' ? 'selected="selected"' : ''}>Text</option>
+                            <option value="url" ${item.field === 'url' ? 'selected="selected"' : ''}>${wscT('optionUrl', 'URL')}</option>
+                            <option value="email" ${item.field === 'email' ? 'selected="selected"' : ''}>${wscT('optionEmail', 'Email')}</option>
+                            <option value="text" ${item.field === 'text' ? 'selected="selected"' : ''}>${wscT('optionText', 'Text')}</option>
                         </select>   
-                        <label for="form-id-${fieldCounter + 1}" class="wsc-form-label wsc-mt-4">Field ID</label>
-                        <input id="form-id-${fieldCounter + 1}" type="text" class="wsc-input wsc-input-primary field-id" name="form-field-id-${fieldCounter + 1}" data-id="${fieldCounter + 1}" placeholder="Field ID" value="${item.id}">
-                        <label for="form-class-${fieldCounter + 1}" class="wsc-form-label wsc-mt-4">Field Class</label>
-                        <input id="form-class-${fieldCounter + 1}" type="text" class="wsc-input wsc-input-primary field-class" name="form-field-class-${fieldCounter + 1}" data-class="${fieldCounter + 1}" placeholder="Field class" value="${item.class}">
-                        <label class="wsc-form-label wsc-mt-4" for="form-event-${fieldCounter + 1}">Javascript Event Type</label>
+                        <label for="form-id-${fieldCounter + 1}" class="wsc-form-label wsc-mt-4">${wscT('fieldId', 'Field ID')}</label>
+                        <input id="form-id-${fieldCounter + 1}" type="text" class="wsc-input wsc-input-primary field-id" name="form-field-id-${fieldCounter + 1}" data-id="${fieldCounter + 1}" placeholder="${wscT('fieldId', 'Field ID')}" value="${item.id}">
+                        <label for="form-class-${fieldCounter + 1}" class="wsc-form-label wsc-mt-4">${wscT('fieldClass', 'Field class')}</label>
+                        <input id="form-class-${fieldCounter + 1}" type="text" class="wsc-input wsc-input-primary field-class" name="form-field-class-${fieldCounter + 1}" data-class="${fieldCounter + 1}" placeholder="${wscT('fieldClass', 'Field class')}" value="${item.class}">
+                        <label class="wsc-form-label wsc-mt-4" for="form-event-${fieldCounter + 1}">${wscT('javascriptEvent', 'JavaScript event')}</label>
                         <select class="wsc-input wsc-input-primary form-event wsc-mt-4" id="form-event-${fieldCounter + 1}" name="form-event-${fieldCounter + 1}" data-id="${fieldCounter + 1}">
-                            <option value="change" ${item.event === 'change' ? 'selected="selected"' : ''}>Chance</option>
-                            <option value="input" ${item.event === 'input' ? 'selected="selected"' : ''}>Input</option>
-                            <option value="submit" ${item.event === 'submit' ? 'selected="selected"' : ''}>Form Submit</option>
+                            <option value="change" ${item.event === 'change' ? 'selected="selected"' : ''}>${wscT('optionChange', 'Change')}</option>
+                            <option value="input" ${item.event === 'input' ? 'selected="selected"' : ''}>${wscT('optionInput', 'Input')}</option>
+                            <option value="submit" ${item.event === 'submit' ? 'selected="selected"' : ''}>${wscT('optionFormSubmit', 'Form submit')}</option>
                         </select>
                     </div>
                     `;
@@ -287,11 +435,19 @@ jQuery(document).ready(function ($) {
         const saveButton = $('#saveFormSetting');
         const formError = $('#wsc-form-error-message');
         const formType = $('#form_type').val();
-        const pageId = $('#page_id').val();
+        const pageId = JSON.stringify(wscCollectPageTargetsArray());
         const formId = $('#form_id').val();
         const formClass = $('#form_class').val();
-        const webRiskStatus = parseInt($('#wsc-webrisk-status').val())
-        const virustotalStatus = parseInt($('#wsc-virustotal-status').val())
+        const webRiskStatus =
+            parseInt(
+                $('#wsc-webrisk-status input[name="is_webrisk"]:checked').val(),
+                10
+            ) || 0;
+        const virustotalStatus =
+            parseInt(
+                $('#wsc-virustotal-status input[name="is_virustotal"]:checked').val(),
+                10
+            ) || 0;
         const formSettings = [];
 
         $('#wsc-form-fields .wsc-form-group').each(function (i, item) {
@@ -299,8 +455,8 @@ jQuery(document).ready(function ($) {
             const fieldId = $(item).find('.field-id').val();
             const fieldClass = $(item).find('.field-class').val();
             const fieldEvent = $(item).find('.form-event').val();
-            const isRequired = parseInt($(item).find('#wsc-required-status .wsc-check').find('input').val());
-            const isValidate = parseInt($(item).find('#wsc-validation-status .wsc-check').find('input').val());
+            const isRequired = parseInt($(item).find('#wsc-required-status input:checked').val(), 10) || 0;
+            const isValidate = parseInt($(item).find('#wsc-validation-status input:checked').val(), 10) || 0;
 
             formSettings.push({field: fieldType, id: fieldId, class: fieldClass, event: fieldEvent, isRequired: isRequired, isValidate: isValidate});
         })
@@ -329,7 +485,7 @@ jQuery(document).ready(function ($) {
             success: function () {
                 formError.addClass('wsc-text-success');
                 formError.removeClass('wsc-form-error');
-                formError.html('Saved');
+                formError.html(wscT('saved', 'Saved'));
                 formSettingTable.ajax.reload(null, false);
                 setTimeout(() => {
                     const formSettingForm = document.getElementById('wsc-settings-form');
@@ -368,10 +524,20 @@ jQuery(document).ready(function ($) {
 
     loadRequiredField();
 
-    $('#wscAddFormSetting, .toggleFormField').on('click', function () {
+    $('#wscAddFormSetting').on('click', function () {
+        const wasHidden = $('#wsc-settings-form').hasClass('wsc-hidden');
         $('#wsc-settings-form').toggleClass('wsc-hidden');
         $('#form-setting-table').toggleClass('wsc-hidden');
-    })
+        if (wasHidden) {
+            $('#form_settings_id').val('0');
+            wscResetPageTargetsForNew();
+        }
+    });
+
+    $('.toggleFormField').on('click', function () {
+        $('#wsc-settings-form').toggleClass('wsc-hidden');
+        $('#form-setting-table').toggleClass('wsc-hidden');
+    });
 
     $('.wsc-switch-option').on('click', function () {
          const $this = $(this);
@@ -399,6 +565,8 @@ function loadRegex(e){
 
 function regexList(element){
     const regexLists = WPSpanChecker.regexList;
+    const L = (WPSpanChecker.i18n) ? WPSpanChecker.i18n : {};
+    const t = (k, fb) => (L[k]) ? L[k] : fb;
     element.html('');
     regexLists.forEach(item => {
         const $li = jQuery(`
@@ -407,8 +575,8 @@ function regexList(element){
                 <div style="font-family:monospace; margin:8px 0;">${item.pattern}</div>
                 <div style="color:#666; font-size:0.9em;">${item.desc}</div>
                 <div style="margin-top:8px;">
-                    <span style="font-family:monospace; background:#f4f4f4; padding:4px 8px; border-radius:4px;">Example: ${item.example}</span>
-                    <button class="wsc-copy-button wsc-btn wsc-btn-outline-primary" type="button" data-regex="${item.pattern}" style="margin-left:8px; padding:4px 8px; border-radius:4px;" onclick="copyToClipboard(${item.pattern})">Copy</button>
+                    <span style="font-family:monospace; background:#f4f4f4; padding:4px 8px; border-radius:4px;">${t('examplePrefix', 'Example:')} ${item.example}</span>
+                    <button class="wsc-copy-button wsc-btn wsc-btn-outline-primary" type="button" data-regex="${item.pattern}" style="margin-left:8px; padding:4px 8px; border-radius:4px;" onclick="copyToClipboard(${item.pattern})">${t('copy', 'Copy')}</button>
                 </div>
             </li>
         `);
@@ -417,13 +585,15 @@ function regexList(element){
 }
 
 function copyToClipboard(text) {
+    const L = (typeof WPSpanChecker !== 'undefined' && WPSpanChecker.i18n) ? WPSpanChecker.i18n : {};
+    const t = (k, fb) => (L[k]) ? L[k] : fb;
     if (navigator.clipboard && window.isSecureContext) {
         // ✅ Modern way (requires HTTPS or localhost)
         return navigator.clipboard.writeText(text)
             .then(() => {
                 wpSpanCheckerToast.fire({
                     icon: 'success',
-                    title: "Copied",
+                    title: t('copied', 'Copied'),
                     position: 'bottom-right',
                 })
                 console.log("Copied to clipboard:", text);
@@ -449,7 +619,7 @@ function copyToClipboard(text) {
             document.execCommand("copy");
             wpSpanCheckerToast.fire({
                 icon: 'success',
-                title: "Copied",
+                title: t('copied', 'Copied'),
                 position: 'bottom-right',
             })
         } catch (err) {

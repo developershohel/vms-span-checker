@@ -1,141 +1,284 @@
 <?php
+/**
+ * Domain validation pipeline.
+ *
+ * @package WP_Span_Checker
+ */
 
 namespace WP_Span_Checker\Services;
 
+use WP_Span_Checker\Disposable;
 use WP_Span_Checker\Logger;
 use WP_Span_Checker\Whitelist;
-use WP_Span_Checker\Disposable;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+/**
+ * Whitelist, disposable, HTTPS, and optional reputation checks.
+ */
 class Domain_Validator {
 
-	private Whitelist $whitelist;
-	private Disposable $disposable;
-	private Logger $logger;
-	private VirusTotal $virustotal;
-	private GoogleWebRisk $webrisk;
+	/**
+	 * Whitelist repository.
+	 *
+	 * @var Whitelist
+	 */
+	private $whitelist;
 
+	/**
+	 * Disposable list repository.
+	 *
+	 * @var Disposable
+	 */
+	private $disposable;
+
+	/**
+	 * Activity logger.
+	 *
+	 * @var Logger
+	 */
+	private $logger;
+
+	/**
+	 * VirusTotal client.
+	 *
+	 * @var VirusTotal
+	 */
+	private $virustotal;
+
+	/**
+	 * Google Web Risk client.
+	 *
+	 * @var GoogleWebRisk
+	 */
+	private $webrisk;
+
+	/**
+	 * Constructor.
+	 */
 	public function __construct() {
-		$this->whitelist  = new \WP_Span_Checker\Whitelist();
-		$this->disposable = new \WP_Span_Checker\Disposable();
-		$this->logger     = new \WP_Span_Checker\Logger();
-		$this->virustotal = new \WP_Span_Checker\Services\VirusTotal();
-		$this->webrisk    = new \WP_Span_Checker\Services\GoogleWebRisk();
+		$this->whitelist  = new Whitelist();
+		$this->disposable = new Disposable();
+		$this->logger     = new Logger();
+		$this->virustotal = new VirusTotal();
+		$this->webrisk    = new GoogleWebRisk();
 	}
 
 	/**
-	 * Validate a domain for whitelist / disposable / HTTPS / API checks
+	 * Validate a domain for whitelist / disposable / HTTPS / API checks.
+	 *
+	 * @param string               $domain   Hostname.
+	 * @param string               $type     Context label for logs.
+	 * @param string               $ip       Client IP.
+	 * @param array<string, mixed> $settings Flags: is_webrisk, is_virustotal.
+	 * @return array{status:bool,message:string}
 	 */
-	public function validate_domain( string $domain, string $type = 'registration', string $ip = '', array $settings = array() ): array {
+	public function validate_domain( $domain, $type = 'registration', $ip = '', $settings = array() ) {
 		$domain = strtolower( trim( $domain ) );
 
-		// 1️⃣ Whitelist check
+		$skip_https = ! empty( $settings['skip_https'] );
+
 		$whitelist_domains = array_column( $this->whitelist->get_all(), 'domain' );
-		if ( in_array( $domain, $whitelist_domains ) ) {
-			return $this->log_and_return( $type, $ip, $domain, 'success', 'Domain is whitelisted.', true );
+		if ( in_array( $domain, $whitelist_domains, true ) ) {
+			return $this->log_and_return( $type, $ip, $domain, 'success', __( 'Domain is whitelisted.', 'wp-span-checker' ), true );
 		}
 
-		// 2️⃣ Disposable check
 		$disposable_domains = array_column( $this->disposable->get_all(), 'domain' );
-		if ( in_array( $domain, $disposable_domains ) ) {
-			return $this->log_and_return( $type, $ip, $domain, 'failed', 'Disposable email/domain detected.', false );
+		if ( in_array( $domain, $disposable_domains, true ) ) {
+			return $this->log_and_return( $type, $ip, $domain, 'failed', __( 'Disposable email or domain detected.', 'wp-span-checker' ), false );
 		}
 
-		// 3️⃣ Check HTTPS availability
-		$https_status = $this->is_https_available( $domain );
-		if ( ! $https_status['status'] ) {
-			return $this->log_and_return( $type, $ip, $domain, 'failed', $https_status['message'], false );
+		if ( ! empty( $settings['require_mx'] ) ) {
+			$mx_ok = $this->domain_has_inbound_mail_dns( $domain, ! empty( $settings['mx_allow_a_fallback'] ) );
+			if ( ! $mx_ok ) {
+				return $this->log_and_return(
+					$type,
+					$ip,
+					$domain,
+					'failed',
+					__( 'Email domain has no MX (or acceptable A) DNS records — mail may not be deliverable.', 'wp-span-checker' ),
+					false
+				);
+			}
 		}
 
-		if ( $settings['is_webrisk'] && $settings['is_virustotal'] ) {
-			// 5️⃣ Google WebRisk check
-			$webrisk_result = $this->webrisk->checkUrl( "https://$domain" );
+		if ( ! $skip_https ) {
+			$https_status = $this->is_https_available( $domain );
+			if ( ! $https_status['status'] ) {
+				return $this->log_and_return( $type, $ip, $domain, 'failed', $https_status['message'], false );
+			}
+		}
+
+		$use_webrisk = ! empty( $settings['is_webrisk'] );
+		$use_vt      = ! empty( $settings['is_virustotal'] );
+
+		if ( $use_webrisk && $use_vt ) {
+			$webrisk_result = $this->webrisk->check_url( 'https://' . $domain );
 			if ( ! $webrisk_result['status'] ) {
 				return $this->log_and_return( $type, $ip, $domain, 'failed', $webrisk_result['message'], false );
 			}
 
-			// 4️⃣ VirusTotal check
-			$vt_result = $this->virustotal->checkDomain( $domain );
+			$vt_result = $this->virustotal->check_domain( $domain );
 			if ( ! $vt_result['status'] ) {
 				return $this->log_and_return( $type, $ip, $domain, 'failed', $vt_result['message'], false );
 			}
-		} else if ( $settings['is_virustotal'] ) {
-			// 4️⃣ VirusTotal check
-			$vt_result = $this->virustotal->checkDomain( $domain );
+		} elseif ( $use_vt ) {
+			$vt_result = $this->virustotal->check_domain( $domain );
 			if ( ! $vt_result['status'] ) {
 				return $this->log_and_return( $type, $ip, $domain, 'failed', $vt_result['message'], false );
 			}
-		} else if ( $settings['is_webrisk'] ) {
-			$webrisk_result = $this->webrisk->checkUrl( "https://$domain" );
-			if ( ! $webrisk_result['status'] ) {
-				return $this->log_and_return( $type, $ip, $domain, 'failed', $webrisk_result['message'], false );
-			}
-		} else {
-			$webrisk_result = $this->webrisk->checkUrl( "https://$domain" );
+		} elseif ( $use_webrisk ) {
+			$webrisk_result = $this->webrisk->check_url( 'https://' . $domain );
 			if ( ! $webrisk_result['status'] ) {
 				return $this->log_and_return( $type, $ip, $domain, 'failed', $webrisk_result['message'], false );
 			}
 		}
 
-		// ✅ Passed all checks
-		return $this->log_and_return( $type, $ip, $domain, 'success', 'Domain is safe and valid.', true );
+		return $this->log_and_return( $type, $ip, $domain, 'success', __( 'Domain is safe and valid.', 'wp-span-checker' ), true );
 	}
 
 	/**
-	 * Check HTTPS availability for a domain
+	 * MX exists, or optional A-record fallback (some small hosts).
+	 *
+	 * @param string $domain ASCII hostname.
+	 * @param bool   $allow_a_fallback Allow A record if no MX.
 	 */
-	private function is_https_available( string $domain ): array {
-		if ( empty( $domain ) ) {
-			return [ 'message' => 'No URL provided', 'status' => false ];
+	private function domain_has_inbound_mail_dns( string $domain, bool $allow_a_fallback ): bool {
+		if ( '' === $domain || ! function_exists( 'dns_get_record' ) ) {
+			return true;
 		}
 
-		$url      = esc_url_raw( $domain );
-		$response = wp_remote_get( $url, [ 'timeout' => 10 ] );
+		$mx = @dns_get_record( $domain, DNS_MX );
+		if ( is_array( $mx ) && count( $mx ) > 0 ) {
+			return true;
+		}
+
+		if ( $allow_a_fallback ) {
+			$a = @dns_get_record( $domain, DNS_A );
+			if ( is_array( $a ) && count( $a ) > 0 ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Check HTTPS availability for a host.
+	 *
+	 * @param string $domain Hostname or URL.
+	 * @return array{message:string,status:bool}
+	 */
+	private function is_https_available( $domain ) {
+		if ( '' === $domain ) {
+			return array(
+				'message' => __( 'No URL provided.', 'wp-span-checker' ),
+				'status'  => false,
+			);
+		}
+
+		$url = preg_match( '#^https?://#i', $domain )
+			? esc_url_raw( $domain )
+			: esc_url_raw( 'https://' . $domain );
+
+		if ( empty( $url ) ) {
+			return array(
+				'message' => __( 'Invalid domain.', 'wp-span-checker' ),
+				'status'  => false,
+			);
+		}
+
+		$response = wp_remote_get(
+			$url,
+			array(
+				'timeout'     => 10,
+				'redirection' => 5,
+				'sslverify'   => true,
+			)
+		);
 
 		if ( is_wp_error( $response ) ) {
-			return [ 'message' => 'Request failed', 'status' => false ];
+			return array(
+				/* translators: %s: WordPress error message */
+				'message' => sprintf( __( 'Request failed: %s', 'wp-span-checker' ), $response->get_error_message() ),
+				'status'  => false,
+			);
 		}
 
-		$status = wp_remote_retrieve_response_code( $response );
+		$status = (int) wp_remote_retrieve_response_code( $response );
 
-		if ( $status == 200 ) {
-			return [ 'message' => '✅ Site is live (200 OK)', 'status' => true ];
-		} elseif ( $status >= 300 && $status < 400 ) {
-			return [ 'message' => '⚠️ Redirect detected (' . $status . ')', 'status' => false ];
-		} elseif ( $status >= 400 && $status < 500 ) {
-			return [ 'message' => '❌ Client error (' . $status . ')', 'status' => false ];
-		} elseif ( $status >= 500 ) {
-			return [ 'message' => '🔥 Server error (' . $status . ')', 'status' => false ];
-		} else {
-			return [ 'message' => 'Unknown status (' . $status . ')', 'status' => false ];
+		if ( $status >= 200 && $status < 300 ) {
+			return array(
+				'message' => __( 'Site responded successfully.', 'wp-span-checker' ),
+				'status'  => true,
+			);
 		}
+		if ( $status >= 300 && $status < 400 ) {
+			return array(
+				/* translators: %d: HTTP status code */
+				'message' => sprintf( __( 'Redirect only (%d).', 'wp-span-checker' ), $status ),
+				'status'  => false,
+			);
+		}
+		if ( $status >= 400 && $status < 500 ) {
+			return array(
+				/* translators: %d: HTTP status code */
+				'message' => sprintf( __( 'Client error (%d).', 'wp-span-checker' ), $status ),
+				'status'  => false,
+			);
+		}
+		if ( $status >= 500 ) {
+			return array(
+				/* translators: %d: HTTP status code */
+				'message' => sprintf( __( 'Server error (%d).', 'wp-span-checker' ), $status ),
+				'status'  => false,
+			);
+		}
+
+		return array(
+			/* translators: %d: HTTP status code */
+			'message' => sprintf( __( 'Unknown status (%d).', 'wp-span-checker' ), $status ),
+			'status'  => false,
+		);
 	}
 
 	/**
-	 * Helper: log the result and return standardized response
+	 * Log and build JSON-safe payload.
+	 *
+	 * @param string $type    Log type.
+	 * @param string $ip      IP address.
+	 * @param string $domain  Domain checked.
+	 * @param string $status  success|failed.
+	 * @param string $message Human-readable message.
+	 * @param bool   $success Whether validation passed.
+	 * @return array{status:bool,message:string}
 	 */
-	private function log_and_return( string $type, string $ip, string $domain, string $status, string $message, bool $success ): array {
+	private function log_and_return( $type, $ip, $domain, $status, $message, $success ) {
 		$this->logger->log( $type, $ip, $domain, $status, $message );
 
-		return [
+		return array(
 			'status'  => $success,
-			'message' => $message
-		];
+			'message' => $message,
+		);
 	}
 
 	/**
-	 * Validate an email domain
+	 * Validate an email address by extracting its domain.
+	 *
+	 * @param string $email  Email.
+	 * @param string $type   Log context.
+	 * @param string $ip     Client IP.
+	 * @return array{status:bool,message:string}
 	 */
-	public function validate_email( string $email, string $type = 'registration', string $ip = '' ): array {
+	public function validate_email( $email, $type = 'registration', $ip = '', $settings = array() ) {
 		if ( ! filter_var( $email, FILTER_VALIDATE_EMAIL ) ) {
-			return $this->log_and_return( $type, $ip, '', 'failed', 'Invalid email format.', false );
+			return $this->log_and_return( $type, $ip, '', 'failed', __( 'Invalid email format.', 'wp-span-checker' ), false );
 		}
 
-		$domain = strtolower( substr( strrchr( $email, "@" ), 1 ) );
+		$domain = strtolower( substr( strrchr( $email, '@' ), 1 ) );
 
-		return $this->validate_domain( $domain, $type, $ip );
+		return $this->validate_domain( $domain, $type, $ip, $settings );
 	}
 }

@@ -42,4 +42,31 @@ class Whitelist {
 		global $wpdb;
 		return (bool) $wpdb->delete($this->table, ['id' => $id]);
 	}
+
+	/**
+	 * Whether the host or a parent host is on the whitelist.
+	 *
+	 * @param string $domain Lowercase email domain.
+	 */
+	public function domain_on_list( string $domain ): bool {
+		$domain = strtolower( trim( $domain ) );
+		if ( $domain === '' ) {
+			return false;
+		}
+		$labels = explode( '.', $domain );
+		$n      = count( $labels );
+		for ( $i = 0; $i < $n; $i++ ) {
+			$candidate = implode( '.', array_slice( $labels, $i ) );
+			if ( $candidate === '' ) {
+				continue;
+			}
+			$hit = (int) $this->wpdb->get_var(
+				$this->wpdb->prepare( "SELECT COUNT(*) FROM {$this->table} WHERE domain = %s", $candidate )
+			);
+			if ( $hit > 0 ) {
+				return true;
+			}
+		}
+		return false;
+	}
 }

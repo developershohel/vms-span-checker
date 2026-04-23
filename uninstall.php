@@ -1,53 +1,55 @@
 <?php
-
 /**
- * Fired when the plugin is uninstalled.
+ * Uninstall: drop custom tables and plugin options.
  *
- * @package YourPluginName
+ * @package WP_Span_Checker
  */
 
-// Exit if accessed directly.
 if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 	exit;
 }
 
-/**
- * Example 1: Delete plugin options from wp_options
- */
-delete_option( 'wsc_plugin_settings' );
-delete_option( 'wsc_other_option' );
+global $wpdb;
 
-// If you used multisite, remove options from each site
+$tables = array(
+	'span_whitelist_domains',
+	'span_disposable_domains',
+	'span_checker_form_settings',
+	'span_checker_logs',
+	'span_checker_forms',
+	'span_checker_api_keys',
+	'span_checker_ai_post_summary',
+	'span_checker_comment_enforcement',
+);
+
+$options = array(
+	'wsc-google-config',
+	'wsc-virustotal-config',
+	'wsc-ai-span-config',
+	'wsc-registration-guard',
+	'wp_span_checker_db_version',
+	'wp_span_checker_schema_version',
+);
+
+/**
+ * Remove data for one site.
+ */
+$clean_site = static function () use ( $wpdb, $tables, $options ) {
+	foreach ( $options as $option ) {
+		delete_option( $option );
+	}
+	foreach ( $tables as $table ) {
+		$wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}{$table}" );
+	}
+};
+
 if ( is_multisite() ) {
-	global $wpdb;
-	$blog_ids = $wpdb->get_col( "SELECT blog_id FROM $wpdb->blogs" );
+	$blog_ids = $wpdb->get_col( "SELECT blog_id FROM {$wpdb->blogs}" );
 	foreach ( $blog_ids as $blog_id ) {
-		switch_to_blog( $blog_id );
-		delete_option( 'wsc_plugin_settings' );
-		delete_option( 'wsc_other_option' );
+		switch_to_blog( (int) $blog_id );
+		$clean_site();
 		restore_current_blog();
 	}
+} else {
+	$clean_site();
 }
-
-/**
- * Example 2: Remove custom DB tables (if you created any)
- */
-global $wpdb;
-$wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}wsc_forms" );
-$wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}wsc_form_entries" );
-
-/**
- * Example 3: Remove post meta or custom posts if your plugin added them
- */
-// Delete all post meta keys you added
-$wpdb->query(
-	$wpdb->prepare(
-		"DELETE FROM {$wpdb->postmeta} WHERE meta_key LIKE %s",
-		'wsc_%'
-	)
-);
-
-// Delete custom post type content (if used)
-$wpdb->query(
-	"DELETE FROM {$wpdb->posts} WHERE post_type = 'wsc_form'"
-);

@@ -13,7 +13,7 @@ class Form_Builder {
 	public function __construct() {
 		global $wpdb;
 		$this->wpdb  = $wpdb;
-		$this->table = $this->wpdb->prefix . 'wp_span_forms';
+		$this->table = $this->wpdb->prefix . 'span_checker_forms';
 	}
 
 	public function get_all(): array {

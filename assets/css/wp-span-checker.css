@@ -1,10 +1,10 @@
 /* =========================
-   Root Colors
+   Admin palette (scoped — matches WP Span Checker dashboard tokens)
 ========================= */
-:root {
+body.wsc-plugin-admin {
   --white: #fff !important;
-  --primary: #0d6efd !important;
-  --primary-hover: #0b5ed7 !important;
+  --primary: #4f46e5 !important;
+  --primary-hover: #4338ca !important;
   --secondary: #6c757d !important;
   --secondary-hover: #5c636a !important;
   --success: #198754 !important;
@@ -26,13 +26,13 @@
   --text-color: #212529 !important;
   --background-color: #fff !important;
   --border-color: #ced4da !important;
-  --primary-shadow: rgba(13, 110, 253, 0.25) !important;
+  --primary-shadow: rgba(79, 70, 229, 0.28) !important;
   --success-shadow: rgba(25, 135, 84, 0.25) !important;
   --danger-shadow: rgba(220, 53, 69, 0.25) !important;
   --warning-shadow: rgba(255, 193, 7, 0.25) !important;
   --info-shadow: rgba(13, 202, 240, 0.25) !important;
   /* Gradients */
-  --gradient-primary: linear-gradient(90deg, #0d6efd 0%, #0b5ed7 100%) !important;
+  --gradient-primary: linear-gradient(90deg, #4f46e5 0%, #6366f1 100%) !important;
   --gradient-success: linear-gradient(90deg, #198754 0%, #157347 100%) !important;
   --gradient-danger: linear-gradient(90deg, #dc3545 0%, #b02a37 100%) !important;
   --gradient-warning: linear-gradient(90deg, #ffc107 0%, #ffca2c 100%) !important;
