@@ -43,6 +43,7 @@ class Ajax {
 		add_action( 'wp_ajax_validateDomainName', array( $this, 'ajax_validate_domain_name' ) );
 		add_action( 'wp_ajax_nopriv_validateDomainName', array( $this, 'ajax_validate_domain_name' ) );
 		add_action( 'wp_ajax_wsc_ai_regenerate_summary', array( $this, 'ajax_ai_regenerate_summary' ) );
+		add_action( 'wp_ajax_import_whitelist_seed', array( $this, 'ajax_import_whitelist_seed' ) );
 	}
 
 	/**
@@ -285,5 +286,78 @@ class Ajax {
 				)
 			);
 		}
+	}
+
+	/**
+	 * AJAX: import bundled whitelist SQL domains with INSERT IGNORE behavior.
+	 */
+	public function ajax_import_whitelist_seed() {
+		check_ajax_referer( 'wp_span_checker_nonce', 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'You do not have permission to perform this action.', 'wp-span-checker' ) ) );
+		}
+
+		$file = WP_SPAN_CHECKER_DIR . 'includes/data/whitelist.sql';
+		if ( ! is_readable( $file ) ) {
+			wp_send_json_error( array( 'message' => __( 'Whitelist SQL file not found.', 'wp-span-checker' ) ) );
+		}
+
+		$sql = file_get_contents( $file );
+		if ( ! is_string( $sql ) || '' === trim( $sql ) ) {
+			wp_send_json_error( array( 'message' => __( 'Whitelist SQL file is empty.', 'wp-span-checker' ) ) );
+		}
+
+		preg_match_all( "/VALUES\\s*\\(\\s*'([^']+)'\\s*\\)/i", $sql, $matches );
+		$domains = isset( $matches[1] ) && is_array( $matches[1] ) ? $matches[1] : array();
+		$domains = array_values(
+			array_unique(
+				array_filter(
+					array_map(
+						static function ( $d ) {
+							return strtolower( sanitize_text_field( (string) $d ) );
+						},
+						$domains
+					)
+				)
+			)
+		);
+
+		if ( empty( $domains ) ) {
+			wp_send_json_error( array( 'message' => __( 'No domains found in whitelist SQL.', 'wp-span-checker' ) ) );
+		}
+
+		$table    = $this->wpdb->prefix . 'span_whitelist_domains';
+		$inserted = 0;
+		$skipped  = 0;
+
+		foreach ( $domains as $domain ) {
+			$result = $this->wpdb->query(
+				$this->wpdb->prepare(
+					"INSERT IGNORE INTO {$table} (domain) VALUES (%s)",
+					$domain
+				)
+			);
+			if ( false === $result ) {
+				continue;
+			}
+			if ( 1 === (int) $result ) {
+				++$inserted;
+			} else {
+				++$skipped;
+			}
+		}
+
+		wp_send_json_success(
+			array(
+				'message'  => sprintf(
+					/* translators: 1: inserted count, 2: skipped duplicates */
+					__( 'Whitelist import complete: %1$d inserted, %2$d already existed.', 'wp-span-checker' ),
+					$inserted,
+					$skipped
+				),
+				'inserted' => $inserted,
+				'skipped'  => $skipped,
+			)
+		);
 	}
 }

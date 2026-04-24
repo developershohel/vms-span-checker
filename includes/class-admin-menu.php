@@ -111,11 +111,19 @@ class Admin_Menu {
 		);
 		add_submenu_page(
 			'wp-span-checker',
-			__( 'Comment moderation', 'wp-span-checker' ),
-			__( 'Comment moderation', 'wp-span-checker' ),
+			__( 'Comment Guard', 'wp-span-checker' ),
+			__( 'Comment Guard', 'wp-span-checker' ),
 			'manage_options',
 			'wp-span-checker-comment-settings',
 			array( $this, 'comment_settings_page' )
+		);
+		add_submenu_page(
+			'wp-span-checker',
+			__( 'Contact & Subscribe Guard', 'wp-span-checker' ),
+			__( 'Contact & Subscribe Guard', 'wp-span-checker' ),
+			'manage_options',
+			'wp-span-checker-contact-subscribe-guard',
+			array( $this, 'contact_subscribe_guard_page' )
 		);
 		add_submenu_page(
 			'wp-span-checker',
@@ -195,6 +203,13 @@ class Admin_Menu {
 	 */
 	public function comment_settings_page() {
 		require WP_SPAN_CHECKER_DIR . 'templates/comment-settings.php';
+	}
+
+	/**
+	 * Contact and subscribe guard settings.
+	 */
+	public function contact_subscribe_guard_page() {
+		require WP_SPAN_CHECKER_DIR . 'templates/contact-subscribe-guard.php';
 	}
 
 	/**

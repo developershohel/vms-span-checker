@@ -1,6 +1,6 @@
 <?php
 /**
- * Comment moderation — heuristic anti-spam, AI, strikes, prompts.
+ * Comment guard — heuristic anti-spam, AI, strikes, prompts.
  *
  * @package WP_Span_Checker
  */
@@ -51,7 +51,6 @@ if ( isset( $_SERVER['REQUEST_METHOD'] ) && 'POST' === $_SERVER['REQUEST_METHOD'
 		'comment_block_punycode_abuse'    => ! empty( $_POST['comment_block_punycode_abuse'] ),
 		'comment_emoji_flood_max'         => isset( $_POST['comment_emoji_flood_max'] ) ? absint( $_POST['comment_emoji_flood_max'] ) : 0,
 		'comment_max_strikes'             => isset( $_POST['comment_max_strikes'] ) ? absint( $_POST['comment_max_strikes'] ) : 5,
-		'comment_contact_page_id'         => isset( $_POST['comment_contact_page_id'] ) ? absint( $_POST['comment_contact_page_id'] ) : 0,
 		'comment_site_ban_enabled'        => ! empty( $_POST['comment_site_ban_enabled'] ),
 		'comment_site_ban_strikes'        => isset( $_POST['comment_site_ban_strikes'] ) ? absint( $_POST['comment_site_ban_strikes'] ) : 10,
 		'comment_allow_links'             => ! empty( $_POST['comment_allow_links'] ),
@@ -61,7 +60,7 @@ if ( isset( $_SERVER['REQUEST_METHOD'] ) && 'POST' === $_SERVER['REQUEST_METHOD'
 
 	AI_Span_Config::update( $incoming );
 	$cfg = AI_Span_Config::get();
-	echo '<div class="updated"><p>' . esc_html__( 'Comment moderation settings saved.', 'wp-span-checker' ) . '</p></div>';
+	echo '<div class="updated"><p>' . esc_html__( 'Comment Guard settings saved.', 'wp-span-checker' ) . '</p></div>';
 }
 // phpcs:enable WordPress.Security.NonceVerification.Missing
 
@@ -76,7 +75,7 @@ $caps_val = isset( $cfg['comment_max_caps_ratio'] ) ? (float) $cfg['comment_max_
 <div class="wrap wsc-admin">
 	<?php
 	wp_span_checker_admin_page_header(
-		__( 'Comment moderation', 'wp-span-checker' ),
+		__( 'Comment Guard', 'wp-span-checker' ),
 		__( 'Works fully without AI: a pluggable component pipeline (filters, lists, flood control). Enable AI separately for semantic checks when post summaries exist.', 'wp-span-checker' )
 	);
 	?>
@@ -367,23 +366,6 @@ $caps_val = isset( $cfg['comment_max_caps_ratio'] ) ? (float) $cfg['comment_max_
 					<td>
 						<input type="number" name="comment_max_strikes" id="comment_max_strikes" value="<?php echo esc_attr( (string) (int) $cfg['comment_max_strikes'] ); ?>" min="1" max="100" class="small-text">
 						<p class="description"><?php esc_html_e( 'After this many rejected comments (per visitor), commenting is disabled for them. Further spam attempts can still add strikes toward a site ban.', 'wp-span-checker' ); ?></p>
-					</td>
-				</tr>
-				<tr>
-					<th scope="row"><label for="comment_contact_page_id"><?php esc_html_e( 'Contact page', 'wp-span-checker' ); ?></label></th>
-					<td>
-						<?php
-						wp_dropdown_pages(
-							array(
-								'name'              => 'comment_contact_page_id',
-								'id'                => 'comment_contact_page_id',
-								'selected'          => (int) ( $cfg['comment_contact_page_id'] ?? 0 ),
-								'show_option_none'  => __( '— None —', 'wp-span-checker' ),
-								'option_none_value' => '0',
-							)
-						);
-						?>
-						<p class="description"><?php esc_html_e( 'Shown to strike-blocked visitors so they know why comments are hidden and how to reach you. Recommended.', 'wp-span-checker' ); ?></p>
 					</td>
 				</tr>
 				<tr>

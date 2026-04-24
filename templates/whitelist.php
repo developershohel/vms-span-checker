@@ -27,6 +27,14 @@ $domain_type = 'whitelist';
 			<input type="text" name="domain" placeholder="<?php esc_attr_e( 'Enter domain', 'wp-span-checker' ); ?>" required>
 			<input type="submit" class="button button-primary" value="<?php esc_attr_e( 'Add domain', 'wp-span-checker' ); ?>">
 		</form>
+		<p style="margin-top:12px;">
+			<button type="button" id="wsc-import-whitelist-seed" class="button button-secondary">
+				<?php esc_html_e( 'Import top provider whitelist (SQL)', 'wp-span-checker' ); ?>
+			</button>
+		</p>
+		<p class="description" style="margin-top:6px;">
+			<?php esc_html_e( 'Loads bundled major email-provider domains from includes/data/whitelist.sql using insert-ignore (duplicates are skipped).', 'wp-span-checker' ); ?>
+		</p>
 	</div>
 
 	<div class="wsc-card wsc-card--table">

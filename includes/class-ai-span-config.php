@@ -43,6 +43,11 @@ class AI_Span_Config {
 			'summary_post_types'         => array( 'post' ),
 			'comment_max_strikes'           => 5,
 			'comment_contact_page_id'       => 0,
+			'contact_guard_page_id'         => 0,
+			'subscribe_guard_enabled'       => false,
+			'subscribe_guard_scope'         => 'site',
+			'subscribe_guard_page_ids'      => '',
+			'subscribe_guard_form_id'       => '',
 			'comment_site_ban_enabled'      => false,
 			'comment_site_ban_strikes'      => 10,
 			'comment_allow_links'           => true,
@@ -129,6 +134,12 @@ class AI_Span_Config {
 		$c['system_prompt']         = wp_kses_post( (string) ( $c['system_prompt'] ?? $d['system_prompt'] ) );
 		$c['comment_max_strikes']   = max( 1, min( 100, absint( $c['comment_max_strikes'] ?? 5 ) ) );
 		$c['comment_contact_page_id'] = absint( $c['comment_contact_page_id'] ?? 0 );
+		$c['contact_guard_page_id'] = absint( $c['contact_guard_page_id'] ?? 0 );
+		$c['subscribe_guard_enabled'] = ! empty( $c['subscribe_guard_enabled'] );
+		$scope = (string) ( $c['subscribe_guard_scope'] ?? 'site' );
+		$c['subscribe_guard_scope'] = in_array( $scope, array( 'site', 'specific' ), true ) ? $scope : 'site';
+		$c['subscribe_guard_page_ids'] = sanitize_text_field( (string) ( $c['subscribe_guard_page_ids'] ?? '' ) );
+		$c['subscribe_guard_form_id']  = sanitize_text_field( (string) ( $c['subscribe_guard_form_id'] ?? '' ) );
 		$c['comment_site_ban_enabled'] = ! empty( $c['comment_site_ban_enabled'] );
 		$ban_at                      = max( 2, min( 500, absint( $c['comment_site_ban_strikes'] ?? 10 ) ) );
 		$c['comment_site_ban_strikes'] = max( $ban_at, $c['comment_max_strikes'] );

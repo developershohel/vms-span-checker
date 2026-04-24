@@ -27,7 +27,6 @@ if ( isset( $_SERVER['REQUEST_METHOD'] ) && 'POST' === $_SERVER['REQUEST_METHOD'
 			'enabled'                    => ! empty( $_POST['rg_enabled'] ),
 			'use_webrisk'                => ! empty( $_POST['rg_webrisk'] ),
 			'use_virustotal'             => ! empty( $_POST['rg_virustotal'] ),
-			'vt_skip_if_webrisk_clean'   => ! empty( $_POST['rg_vt_skip_if_webrisk_clean'] ),
 			'require_dns_live'           => ! empty( $_POST['rg_require_dns_live'] ),
 			'require_mx'                 => ! empty( $_POST['rg_require_mx'] ),
 			'mx_allow_a_fallback'        => ! empty( $_POST['rg_mx_a_fallback'] ),
@@ -84,7 +83,7 @@ $can_register = get_option( 'users_can_register' );
 							array(
 								'name'        => 'rg_webrisk',
 								'checked'     => ! empty( $cfg['use_webrisk'] ),
-								'description' => __( 'Check https://domain against Web Risk (requires API key under API Settings).', 'wp-span-checker' ),
+								'description' => __( 'Google threat-list check (malware/phishing/unwanted software). If clean, it means Google has not flagged this domain URL.', 'wp-span-checker' ),
 							)
 						);
 						?>
@@ -98,21 +97,7 @@ $can_register = get_option( 'users_can_register' );
 							array(
 								'name'        => 'rg_virustotal',
 								'checked'     => ! empty( $cfg['use_virustotal'] ),
-								'description' => __( 'Check domain reputation (requires API keys and thresholds under API Settings).', 'wp-span-checker' ),
-							)
-						);
-						?>
-					</td>
-				</tr>
-				<tr>
-					<th scope="row"><?php esc_html_e( 'Skip VirusTotal when Web Risk is clean', 'wp-span-checker' ); ?></th>
-					<td>
-						<?php
-						wp_span_checker_admin_switch(
-							array(
-								'name'        => 'rg_vt_skip_if_webrisk_clean',
-								'checked'     => ! empty( $cfg['vt_skip_if_webrisk_clean'] ),
-								'description' => __( 'When both APIs are enabled: if Web Risk passes, do not call VirusTotal (saves quota). Turn off to always run both.', 'wp-span-checker' ),
+								'description' => __( 'Multi-engine reputation check. A domain can pass Web Risk but still fail here if your malicious/suspicious thresholds are exceeded.', 'wp-span-checker' ),
 							)
 						);
 						?>

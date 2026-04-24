@@ -67,7 +67,10 @@ class AI_Span_Comments {
 			return;
 		}
 		$c         = AI_Span_Config::get();
-		$contact_id = (int) ( $c['comment_contact_page_id'] ?? 0 );
+		$contact_id = (int) ( $c['contact_guard_page_id'] ?? 0 );
+		if ( $contact_id <= 0 ) {
+			$contact_id = (int) ( $c['comment_contact_page_id'] ?? 0 );
+		}
 		if ( $contact_id <= 0 || ! is_page( $contact_id ) ) {
 			return;
 		}
@@ -461,7 +464,10 @@ class AI_Span_Comments {
 		}
 
 		$c          = AI_Span_Config::get();
-		$contact_id = (int) ( $c['comment_contact_page_id'] ?? 0 );
+		$contact_id = (int) ( $c['contact_guard_page_id'] ?? 0 );
+		if ( $contact_id <= 0 ) {
+			$contact_id = (int) ( $c['comment_contact_page_id'] ?? 0 );
+		}
 		if ( $contact_id > 0 && is_page( $contact_id ) ) {
 			return;
 		}
@@ -576,7 +582,10 @@ class AI_Span_Comments {
 	 */
 	private function get_contact_owner_html_fragment(): string {
 		$c          = AI_Span_Config::get();
-		$page_id    = (int) ( $c['comment_contact_page_id'] ?? 0 );
+		$page_id    = (int) ( $c['contact_guard_page_id'] ?? 0 );
+		if ( $page_id <= 0 ) {
+			$page_id = (int) ( $c['comment_contact_page_id'] ?? 0 );
+		}
 		$permalink  = ( $page_id > 0 ) ? get_permalink( $page_id ) : '';
 		if ( ! is_string( $permalink ) || '' === $permalink ) {
 			return esc_html__( 'If you believe this is a mistake, please reach the site owner through any contact method they publish on this website.', 'wp-span-checker' );

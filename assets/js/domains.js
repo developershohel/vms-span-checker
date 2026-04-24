@@ -193,6 +193,38 @@ jQuery(document).ready(function ($) {
         });
     });
 
+    $('#wsc-import-whitelist-seed').on('click', function () {
+        const $btn = $(this);
+        Swal.fire({
+            title: wscT('importWhitelistSeedTitle', 'Import bundled whitelist domains?'),
+            text: wscT('importWhitelistSeedText', 'This will add common provider domains and skip existing entries.'),
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: wscT('import', 'Import'),
+            cancelButtonText: wscT('cancel', 'Cancel'),
+        }).then(function (result) {
+            if (!result.isConfirmed) {
+                return;
+            }
+            $btn.prop('disabled', true);
+            $.post(WPSpanChecker.ajaxurl, {
+                action: 'import_whitelist_seed',
+                nonce: WPSpanChecker.nonce
+            }, function (response) {
+                if (response && response.success) {
+                    table.ajax.reload(null, false);
+                    wscOkToast(wscAjaxErr(response.data, wscT('importDone', 'Whitelist import complete.')));
+                } else {
+                    wscErrToast(wscAjaxErr(response ? response.data : null, wscT('importFailed', 'Whitelist import failed.')));
+                }
+            }).fail(function () {
+                wscErrToast(wscT('importFailed', 'Whitelist import failed.'));
+            }).always(function () {
+                $btn.prop('disabled', false);
+            });
+        });
+    });
+
     // Delete domain
     $('#domains-table').on('click', '.delete-domain', function () {
         let id = $(this).data('id');

@@ -61,7 +61,7 @@ class VirusTotal {
 		if ( empty( $this->api_keys ) ) {
 			return array(
 				'status'  => false,
-				'message' => __( 'VirusTotal API key is required.', 'wp-span-checker' ),
+				'message' => __( 'Security reputation check is temporarily unavailable. Please try again later.', 'wp-span-checker' ),
 			);
 		}
 
@@ -69,7 +69,7 @@ class VirusTotal {
 		if ( ! $api_key ) {
 			return array(
 				'status'  => false,
-				'message' => __( 'No valid VirusTotal key.', 'wp-span-checker' ),
+				'message' => __( 'Security reputation check is temporarily unavailable. Please try again later.', 'wp-span-checker' ),
 			);
 		}
 
@@ -88,8 +88,15 @@ class VirusTotal {
 		if ( is_wp_error( $response ) ) {
 			return array(
 				'status'  => false,
-				/* translators: %s: WordPress error message */
-				'message' => sprintf( __( 'VirusTotal API request failed: %s', 'wp-span-checker' ), $response->get_error_message() ),
+				'message' => __( 'Security reputation check could not be completed. Please try again.', 'wp-span-checker' ),
+			);
+		}
+
+		$http_code = (int) wp_remote_retrieve_response_code( $response );
+		if ( $http_code < 200 || $http_code >= 300 ) {
+			return array(
+				'status'  => false,
+				'message' => __( 'Security reputation check could not be completed. Please try again.', 'wp-span-checker' ),
 			);
 		}
 
@@ -97,14 +104,28 @@ class VirusTotal {
 		if ( ! $body ) {
 			return array(
 				'status'  => false,
-				'message' => __( 'VirusTotal API returned an empty response.', 'wp-span-checker' ),
+				'message' => __( 'Security reputation check returned an empty response. Please try again.', 'wp-span-checker' ),
 			);
 		}
 
 		$data = json_decode( $body, true );
+		if ( ! is_array( $data ) ) {
+			return array(
+				'status'  => false,
+				'message' => __( 'Security reputation check returned an invalid response. Please try again.', 'wp-span-checker' ),
+			);
+		}
+
 		$stats = isset( $data['data']['attributes']['last_analysis_stats'] ) && is_array( $data['data']['attributes']['last_analysis_stats'] )
 			? $data['data']['attributes']['last_analysis_stats']
 			: array();
+
+		if ( empty( $stats ) ) {
+			return array(
+				'status'  => false,
+				'message' => __( 'Security reputation report was incomplete. Please try again.', 'wp-span-checker' ),
+			);
+		}
 
 		$malicious  = isset( $stats['malicious'] ) ? (int) $stats['malicious'] : 0;
 		$suspicious = isset( $stats['suspicious'] ) ? (int) $stats['suspicious'] : 0;
@@ -118,7 +139,7 @@ class VirusTotal {
 				'status'  => false,
 				/* translators: 1: malicious engine count, 2: allowed max */
 				'message' => sprintf(
-					__( 'VirusTotal: too many malicious detections (%1$d; allowed max %2$d).', 'wp-span-checker' ),
+					__( 'This email domain failed security reputation checks (%1$d signals; allowed max %2$d).', 'wp-span-checker' ),
 					$malicious,
 					$max_bad
 				),
@@ -130,7 +151,7 @@ class VirusTotal {
 				'status'  => false,
 				/* translators: 1: suspicious engine count, 2: allowed max */
 				'message' => sprintf(
-					__( 'VirusTotal: too many suspicious detections (%1$d; allowed max %2$d).', 'wp-span-checker' ),
+					__( 'This email domain failed security reputation checks (%1$d suspicious signals; allowed max %2$d).', 'wp-span-checker' ),
 					$suspicious,
 					$max_susp
 				),
@@ -139,7 +160,7 @@ class VirusTotal {
 
 		return array(
 			'status'  => true,
-			'message' => __( 'VirusTotal: domain within your thresholds.', 'wp-span-checker' ),
+			'message' => __( 'Domain passed reputation checks.', 'wp-span-checker' ),
 		);
 	}
 }

@@ -128,17 +128,13 @@ class Domain_Validator {
 
 		$use_webrisk = ! empty( $settings['is_webrisk'] );
 		$use_vt      = ! empty( $settings['is_virustotal'] );
-		// When both APIs are on: if Web Risk is clean, skip VirusTotal (default) to save quota.
-		$vt_skip_if_webrisk_clean = ! array_key_exists( 'vt_skip_if_webrisk_clean', $settings )
-			? true
-			: ! empty( $settings['vt_skip_if_webrisk_clean'] );
 
 		if ( $use_webrisk ) {
 			$webrisk_result = $this->webrisk->check_url( 'https://' . $domain );
 			if ( ! $webrisk_result['status'] ) {
 				return $this->log_and_return( $type, $ip, $domain, 'failed', $webrisk_result['message'], false );
 			}
-			if ( $use_vt && ! $vt_skip_if_webrisk_clean ) {
+			if ( $use_vt ) {
 				$vt_result = $this->virustotal->check_domain( $domain );
 				if ( ! $vt_result['status'] ) {
 					return $this->log_and_return( $type, $ip, $domain, 'failed', $vt_result['message'], false );
