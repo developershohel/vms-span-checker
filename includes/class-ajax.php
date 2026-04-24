@@ -139,55 +139,31 @@ class Ajax {
 
 		$table = $this->wpdb->prefix . 'span_checker_form_settings';
 
+		$row = array(
+			'form_type'     => $form_type,
+			'page_id'       => $page_id,
+			'form_id'       => $form_id,
+			'form_class'    => $form_class,
+			'settings'      => wp_json_encode( $sanitized_array ),
+			'is_webrisk'    => $is_webrisk,
+			'is_virustotal' => $is_virustotal,
+		);
+
 		try {
-			if ( $id ) {
-				$exists = (int) $this->wpdb->get_var(
-					$this->wpdb->prepare(
-						"SELECT COUNT(*) FROM {$table} WHERE form_id = %s",
-						$form_id
-					)
+			if ( $id > 0 ) {
+				$updated = $this->wpdb->update(
+					$table,
+					$row,
+					array( 'id' => $id )
 				);
-				if ( $exists > 0 ) {
-					$this->wpdb->update(
-						$table,
-						array(
-							'form_type'     => $form_type,
-							'page_id'       => $page_id,
-							'form_id'       => $form_id,
-							'form_class'    => $form_class,
-							'settings'      => wp_json_encode( $sanitized_array ),
-							'is_webrisk'    => $is_webrisk,
-							'is_virustotal' => $is_virustotal,
-						),
-						array( 'id' => $id )
-					);
-				} else {
-					$this->wpdb->insert(
-						$table,
-						array(
-							'form_type'     => $form_type,
-							'page_id'       => $page_id,
-							'form_id'       => $form_id,
-							'form_class'    => $form_class,
-							'is_webrisk'    => $is_webrisk,
-							'is_virustotal' => $is_virustotal,
-							'settings'      => wp_json_encode( $sanitized_array ),
-						)
-					);
+				if ( false === $updated ) {
+					wp_send_json_error( array( 'message' => __( 'Could not update Form Guard mapping.', 'wp-span-checker' ) ) );
 				}
 			} else {
-				$this->wpdb->insert(
-					$table,
-					array(
-						'form_type'     => $form_type,
-						'page_id'       => $page_id,
-						'form_id'       => $form_id,
-						'form_class'    => $form_class,
-						'is_webrisk'    => $is_webrisk,
-						'is_virustotal' => $is_virustotal,
-						'settings'      => wp_json_encode( $sanitized_array ),
-					)
-				);
+				$inserted = $this->wpdb->insert( $table, $row );
+				if ( ! $inserted ) {
+					wp_send_json_error( array( 'message' => __( 'Could not save Form Guard mapping.', 'wp-span-checker' ) ) );
+				}
 			}
 
 			wp_send_json_success();

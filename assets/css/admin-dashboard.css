@@ -471,6 +471,26 @@ body.wsc-plugin-admin #wpbody-content > .wrap {
 	color: inherit;
 }
 
+.wsc-admin__page-head--branded {
+	display: flex;
+	align-items: center;
+	gap: 0.85rem;
+}
+
+.wsc-admin__logo {
+	display: block;
+	flex-shrink: 0;
+	width: 40px;
+	height: 40px;
+	border-radius: 10px;
+	box-shadow: 0 2px 10px rgba(79, 70, 229, 0.22);
+}
+
+.wsc-admin__titles {
+	flex: 1;
+	min-width: 0;
+}
+
 .wsc-admin__kicker {
 	display: block;
 	font-size: 0.6875rem;
@@ -662,7 +682,7 @@ body.wsc-plugin-admin table.dataTable.no-footer {
 	border-bottom: 1px solid rgba(148, 163, 184, 0.25);
 }
 
-/* Form settings: align with shell */
+/* Form Guard screen: align with shell */
 body.wsc-plugin-admin .wsc-wrap.wsc-admin .wsc-form {
 	border: 1px solid rgba(148, 163, 184, 0.35);
 	box-shadow: 0 4px 24px -4px rgba(15, 23, 42, 0.06);
@@ -700,7 +720,7 @@ body.wsc-plugin-admin .wsc-admin .wsc-form {
 	margin-bottom: 1rem;
 }
 
-/* Form settings: multi-target locations */
+/* Form Guard: multi-target locations */
 .wsc-targets-help {
 	margin: 0.35rem 0 0.75rem;
 	font-size: 0.85rem;
@@ -885,6 +905,10 @@ body.wsc-plugin-admin .wsc-admin__page-head {
 	border-radius: 14px;
 	padding: 1rem 1.2rem;
 	box-shadow: var(--wsc-shadow);
+}
+
+body.wsc-plugin-admin .wsc-admin__page-head--branded {
+	align-items: flex-start;
 }
 
 body.wsc-plugin-admin .wsc-admin__kicker {

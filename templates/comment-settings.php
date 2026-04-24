@@ -51,6 +51,9 @@ if ( isset( $_SERVER['REQUEST_METHOD'] ) && 'POST' === $_SERVER['REQUEST_METHOD'
 		'comment_block_punycode_abuse'    => ! empty( $_POST['comment_block_punycode_abuse'] ),
 		'comment_emoji_flood_max'         => isset( $_POST['comment_emoji_flood_max'] ) ? absint( $_POST['comment_emoji_flood_max'] ) : 0,
 		'comment_max_strikes'             => isset( $_POST['comment_max_strikes'] ) ? absint( $_POST['comment_max_strikes'] ) : 5,
+		'comment_contact_page_id'         => isset( $_POST['comment_contact_page_id'] ) ? absint( $_POST['comment_contact_page_id'] ) : 0,
+		'comment_site_ban_enabled'        => ! empty( $_POST['comment_site_ban_enabled'] ),
+		'comment_site_ban_strikes'        => isset( $_POST['comment_site_ban_strikes'] ) ? absint( $_POST['comment_site_ban_strikes'] ) : 10,
 		'comment_allow_links'             => ! empty( $_POST['comment_allow_links'] ),
 		'product_review_filter'           => ! empty( $_POST['product_review_filter'] ),
 		'system_prompt'                   => isset( $_POST['system_prompt'] ) ? wp_unslash( $_POST['system_prompt'] ) : '',
@@ -363,7 +366,45 @@ $caps_val = isset( $cfg['comment_max_caps_ratio'] ) ? (float) $cfg['comment_max_
 					<th scope="row"><label for="comment_max_strikes"><?php esc_html_e( 'Max strikes before block', 'wp-span-checker' ); ?></label></th>
 					<td>
 						<input type="number" name="comment_max_strikes" id="comment_max_strikes" value="<?php echo esc_attr( (string) (int) $cfg['comment_max_strikes'] ); ?>" min="1" max="100" class="small-text">
-						<p class="description"><?php esc_html_e( 'Applies to heuristic and AI rejections when strikes are enabled for each path.', 'wp-span-checker' ); ?></p>
+						<p class="description"><?php esc_html_e( 'After this many rejected comments (per visitor), commenting is disabled for them. Further spam attempts can still add strikes toward a site ban.', 'wp-span-checker' ); ?></p>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row"><label for="comment_contact_page_id"><?php esc_html_e( 'Contact page', 'wp-span-checker' ); ?></label></th>
+					<td>
+						<?php
+						wp_dropdown_pages(
+							array(
+								'name'              => 'comment_contact_page_id',
+								'id'                => 'comment_contact_page_id',
+								'selected'          => (int) ( $cfg['comment_contact_page_id'] ?? 0 ),
+								'show_option_none'  => __( '— None —', 'wp-span-checker' ),
+								'option_none_value' => '0',
+							)
+						);
+						?>
+						<p class="description"><?php esc_html_e( 'Shown to strike-blocked visitors so they know why comments are hidden and how to reach you. Recommended.', 'wp-span-checker' ); ?></p>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row"><?php esc_html_e( 'Permanent site restriction', 'wp-span-checker' ); ?></th>
+					<td>
+						<?php
+						wp_span_checker_admin_switch(
+							array(
+								'name'        => 'comment_site_ban_enabled',
+								'checked'     => ! empty( $cfg['comment_site_ban_enabled'] ),
+								'description' => __( 'After the strike count below, block the visitor from the front of the site (guests by IP; logged-in users lose access and cannot sign in again until you unblock them). The contact page above stays available.', 'wp-span-checker' ),
+							)
+						);
+						?>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row"><label for="comment_site_ban_strikes"><?php esc_html_e( 'Strikes before permanent restriction', 'wp-span-checker' ); ?></label></th>
+					<td>
+						<input type="number" name="comment_site_ban_strikes" id="comment_site_ban_strikes" value="<?php echo esc_attr( (string) (int) ( $cfg['comment_site_ban_strikes'] ?? 10 ) ); ?>" min="2" max="500" class="small-text">
+						<p class="description"><?php esc_html_e( 'Must be at least the “max strikes before block” value. Shared IPs can affect guests—unblock from Blocked commenters if needed.', 'wp-span-checker' ); ?></p>
 					</td>
 				</tr>
 				<tr>

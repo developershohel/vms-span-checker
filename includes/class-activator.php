@@ -92,12 +92,15 @@ class Activator {
 				actor_label varchar(191) NOT NULL DEFAULT '',
 				strikes int(10) unsigned NOT NULL DEFAULT 0,
 				blocked tinyint(1) NOT NULL DEFAULT 0,
+				site_banned tinyint(1) NOT NULL DEFAULT 0,
+				last_ip varchar(45) NOT NULL DEFAULT '',
 				blocked_at datetime NULL,
 				last_strike_at datetime NULL,
 				last_reason varchar(500) NOT NULL DEFAULT '',
 				PRIMARY KEY  (id),
 				UNIQUE KEY actor_key (actor_key),
-				KEY blocked (blocked)
+				KEY blocked (blocked),
+				KEY site_banned_ip (site_banned, last_ip(40))
 			) $charset_collate;",
 		);
 
@@ -108,7 +111,7 @@ class Activator {
 		self::maybe_seed_disposable_domains();
 
 		update_option( 'wp_span_checker_db_version', WP_SPAN_CHECKER_VERSION );
-		update_option( 'wp_span_checker_schema_version', '4' );
+		update_option( 'wp_span_checker_schema_version', '5' );
 	}
 
 	/**
@@ -146,6 +149,28 @@ class Activator {
 				$wpdb->query( "ALTER TABLE {$table} MODIFY COLUMN actor_key varchar(191) NOT NULL" );
 			}
 			update_option( 'wp_span_checker_schema_version', '4' );
+			$current = '4';
+		}
+
+		if ( version_compare( $current, '5', '<' ) ) {
+			$table = $wpdb->prefix . 'span_checker_comment_enforcement';
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name uses trusted prefix.
+			$exists = $wpdb->get_var( "SHOW TABLES LIKE '{$table}'" );
+			if ( $exists ) {
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$has_sb = $wpdb->get_results( "SHOW COLUMNS FROM {$table} LIKE 'site_banned'" );
+				if ( empty( $has_sb ) ) {
+					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+					$wpdb->query( "ALTER TABLE {$table} ADD COLUMN site_banned tinyint(1) NOT NULL DEFAULT 0 AFTER blocked" );
+				}
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$has_ip = $wpdb->get_results( "SHOW COLUMNS FROM {$table} LIKE 'last_ip'" );
+				if ( empty( $has_ip ) ) {
+					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+					$wpdb->query( "ALTER TABLE {$table} ADD COLUMN last_ip varchar(45) NOT NULL DEFAULT '' AFTER site_banned" );
+				}
+			}
+			update_option( 'wp_span_checker_schema_version', '5' );
 		}
 	}
 
@@ -177,12 +202,15 @@ class Activator {
 				actor_label varchar(191) NOT NULL DEFAULT '',
 				strikes int(10) unsigned NOT NULL DEFAULT 0,
 				blocked tinyint(1) NOT NULL DEFAULT 0,
+				site_banned tinyint(1) NOT NULL DEFAULT 0,
+				last_ip varchar(45) NOT NULL DEFAULT '',
 				blocked_at datetime NULL,
 				last_strike_at datetime NULL,
 				last_reason varchar(500) NOT NULL DEFAULT '',
 				PRIMARY KEY  (id),
 				UNIQUE KEY actor_key (actor_key),
-				KEY blocked (blocked)
+				KEY blocked (blocked),
+				KEY site_banned_ip (site_banned, last_ip(40))
 			) $charset_collate;",
 		);
 

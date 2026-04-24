@@ -58,6 +58,7 @@ function wp_span_checker_bootstrap() {
 	require_once WP_SPAN_CHECKER_DIR . 'includes/class-whitelist.php';
 	require_once WP_SPAN_CHECKER_DIR . 'includes/class-disposable.php';
 	require_once WP_SPAN_CHECKER_DIR . 'includes/class-logger.php';
+	require_once WP_SPAN_CHECKER_DIR . 'includes/class-plugin-activity-log.php';
 	require_once WP_SPAN_CHECKER_DIR . 'includes/class-form-settings.php';
 	require_once WP_SPAN_CHECKER_DIR . 'includes/class-form.php';
 	require_once WP_SPAN_CHECKER_DIR . 'includes/class-api-settings.php';
@@ -84,6 +85,7 @@ function wp_span_checker_bootstrap() {
 	new WP_Span_Checker\AI_Span_Summary();
 	new WP_Span_Checker\AI_Span_Comments();
 	new WP_Span_Checker\Registration_Guard();
+	new WP_Span_Checker\Plugin_Activity_Log();
 
 	require_once WP_SPAN_CHECKER_DIR . 'public/render-form.php';
 }

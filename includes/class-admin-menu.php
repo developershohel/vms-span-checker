@@ -79,8 +79,16 @@ class Admin_Menu {
 		);
 		add_submenu_page(
 			'wp-span-checker',
-			__( 'Form Settings', 'wp-span-checker' ),
-			__( 'Form Settings', 'wp-span-checker' ),
+			__( 'Tools & log', 'wp-span-checker' ),
+			__( 'Tools & log', 'wp-span-checker' ),
+			'manage_options',
+			'wp-span-checker-tools',
+			array( $this, 'tools_page' )
+		);
+		add_submenu_page(
+			'wp-span-checker',
+			__( 'Form Guard', 'wp-span-checker' ),
+			__( 'Form Guard', 'wp-span-checker' ),
 			'manage_options',
 			'wp-span-checker-form-settings',
 			array( $this, 'form_settings_page' )
@@ -155,7 +163,14 @@ class Admin_Menu {
 	}
 
 	/**
-	 * Form mapping settings screen.
+	 * Manual API tests and activity log console.
+	 */
+	public function tools_page() {
+		require WP_SPAN_CHECKER_DIR . 'templates/tools.php';
+	}
+
+	/**
+	 * Form Guard — map front-end forms to validation rules.
 	 */
 	public function form_settings_page() {
 		require WP_SPAN_CHECKER_DIR . 'templates/form-settings.php';

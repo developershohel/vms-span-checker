@@ -454,7 +454,7 @@ function wp_span_checker_sanitize_page_targets_param( $raw ): string {
  */
 function wp_span_checker_get_js_i18n() {
 	return array(
-		'formNotFound'             => __( 'Form not found. Check Form ID / class in WP Span Checker settings.', 'wp-span-checker' ),
+		'formNotFound'             => __( 'Form not found. Check Form ID / class under WP Span Checker Form Guard.', 'wp-span-checker' ),
 		'emailInvalid'             => __( 'Email address is invalid', 'wp-span-checker' ),
 		'validationFailed'         => __( 'Validation failed', 'wp-span-checker' ),
 		'emailRequired'            => __( 'Valid email is required', 'wp-span-checker' ),
@@ -466,15 +466,15 @@ function wp_span_checker_get_js_i18n() {
 		'urlValid'                 => __( 'URL is valid', 'wp-span-checker' ),
 		'confirmDeleteDomain'      => __( 'Are you sure you want to delete this domain?', 'wp-span-checker' ),
 		'confirmDeleteDomainTitle' => __( 'Remove this domain?', 'wp-span-checker' ),
-		'confirmDeleteFormSetting' => __( 'Are you sure you want to delete this form setting?', 'wp-span-checker' ),
-		'confirmDeleteFormTitle'   => __( 'Remove this form mapping?', 'wp-span-checker' ),
+		'confirmDeleteFormSetting' => __( 'Are you sure you want to delete this Form Guard mapping?', 'wp-span-checker' ),
+		'confirmDeleteFormTitle'   => __( 'Remove this Form Guard mapping?', 'wp-span-checker' ),
 		'cancel'                   => __( 'Cancel', 'wp-span-checker' ),
 		'domainAdded'              => __( 'Domain added.', 'wp-span-checker' ),
 		'domainRemoved'            => __( 'Domain removed.', 'wp-span-checker' ),
-		'formSettingRemoved'       => __( 'Form setting removed.', 'wp-span-checker' ),
+		'formSettingRemoved'       => __( 'Form Guard mapping removed.', 'wp-span-checker' ),
 		'errorAddingDomain'        => __( 'Error adding domain.', 'wp-span-checker' ),
 		'errorDeletingDomain'      => __( 'Error deleting domain.', 'wp-span-checker' ),
-		'errorDeletingSetting'     => __( 'Error deleting form setting.', 'wp-span-checker' ),
+		'errorDeletingSetting'     => __( 'Could not delete Form Guard mapping.', 'wp-span-checker' ),
 		'saved'                    => __( 'Saved', 'wp-span-checker' ),
 		'delete'                   => __( 'Delete', 'wp-span-checker' ),
 		'edit'                     => __( 'Edit', 'wp-span-checker' ),

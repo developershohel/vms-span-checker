@@ -6,6 +6,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+/**
+ * Form Guard persistence: `span_checker_form_settings` table.
+ */
 class Form_Settings {
 	private $wpdb;
 	private $post;

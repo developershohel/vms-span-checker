@@ -46,7 +46,7 @@ foreach ( (array) $analysis['top_failed_messages'] as $m_row ) {
 
 $insights = array();
 if ( 0 === (int) $summary['form_mappings'] ) {
-	$insights[] = __( 'No form mappings yet—connect a form under Form Settings to start logging checks.', 'wp-span-checker' );
+	$insights[] = __( 'No form mappings yet—add one under Form Guard to start logging checks.', 'wp-span-checker' );
 }
 if ( 0 === (int) $summary['total_logs'] ) {
 	$insights[] = __( 'No validation events recorded yet. Traffic will appear here once forms are mapped and submitted.', 'wp-span-checker' );
@@ -82,8 +82,8 @@ $quick_links = array(
 	array(
 		'url'   => admin_url( 'admin.php?page=wp-span-checker-form-settings' ),
 		'icon'  => '⚡',
-		'title' => __( 'Form mappings', 'wp-span-checker' ),
-		'desc'  => __( 'Connect site forms to validation', 'wp-span-checker' ),
+		'title' => __( 'Form Guard', 'wp-span-checker' ),
+		'desc'  => __( 'Map forms to validation & API scans', 'wp-span-checker' ),
 	),
 	array(
 		'url'   => admin_url( 'admin.php?page=wp-span-checker-api' ),

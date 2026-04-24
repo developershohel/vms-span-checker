@@ -348,8 +348,8 @@ jQuery(document).ready(function ($) {
         let id = $(this).data('id');
         const formSettingForm = $('#form-setting-table');
         Swal.fire({
-            title: wscT('confirmDeleteFormTitle', 'Remove this form mapping?'),
-            text: wscT('confirmDeleteFormSetting', 'Are you sure you want to delete this form setting?'),
+            title: wscT('confirmDeleteFormTitle', 'Remove this Form Guard mapping?'),
+            text: wscT('confirmDeleteFormSetting', 'Are you sure you want to delete this Form Guard mapping?'),
             icon: 'warning',
             showCancelButton: true,
             confirmButtonText: wscT('delete', 'Delete'),
@@ -366,9 +366,9 @@ jQuery(document).ready(function ($) {
             }, function (response) {
                 if (response.success) {
                     formSettingTable.ajax.reload(null, false);
-                    wscOkToast(wscT('formSettingRemoved', 'Form setting removed.'));
+                    wscOkToast(wscT('formSettingRemoved', 'Form Guard mapping removed.'));
                 } else {
-                    wscErrToast(wscAjaxErr(response.data, wscT('errorDeletingSetting', 'Error deleting form setting.')));
+                    wscErrToast(wscAjaxErr(response.data, wscT('errorDeletingSetting', 'Could not delete Form Guard mapping.')));
                 }
                 formSettingForm.removeClass('wsc-opacity');
             });

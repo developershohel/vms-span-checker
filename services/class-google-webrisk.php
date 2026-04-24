@@ -17,25 +17,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 class GoogleWebRisk {
 
 	/**
-	 * API key.
+	 * API key (Web Risk `uris:search` uses the `key` query parameter only).
 	 *
 	 * @var string
 	 */
 	private $api_key = '';
-
-	/**
-	 * Stored secret key (reserved for future OAuth flows).
-	 *
-	 * @var string
-	 */
-	private $secret_key = '';
-
-	/**
-	 * Stored client ID (reserved for future OAuth flows).
-	 *
-	 * @var string
-	 */
-	private $client_id = '';
 
 	/**
 	 * Load options.
@@ -43,9 +29,7 @@ class GoogleWebRisk {
 	public function __construct() {
 		$config = get_option( 'wsc-google-config', array() );
 
-		$this->api_key    = isset( $config['api_key'] ) ? (string) $config['api_key'] : '';
-		$this->secret_key = isset( $config['secret_key'] ) ? (string) $config['secret_key'] : '';
-		$this->client_id  = isset( $config['client_id'] ) ? (string) $config['client_id'] : '';
+		$this->api_key = ( is_array( $config ) && isset( $config['api_key'] ) ) ? (string) $config['api_key'] : '';
 	}
 
 	/**

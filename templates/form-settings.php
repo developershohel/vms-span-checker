@@ -1,6 +1,6 @@
 <?php
 /**
- * Map front-end forms to validation rules.
+ * Form Guard — map front-end forms to validation rules.
  *
  * @package WP_Span_Checker
  */
@@ -34,13 +34,13 @@ $wsc_presets = wp_span_checker_page_target_presets();
 <div class="wrap wsc-wrap wsc-admin" id="wsc-content-wrapper">
 	<?php
 	wp_span_checker_admin_page_header(
-		__( 'Form Settings', 'wp-span-checker' ),
-		__( 'Map site forms to validation rules, fields, and optional API scans.', 'wp-span-checker' )
+		__( 'Form Guard', 'wp-span-checker' ),
+		__( 'Protect front-end forms: map each form to fields, disposable checks, and optional Web Risk / VirusTotal scans.', 'wp-span-checker' )
 	);
 	?>
 
 	<div class="wsc-control-group wsc-flex wsc-justify-end wsc-items-center wsc-mb-8">
-		<button type="button" class="wsc-btn wsc-btn-outline-primary" id="wscAddFormSetting"><?php esc_html_e( 'Add form setting', 'wp-span-checker' ); ?></button>
+		<button type="button" class="wsc-btn wsc-btn-outline-primary" id="wscAddFormSetting"><?php esc_html_e( 'Add form guard mapping', 'wp-span-checker' ); ?></button>
 	</div>
 
 	<form method="post" class="wsc-form wsc-bg-white wsc-p-8 wsc-rounded-3xl wsc-hidden" id="wsc-settings-form">
@@ -213,7 +213,7 @@ $wsc_presets = wp_span_checker_page_target_presets();
 		</div>
 		<div class="wsc-form-group">
 			<button type="submit" class="wsc-btn wsc-btn-success wsc-flex wsc-items-center" id="saveFormSetting">
-				<span><?php esc_html_e( 'Save setting', 'wp-span-checker' ); ?></span>
+				<span><?php esc_html_e( 'Save mapping', 'wp-span-checker' ); ?></span>
 				<span class="wsc-spinner wsc-hidden dashicons dashicons-admin-generic wsc-mr-4 wsc-text-success"></span>
 			</button>
 			<span class="wsc-form-error-message wsc-form-error wsc-block" id="wsc-form-error-message"></span>

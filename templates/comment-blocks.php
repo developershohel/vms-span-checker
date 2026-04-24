@@ -32,7 +32,7 @@ if ( isset( $_SERVER['REQUEST_METHOD'] ) && 'POST' === $_SERVER['REQUEST_METHOD'
 // phpcs:enable WordPress.Security.NonceVerification.Missing
 
 // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name uses trusted prefix.
-$rows = $wpdb->get_results( "SELECT * FROM {$table} ORDER BY blocked DESC, strikes DESC, last_strike_at DESC LIMIT 500", ARRAY_A );
+$rows = $wpdb->get_results( "SELECT * FROM {$table} ORDER BY site_banned DESC, blocked DESC, strikes DESC, last_strike_at DESC LIMIT 500", ARRAY_A );
 if ( ! is_array( $rows ) ) {
 	$rows = array();
 }
@@ -42,7 +42,7 @@ if ( ! is_array( $rows ) ) {
 	<?php
 	wp_span_checker_admin_page_header(
 		__( 'Blocked commenters', 'wp-span-checker' ),
-		__( 'Actors accumulate strikes when comments are rejected. Blocked rows cannot comment until you unblock them.', 'wp-span-checker' )
+		__( 'Actors accumulate strikes when comments are rejected. Comment-blocked rows cannot use the comment form; site-restricted rows are blocked from the rest of the site (contact page excepted) until you unblock them.', 'wp-span-checker' )
 	);
 	?>
 
@@ -55,7 +55,8 @@ if ( ! is_array( $rows ) ) {
 					<tr>
 						<th><?php esc_html_e( 'Label', 'wp-span-checker' ); ?></th>
 						<th><?php esc_html_e( 'Strikes', 'wp-span-checker' ); ?></th>
-						<th><?php esc_html_e( 'Blocked', 'wp-span-checker' ); ?></th>
+						<th><?php esc_html_e( 'Comment block', 'wp-span-checker' ); ?></th>
+						<th><?php esc_html_e( 'Site restricted', 'wp-span-checker' ); ?></th>
 						<th><?php esc_html_e( 'Last strike', 'wp-span-checker' ); ?></th>
 						<th><?php esc_html_e( 'Last reason', 'wp-span-checker' ); ?></th>
 						<th><?php esc_html_e( 'Actions', 'wp-span-checker' ); ?></th>
@@ -67,10 +68,11 @@ if ( ! is_array( $rows ) ) {
 							<td><?php echo esc_html( (string) ( $row['actor_label'] ?? '' ) ); ?></td>
 							<td><?php echo esc_html( (string) (int) ( $row['strikes'] ?? 0 ) ); ?></td>
 							<td><?php echo ! empty( $row['blocked'] ) ? esc_html__( 'Yes', 'wp-span-checker' ) : esc_html__( 'No', 'wp-span-checker' ); ?></td>
+							<td><?php echo ! empty( $row['site_banned'] ) ? esc_html__( 'Yes', 'wp-span-checker' ) : esc_html__( 'No', 'wp-span-checker' ); ?></td>
 							<td><?php echo esc_html( (string) ( $row['last_strike_at'] ?? '' ) ); ?></td>
 							<td><?php echo esc_html( (string) ( $row['last_reason'] ?? '' ) ); ?></td>
 							<td>
-								<?php if ( ! empty( $row['blocked'] ) || (int) ( $row['strikes'] ?? 0 ) > 0 ) : ?>
+								<?php if ( ! empty( $row['blocked'] ) || ! empty( $row['site_banned'] ) || (int) ( $row['strikes'] ?? 0 ) > 0 ) : ?>
 									<form method="post" style="display:inline;">
 										<?php wp_nonce_field( 'wsc_blocks_action', 'wsc_blocks_nonce' ); ?>
 										<input type="hidden" name="actor_key" value="<?php echo esc_attr( (string) ( $row['actor_key'] ?? '' ) ); ?>">

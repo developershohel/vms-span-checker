@@ -9,10 +9,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-$google_defaults     = array(
-	'secret_key' => '',
-	'client_id'  => '',
-	'api_key'    => '',
+$google_defaults = array(
+	'api_key' => '',
 );
 $virustotal_defaults = array(
 	'keys'            => array(),
@@ -20,11 +18,18 @@ $virustotal_defaults = array(
 	'max_suspicious'  => -1,
 );
 
-$google_config     = get_option( 'wsc-google-config', $google_defaults );
+$google_raw        = get_option( 'wsc-google-config', $google_defaults );
 $virustotal_config = get_option( 'wsc-virustotal-config', $virustotal_defaults );
 
-if ( ! is_array( $google_config ) ) {
-	$google_config = $google_defaults;
+if ( ! is_array( $google_raw ) ) {
+	$google_raw = $google_defaults;
+}
+// Only `api_key` is used (Web Risk REST `uris:search`); strip legacy unused keys from older installs.
+$google_config = array(
+	'api_key' => isset( $google_raw['api_key'] ) ? (string) $google_raw['api_key'] : '',
+);
+if ( $google_config !== $google_raw ) {
+	update_option( 'wsc-google-config', $google_config );
 }
 if ( ! is_array( $virustotal_config ) || ! isset( $virustotal_config['keys'] ) || ! is_array( $virustotal_config['keys'] ) ) {
 	$virustotal_config = $virustotal_defaults;
@@ -40,9 +45,7 @@ if ( isset( $_SERVER['REQUEST_METHOD'] ) && 'POST' === $_SERVER['REQUEST_METHOD'
 
 	if ( isset( $_POST['google_config'] ) ) {
 		$google_config = array(
-			'secret_key' => isset( $_POST['secret_key'] ) ? sanitize_text_field( wp_unslash( $_POST['secret_key'] ) ) : '',
-			'client_id'  => isset( $_POST['client_id'] ) ? sanitize_text_field( wp_unslash( $_POST['client_id'] ) ) : '',
-			'api_key'    => isset( $_POST['api_key'] ) ? sanitize_text_field( wp_unslash( $_POST['api_key'] ) ) : '',
+			'api_key' => isset( $_POST['api_key'] ) ? sanitize_text_field( wp_unslash( $_POST['api_key'] ) ) : '',
 		);
 		update_option( 'wsc-google-config', $google_config );
 		echo '<div class="updated"><p>' . esc_html__( 'Google configuration saved.', 'wp-span-checker' ) . '</p></div>';
@@ -92,21 +95,41 @@ if ( isset( $_SERVER['REQUEST_METHOD'] ) && 'POST' === $_SERVER['REQUEST_METHOD'
 
 	<div class="wsc-card wsc-api-section">
 		<h2 class="wsc-card__title"><?php esc_html_e( 'Google Web Risk', 'wp-span-checker' ); ?></h2>
+		<p class="description" style="margin-top:0;">
+			<?php
+			echo esc_html__(
+				'This plugin calls the Web Risk v1 API using a single API key (query parameter). Create a key in Google Cloud Console for the Web Risk API—no OAuth client or secret is required for this lookup.',
+				'wp-span-checker'
+			);
+			?>
+		</p>
 		<form method="post">
 			<?php wp_nonce_field( 'wsc_api_action', 'wsc_api_nonce' ); ?>
 			<input type="hidden" name="google_config" value="1">
 			<table class="form-table" role="presentation">
 				<tr>
-					<th scope="row"><label for="secret_key"><?php esc_html_e( 'Secret key', 'wp-span-checker' ); ?></label></th>
-					<td><input type="text" name="secret_key" id="secret_key" value="<?php echo esc_attr( $google_config['secret_key'] ); ?>" class="regular-text" required></td>
-				</tr>
-				<tr>
-					<th scope="row"><label for="client_id"><?php esc_html_e( 'Client ID', 'wp-span-checker' ); ?></label></th>
-					<td><input type="text" name="client_id" id="client_id" value="<?php echo esc_attr( $google_config['client_id'] ); ?>" class="regular-text" required></td>
-				</tr>
-				<tr>
 					<th scope="row"><label for="api_key"><?php esc_html_e( 'API key', 'wp-span-checker' ); ?></label></th>
-					<td><input type="text" name="api_key" id="api_key" value="<?php echo esc_attr( $google_config['api_key'] ); ?>" class="regular-text" required></td>
+					<td>
+						<input type="text" name="api_key" id="api_key" value="<?php echo esc_attr( $google_config['api_key'] ); ?>" class="regular-text" autocomplete="off" required>
+						<p class="description">
+							<?php
+							echo wp_kses(
+								sprintf(
+									/* translators: %s: URL to Google Web Risk docs */
+									__( 'See <a href="%s" rel="noopener noreferrer" target="_blank">Google Web Risk documentation</a> to enable the API and create a key.', 'wp-span-checker' ),
+									esc_url( 'https://cloud.google.com/web-risk/docs/quickstart' )
+								),
+								array(
+									'a' => array(
+										'href'   => true,
+										'rel'    => true,
+										'target' => true,
+									),
+								)
+							);
+							?>
+						</p>
+					</td>
 				</tr>
 			</table>
 			<p class="submit">

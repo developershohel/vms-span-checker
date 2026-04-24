@@ -80,6 +80,10 @@ class Domain_Validator {
 
 		$skip_https = ! empty( $settings['skip_https'] );
 
+		$require_dns = array_key_exists( 'require_dns_live', $settings )
+			? ! empty( $settings['require_dns_live'] )
+			: true;
+
 		$whitelist_domains = array_column( $this->whitelist->get_all(), 'domain' );
 		if ( in_array( $domain, $whitelist_domains, true ) ) {
 			return $this->log_and_return( $type, $ip, $domain, 'success', __( 'Domain is whitelisted.', 'wp-span-checker' ), true );
@@ -88,6 +92,17 @@ class Domain_Validator {
 		$disposable_domains = array_column( $this->disposable->get_all(), 'domain' );
 		if ( in_array( $domain, $disposable_domains, true ) ) {
 			return $this->log_and_return( $type, $ip, $domain, 'failed', __( 'Disposable email or domain detected.', 'wp-span-checker' ), false );
+		}
+
+		if ( $require_dns && ! $this->domain_dns_is_live( $domain ) ) {
+			return $this->log_and_return(
+				$type,
+				$ip,
+				$domain,
+				'failed',
+				__( 'This email domain does not resolve in DNS (no live mail or host records). Use an address at a real, active domain.', 'wp-span-checker' ),
+				false
+			);
 		}
 
 		if ( ! empty( $settings['require_mx'] ) ) {
@@ -113,30 +128,58 @@ class Domain_Validator {
 
 		$use_webrisk = ! empty( $settings['is_webrisk'] );
 		$use_vt      = ! empty( $settings['is_virustotal'] );
+		// When both APIs are on: if Web Risk is clean, skip VirusTotal (default) to save quota.
+		$vt_skip_if_webrisk_clean = ! array_key_exists( 'vt_skip_if_webrisk_clean', $settings )
+			? true
+			: ! empty( $settings['vt_skip_if_webrisk_clean'] );
 
-		if ( $use_webrisk && $use_vt ) {
+		if ( $use_webrisk ) {
 			$webrisk_result = $this->webrisk->check_url( 'https://' . $domain );
 			if ( ! $webrisk_result['status'] ) {
 				return $this->log_and_return( $type, $ip, $domain, 'failed', $webrisk_result['message'], false );
 			}
-
-			$vt_result = $this->virustotal->check_domain( $domain );
-			if ( ! $vt_result['status'] ) {
-				return $this->log_and_return( $type, $ip, $domain, 'failed', $vt_result['message'], false );
+			if ( $use_vt && ! $vt_skip_if_webrisk_clean ) {
+				$vt_result = $this->virustotal->check_domain( $domain );
+				if ( ! $vt_result['status'] ) {
+					return $this->log_and_return( $type, $ip, $domain, 'failed', $vt_result['message'], false );
+				}
 			}
 		} elseif ( $use_vt ) {
 			$vt_result = $this->virustotal->check_domain( $domain );
 			if ( ! $vt_result['status'] ) {
 				return $this->log_and_return( $type, $ip, $domain, 'failed', $vt_result['message'], false );
 			}
-		} elseif ( $use_webrisk ) {
-			$webrisk_result = $this->webrisk->check_url( 'https://' . $domain );
-			if ( ! $webrisk_result['status'] ) {
-				return $this->log_and_return( $type, $ip, $domain, 'failed', $webrisk_result['message'], false );
-			}
 		}
 
 		return $this->log_and_return( $type, $ip, $domain, 'success', __( 'Domain is safe and valid.', 'wp-span-checker' ), true );
+	}
+
+	/**
+	 * MX exists, or optional A-record fallback (some small hosts).
+	 *
+	 * @param string $domain ASCII hostname.
+	 * @param bool   $allow_a_fallback Allow A record if no MX.
+	 */
+	/**
+	 * True if the hostname has common DNS presence (registered / “live” for mail or hosting).
+	 *
+	 * @param string $domain ASCII hostname.
+	 */
+	private function domain_dns_is_live( string $domain ): bool {
+		if ( '' === $domain || ! function_exists( 'dns_get_record' ) ) {
+			return true;
+		}
+
+		$mask = DNS_MX | DNS_NS | DNS_SOA;
+		if ( defined( 'DNS_A' ) ) {
+			$mask |= DNS_A;
+		}
+		if ( defined( 'DNS_AAAA' ) ) {
+			$mask |= DNS_AAAA;
+		}
+
+		$rec = @dns_get_record( $domain, $mask );
+		return is_array( $rec ) && count( $rec ) > 0;
 	}
 
 	/**

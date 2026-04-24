@@ -42,6 +42,9 @@ class AI_Span_Config {
 			'system_prompt'              => self::default_system_prompt(),
 			'summary_post_types'         => array( 'post' ),
 			'comment_max_strikes'           => 5,
+			'comment_contact_page_id'       => 0,
+			'comment_site_ban_enabled'      => false,
+			'comment_site_ban_strikes'      => 10,
 			'comment_allow_links'           => true,
 			'product_review_filter'         => false,
 			'comment_antispam_enabled'      => true,
@@ -125,6 +128,10 @@ class AI_Span_Config {
 		$c['bedrock_model']         = sanitize_text_field( (string) ( $c['bedrock_model'] ?? $d['bedrock_model'] ) );
 		$c['system_prompt']         = wp_kses_post( (string) ( $c['system_prompt'] ?? $d['system_prompt'] ) );
 		$c['comment_max_strikes']   = max( 1, min( 100, absint( $c['comment_max_strikes'] ?? 5 ) ) );
+		$c['comment_contact_page_id'] = absint( $c['comment_contact_page_id'] ?? 0 );
+		$c['comment_site_ban_enabled'] = ! empty( $c['comment_site_ban_enabled'] );
+		$ban_at                      = max( 2, min( 500, absint( $c['comment_site_ban_strikes'] ?? 10 ) ) );
+		$c['comment_site_ban_strikes'] = max( $ban_at, $c['comment_max_strikes'] );
 		$c['comment_allow_links']   = ! empty( $c['comment_allow_links'] );
 		$c['product_review_filter'] = ! empty( $c['product_review_filter'] );
 

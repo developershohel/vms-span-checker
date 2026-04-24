@@ -17,14 +17,29 @@ class Logger {
 	}
 
 	public function log( string $type, string $ip, string $domain, string $status, string $message = '' ): bool {
-		return (bool) $this->wpdb->insert( $this->table, [
-			'type'       => $type,
-			'ip'         => sanitize_text_field( $ip ),
-			'domain'     => sanitize_text_field( $domain ),
-			'status'     => sanitize_text_field( $status ),
-			'message'    => sanitize_text_field( $message ),
-			'created_at' => current_time( 'mysql' ),
-		] );
+		return (bool) $this->wpdb->insert(
+			$this->table,
+			array(
+				'type'       => sanitize_text_field( $type ),
+				'ip'         => sanitize_text_field( $ip ),
+				'domain'     => sanitize_text_field( $domain ),
+				'status'     => sanitize_text_field( $status ),
+				'message'    => self::sanitize_log_message( $message ),
+				'created_at' => current_time( 'mysql' ),
+			)
+		);
+	}
+
+	/**
+	 * Strip tags and cap length for the logs `message` column (TEXT).
+	 */
+	public static function sanitize_log_message( string $message ): string {
+		$m = wp_strip_all_tags( $message );
+		$m = str_replace( array( "\r\n", "\r" ), "\n", $m );
+		if ( strlen( $m ) > 4000 ) {
+			$m = substr( $m, 0, 4000 ) . '…';
+		}
+		return $m;
 	}
 
 	public function get_logs( $limit = 50 ): array {
