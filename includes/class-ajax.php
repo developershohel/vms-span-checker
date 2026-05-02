@@ -42,6 +42,8 @@ class Ajax {
 		add_action( 'wp_ajax_delete_form_setting', array( $this, 'ajax_delete_form_setting' ) );
 		add_action( 'wp_ajax_validateDomainName', array( $this, 'ajax_validate_domain_name' ) );
 		add_action( 'wp_ajax_nopriv_validateDomainName', array( $this, 'ajax_validate_domain_name' ) );
+		add_action( 'wp_ajax_validateFormGuardField', array( $this, 'ajax_validate_form_guard_field' ) );
+		add_action( 'wp_ajax_nopriv_validateFormGuardField', array( $this, 'ajax_validate_form_guard_field' ) );
 		add_action( 'wp_ajax_wsc_ai_regenerate_summary', array( $this, 'ajax_ai_regenerate_summary' ) );
 		add_action( 'wp_ajax_import_whitelist_seed', array( $this, 'ajax_import_whitelist_seed' ) );
 	}
@@ -130,24 +132,52 @@ class Ajax {
 		$page_id = wp_span_checker_sanitize_page_targets_param(
 			isset( $_POST['pageId'] ) ? wp_unslash( $_POST['pageId'] ) : ''
 		);
-		$form_id       = isset( $_POST['formId'] ) ? sanitize_text_field( wp_unslash( $_POST['formId'] ) ) : '';
-		$form_class    = isset( $_POST['formClass'] ) ? sanitize_text_field( wp_unslash( $_POST['formClass'] ) ) : '';
-		$form_settings = isset( $_POST['formSettings'] ) ? wp_unslash( $_POST['formSettings'] ) : array();
-		$is_webrisk    = isset( $_POST['is_webrisk'] ) ? absint( $_POST['is_webrisk'] ) : 0;
-		$is_virustotal = isset( $_POST['is_virustotal'] ) ? absint( $_POST['is_virustotal'] ) : 0;
+		$form_id          = isset( $_POST['formId'] ) ? sanitize_text_field( wp_unslash( $_POST['formId'] ) ) : '';
+		$form_class       = isset( $_POST['formClass'] ) ? sanitize_text_field( wp_unslash( $_POST['formClass'] ) ) : '';
+		$submit_selector  = isset( $_POST['submitSelector'] ) ? sanitize_text_field( wp_unslash( $_POST['submitSelector'] ) ) : '';
+		$form_settings    = isset( $_POST['formSettings'] ) ? wp_unslash( $_POST['formSettings'] ) : array();
+		$is_webrisk_post  = isset( $_POST['is_webrisk'] ) ? absint( $_POST['is_webrisk'] ) : null;
+		$is_virustotal_post = isset( $_POST['is_virustotal'] ) ? absint( $_POST['is_virustotal'] ) : null;
 
 		$sanitized_array = map_deep( $form_settings, 'sanitize_text_field' );
+		foreach ( $sanitized_array as $idx => $f_item ) {
+			if ( ! is_array( $f_item ) ) {
+				continue;
+			}
+			$ft = isset( $f_item['field'] ) ? sanitize_text_field( (string) $f_item['field'] ) : 'text';
+			$sanitized_array[ $idx ] = Form_Guard_Conditional::normalize_field_config( $ft, $f_item );
+		}
 
 		$table = $this->wpdb->prefix . 'span_checker_form_settings';
 
+		$row_wr = 0;
+		$row_vt = 0;
+		foreach ( $sanitized_array as $f_item ) {
+			if ( is_array( $f_item ) ) {
+				if ( ! empty( $f_item['is_webrisk'] ) && '0' !== (string) $f_item['is_webrisk'] ) {
+					$row_wr = 1;
+				}
+				if ( ! empty( $f_item['is_virustotal'] ) && '0' !== (string) $f_item['is_virustotal'] ) {
+					$row_vt = 1;
+				}
+			}
+		}
+		if ( null !== $is_webrisk_post ) {
+			$row_wr = max( $row_wr, $is_webrisk_post );
+		}
+		if ( null !== $is_virustotal_post ) {
+			$row_vt = max( $row_vt, $is_virustotal_post );
+		}
+
 		$row = array(
-			'form_type'     => $form_type,
-			'page_id'       => $page_id,
-			'form_id'       => $form_id,
-			'form_class'    => $form_class,
-			'settings'      => wp_json_encode( $sanitized_array ),
-			'is_webrisk'    => $is_webrisk,
-			'is_virustotal' => $is_virustotal,
+			'form_type'        => $form_type,
+			'page_id'          => $page_id,
+			'form_id'          => $form_id,
+			'form_class'       => $form_class,
+			'submit_selector'  => $submit_selector,
+			'settings'         => wp_json_encode( $sanitized_array ),
+			'is_webrisk'       => $row_wr,
+			'is_virustotal'    => $row_vt,
 		);
 
 		try {
@@ -286,6 +316,40 @@ class Ajax {
 				)
 			);
 		}
+	}
+
+	/**
+	 * AJAX: run Form Guard checks for one mapped field (public).
+	 */
+	public function ajax_validate_form_guard_field() {
+		check_ajax_referer( 'wp_span_checker_nonce', 'nonce' );
+
+		$mapping_id  = isset( $_POST['mappingId'] ) ? absint( $_POST['mappingId'] ) : 0;
+		$field_index = isset( $_POST['fieldIndex'] ) ? absint( $_POST['fieldIndex'] ) : 0;
+		$value_raw   = isset( $_POST['value'] ) ? wp_unslash( $_POST['value'] ) : '';
+		$value       = is_string( $value_raw ) ? $value_raw : '';
+
+		if ( ! $mapping_id ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid mapping.', 'wp-span-checker' ), 'status' => false ) );
+		}
+
+		$table = $this->wpdb->prefix . 'span_checker_form_settings';
+		$row   = $this->wpdb->get_row( $this->wpdb->prepare( "SELECT * FROM {$table} WHERE id = %d", $mapping_id ), ARRAY_A );
+
+		if ( ! $row || empty( $row['settings'] ) ) {
+			wp_send_json_error( array( 'message' => __( 'Mapping not found.', 'wp-span-checker' ), 'status' => false ) );
+		}
+
+		$fields = json_decode( $row['settings'], true );
+		if ( ! is_array( $fields ) || ! isset( $fields[ $field_index ] ) || ! is_array( $fields[ $field_index ] ) ) {
+			wp_send_json_error( array( 'message' => __( 'Field configuration not found.', 'wp-span-checker' ), 'status' => false ) );
+		}
+
+		$field = $fields[ $field_index ];
+		$type  = isset( $field['field'] ) ? sanitize_text_field( (string) $field['field'] ) : 'text';
+
+		$result = Form_Guard_Conditional::validate_field_value( $type, $field, $value, $row );
+		wp_send_json_success( $result );
 	}
 
 	/**

@@ -42,6 +42,7 @@ class Activator {
 				page_id text NOT NULL,
 				form_id varchar(191) NOT NULL DEFAULT '',
 				form_class varchar(500) NOT NULL DEFAULT '',
+				submit_selector varchar(500) NOT NULL DEFAULT '',
 				settings longtext NULL,
 				is_webrisk tinyint(1) NOT NULL DEFAULT 0,
 				is_virustotal tinyint(1) NOT NULL DEFAULT 0,
@@ -171,6 +172,22 @@ class Activator {
 				}
 			}
 			update_option( 'wp_span_checker_schema_version', '5' );
+			$current = '5';
+		}
+
+		if ( version_compare( $current, '6', '<' ) ) {
+			$table = $wpdb->prefix . 'span_checker_form_settings';
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name uses trusted prefix.
+			$exists = $wpdb->get_var( "SHOW TABLES LIKE '{$table}'" );
+			if ( $exists ) {
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$has_col = $wpdb->get_results( "SHOW COLUMNS FROM {$table} LIKE 'submit_selector'" );
+				if ( empty( $has_col ) ) {
+					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+					$wpdb->query( "ALTER TABLE {$table} ADD COLUMN submit_selector varchar(500) NOT NULL DEFAULT '' AFTER form_class" );
+				}
+			}
+			update_option( 'wp_span_checker_schema_version', '6' );
 		}
 	}
 

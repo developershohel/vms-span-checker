@@ -256,37 +256,333 @@ jQuery(document).ready(function ($) {
     });
 
 
+    let wscRegexTargetInput = null;
+
+    function wscEsc(s) {
+        return String(s === undefined || s === null ? '' : s)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function wscFgNextIndex() {
+        let max = 0;
+        $('#wsc-form-fields .wsc-form-field-row').each(function () {
+            const ix = parseInt($(this).attr('data-field-index'), 10) || 0;
+            if (ix > max) {
+                max = ix;
+            }
+        });
+        return max + 1;
+    }
+
+    function wscFgMergeApi(item, legacyRow) {
+        const lr = legacyRow || {};
+        const d = item || {};
+        const has = function (k) {
+            return Object.prototype.hasOwnProperty.call(d, k);
+        };
+        const wr = has('is_webrisk') ? (parseInt(d.is_webrisk, 10) || 0) : (parseInt(lr.is_webrisk, 10) || 0);
+        const vt = has('is_virustotal') ? (parseInt(d.is_virustotal, 10) || 0) : (parseInt(lr.is_virustotal, 10) || 0);
+        return { wr: wr, vt: vt };
+    }
+
+    function wscFgToggleRow($row) {
+        const t = $row.find('.form-field').val();
+        $row.find('.wsc-fg-opt-email').toggle(t === 'email' || t === 'url');
+        $row.find('.wsc-fg-opt-text').toggle(t === 'text');
+        $row.find('.wsc-fg-opt-username').toggle(t === 'username');
+        $row.find('.wsc-fg-opt-textarea').toggle(t === 'textarea');
+        $row.find('.wsc-fg-opt-other').toggle(
+            t === 'tel' || t === 'number' || t === 'password'
+        );
+    }
+
+    function wscFgPickRadio($row, name, val) {
+        const sval = String(val);
+        $row.find('input[type="radio"][name="' + name + '"]').each(function () {
+            const on = String($(this).val()) === sval;
+            $(this).prop('checked', on);
+            $(this).closest('.wsc-switch-option').toggleClass('wsc-check', on);
+        });
+    }
+
+    /** Reset toggles that do not apply when field type changes (conditional guard). */
+    function wscFgSyncConditionalRadios($row) {
+        const ft = $row.find('.form-field').val();
+        const ix = $row.attr('data-field-index');
+        if (ft !== 'email' && ft !== 'url') {
+            wscFgPickRadio($row, 'fg_webrisk_' + ix, 0);
+            wscFgPickRadio($row, 'fg_vt_' + ix, 0);
+        }
+        if (ft !== 'text') {
+            wscFgPickRadio($row, 'fg_texturls_' + ix, 1);
+        }
+        if (ft !== 'username') {
+            wscFgPickRadio($row, 'fg_userexists_' + ix, 0);
+        }
+        if (ft !== 'textarea') {
+            wscFgPickRadio($row, 'fg_tlinks_' + ix, 1);
+            wscFgPickRadio($row, 'fg_tai_' + ix, 0);
+        }
+    }
+
+    /** Strip irrelevant keys before save (matches server Form_Guard_Conditional::normalize_field_config). */
+    function wscFgEffectivePayload(ft, raw) {
+        const o = Object.assign({}, raw);
+        if (ft !== 'email' && ft !== 'url') {
+            o.is_webrisk = 0;
+            o.is_virustotal = 0;
+        }
+        if (ft !== 'username') {
+            o.check_username_exists = 0;
+        }
+        if (ft !== 'text') {
+            delete o.text_allow_urls;
+        }
+        if (ft !== 'textarea') {
+            o.textarea_ai_spam = 0;
+            o.textarea_allow_links = 1;
+        }
+        return o;
+    }
+
+    function wscFgRowHtml(ix, item, legacyRow) {
+        const d = item || {};
+        const field = d.field || 'text';
+        const api = wscFgMergeApi(d, legacyRow);
+        const optSel = function (v) {
+            return field === v ? ' selected="selected"' : '';
+        };
+        const num = function (v, def) {
+            const n = parseInt(v, 10);
+            return Number.isFinite(n) ? n : def;
+        };
+        const req = num(d.isRequired, 0);
+        const val = num(d.isValidate, 0);
+        let wr = api.wr ? 1 : 0;
+        let vt = api.vt ? 1 : 0;
+        if (field === 'email') {
+            if (!Object.prototype.hasOwnProperty.call(d, 'is_webrisk')) {
+                wr = 1;
+            }
+            if (!Object.prototype.hasOwnProperty.call(d, 'is_virustotal')) {
+                vt = 0;
+            }
+        }
+        let tun = num(d.check_username_exists, 0);
+        if (field === 'username' && !Object.prototype.hasOwnProperty.call(d, 'check_username_exists')) {
+            tun = 1;
+        }
+        const tlinks = Object.prototype.hasOwnProperty.call(d, 'textarea_allow_links')
+            ? (parseInt(d.textarea_allow_links, 10) || 0)
+            : 1;
+        const tai = num(d.textarea_ai_spam, 0);
+        const textUrlsAllow = Object.prototype.hasOwnProperty.call(d, 'text_allow_urls')
+            ? (parseInt(d.text_allow_urls, 10) !== 0)
+            : true;
+        const regexVal = wscEsc(d.regex || '');
+        const selEv = d.event || 'change';
+
+        function rad(name, val, cur) {
+            const lab = val ? wscT('enable', 'Enable') : wscT('disable', 'Disable');
+            return '<span class="wsc-switch-option' + (cur === val ? ' wsc-check' : '') + '">' +
+                '<input type="radio" name="' + name + '" value="' + val + '"' + (cur === val ? ' checked="checked"' : '') + '>' +
+                '<label>' + lab + '</label></span>';
+        }
+
+        return (
+            '<div class="wsc-form-field-row wsc-form-group" data-field-index="' + ix + '">' +
+            '<span class="removeFormField dashicons dashicons-no-alt" role="button" tabindex="0"></span>' +
+            '<div class="wsc-fg-row-banner wsc-mb-4">' +
+            '<strong><span class="wsc-fg-row-badge">1</span>. ' + wscT('mappedFieldTitle', 'Mapped form control') + '</strong>' +
+            '<p class="wsc-form-info-message wsc-text-info wsc-mt-2 wsc-mb-0">' + wscT('mappedFieldGuardsBlurb', 'Guards in this row apply only to this field’s ID/class. Use “Add field” for each separate input (10 fields → 10 rows).') + '</p>' +
+            '</div>' +
+            '<label class="wsc-form-label" for="form-field-' + ix + '">' + wscT('formField', 'Form field') + '</label>' +
+            '<select id="form-field-' + ix + '" class="wsc-input wsc-input-primary form-field">' +
+            '<option value="text"' + optSel('text') + '>' + wscT('optionText', 'Text') + '</option>' +
+            '<option value="username"' + optSel('username') + '>' + wscT('optionUsername', 'Username') + '</option>' +
+            '<option value="textarea"' + optSel('textarea') + '>' + wscT('optionTextarea', 'Textarea') + '</option>' +
+            '<option value="email"' + optSel('email') + '>' + wscT('optionEmail', 'Email') + '</option>' +
+            '<option value="url"' + optSel('url') + '>' + wscT('optionUrl', 'URL') + '</option>' +
+            '<option value="tel"' + optSel('tel') + '>' + wscT('optionTel', 'Telephone') + '</option>' +
+            '<option value="number"' + optSel('number') + '>' + wscT('optionNumber', 'Number') + '</option>' +
+            '<option value="password"' + optSel('password') + '>' + wscT('optionPassword', 'Password') + '</option>' +
+            '</select>' +
+            '<label class="wsc-form-label wsc-mt-4" for="form-id-' + ix + '">' + wscT('fieldId', 'Field ID') + '</label>' +
+            '<input id="form-id-' + ix + '" type="text" class="wsc-input wsc-input-primary field-id" placeholder="' + wscEsc(wscT('fieldId', 'Field ID')) + '" value="' + wscEsc(d.id || '') + '">' +
+            '<label class="wsc-form-label wsc-mt-4" for="form-class-' + ix + '">' + wscT('fieldClass', 'Field class') + '</label>' +
+            '<input id="form-class-' + ix + '" type="text" class="wsc-input wsc-input-primary field-class" placeholder="' + wscEsc(wscT('fieldClass', 'Field class')) + '" value="' + wscEsc(d.class || '') + '">' +
+            '<label class="wsc-form-label wsc-mt-4" for="form-event-' + ix + '">' + wscT('javascriptEvent', 'JavaScript event') + '</label>' +
+            '<select class="wsc-input wsc-input-primary form-event wsc-mt-4" id="form-event-' + ix + '">' +
+            '<option value="change"' + (selEv === 'change' ? ' selected' : '') + '>' + wscT('optionChange', 'Change') + '</option>' +
+            '<option value="input"' + (selEv === 'input' ? ' selected' : '') + '>' + wscT('optionInput', 'Input') + '</option>' +
+            '<option value="submit"' + (selEv === 'submit' ? ' selected' : '') + '>' + wscT('optionFormSubmit', 'Form submit') + '</option>' +
+            '</select>' +
+            '<fieldset class="wsc-fg-rules-fieldset wsc-fg-fieldset wsc-mt-4">' +
+            '<legend class="wsc-form-label">' + wscT('validationRulesLegend', 'Validation rules') + '</legend>' +
+            '<div class="wsc-form-attr wsc-mt-2">' +
+            '<p class="wsc-form-label">' + wscT('requiredField', 'Required field') + '</p>' +
+            '<div class="wsc-switch-control">' + rad('is_required_f_' + ix, 1, req) + rad('is_required_f_' + ix, 0, req ? 0 : 1) + '</div>' +
+            '<span class="wsc-form-info-message wsc-text-info">' + wscT('requiredFieldHint', 'Mark the field as required in the browser.') + '</span></div>' +
+            '<div class="wsc-form-attr wsc-mt-4">' +
+            '<p class="wsc-form-label">' + wscT('requireValidation', 'Require validation') + '</p>' +
+            '<div class="wsc-switch-control">' + rad('is_validate_f_' + ix, 1, val) + rad('is_validate_f_' + ix, 0, val ? 0 : 1) + '</div>' +
+            '<span class="wsc-form-info-message wsc-text-info">' + wscT('requireValidationHint', 'Run server-side validation for this field.') + '</span></div>' +
+            '<label class="wsc-form-label wsc-mt-4" for="field-regex-' + ix + '">' + wscT('customRegex', 'Custom regex (delimited)') + '</label>' +
+            '<div class="wsc-flex wsc-gap-2 wsc-items-center wsc-flex-wrap">' +
+            '<input id="field-regex-' + ix + '" type="text" class="wsc-input wsc-input-primary field-regex wsc-flex-grow" placeholder="/^[a-z]+$/" value="' + regexVal + '">' +
+            '<button type="button" class="wsc-btn wsc-btn-outline-primary wsc-open-regex-presets">' + wscT('presetRegex', 'Preset patterns') + '</button></div>' +
+            '<span class="wsc-form-info-message wsc-text-info">' + wscT('customRegexHint', 'Optional. Must look like /pattern/flags. Checked on the server when validation is enabled.') + '</span>' +
+            '</fieldset>' +
+            '<fieldset class="wsc-fg-security-fieldset wsc-fg-fieldset wsc-mt-4">' +
+            '<legend class="wsc-form-label">' + wscT('securityMethodsLegend', 'Protection methods (based on field type)') + '</legend>' +
+            '<p class="wsc-form-info-message wsc-text-info wsc-mb-4">' + wscT('securityMethodsIntro', 'Email and URL rows can enable Web Risk and VirusTotal (Google Web Risk defaults ON when you pick Email). Username rows can enable live “already registered” checks. Text adds URL-in-value rules; textarea adds links + AI spam screening.') + '</p>' +
+            '<div class="wsc-form-attr wsc-mt-2 wsc-fg-opt-email">' +
+            '<p class="wsc-form-label">' + wscT('googleWebRisk', 'Google Web Risk') + '</p>' +
+            '<div class="wsc-switch-control">' + rad('fg_webrisk_' + ix, 1, wr) + rad('fg_webrisk_' + ix, 0, wr ? 0 : 1) + '</div>' +
+            '<span class="wsc-form-info-message wsc-text-info">' + wscT('webriskEmailUrlOnly', 'Used when “Form field” is Email or URL and “Require validation” is enabled for domain checks.') + '</span></div>' +
+            '<div class="wsc-form-attr wsc-mt-4 wsc-fg-opt-email">' +
+            '<p class="wsc-form-label">' + wscT('virusTotal', 'VirusTotal scanner') + '</p>' +
+            '<div class="wsc-switch-control">' + rad('fg_vt_' + ix, 1, vt) + rad('fg_vt_' + ix, 0, vt ? 0 : 1) + '</div>' +
+            '<span class="wsc-form-info-message wsc-text-info">' + wscT('vtEmailUrlOnly', 'Same as Web Risk: applies together with Email or URL domain validation.') + '</span></div>' +
+            '<div class="wsc-form-attr wsc-mt-4 wsc-fg-opt-username">' +
+            '<p class="wsc-form-label">' + wscT('usernameTakenCheck', 'Reject if username exists') + '</p>' +
+            '<div class="wsc-switch-control">' + rad('fg_userexists_' + ix, 1, tun) + rad('fg_userexists_' + ix, 0, tun ? 0 : 1) + '</div>' +
+            '<span class="wsc-form-info-message wsc-text-info">' + wscT('usernameTakenHint', 'Maps to a normal text/username input. When enabled, checks WordPress on change/input (debounced) and again on submit.') + '</span></div>' +
+            '<div class="wsc-form-attr wsc-mt-4 wsc-fg-opt-text">' +
+            '<p class="wsc-form-label">' + wscT('textAllowUrls', 'Allow URLs in value') + '</p>' +
+            '<div class="wsc-switch-control">' + rad('fg_texturls_' + ix, 1, textUrlsAllow ? 1 : 0) + rad('fg_texturls_' + ix, 0, textUrlsAllow ? 0 : 1) + '</div>' +
+            '<span class="wsc-form-info-message wsc-text-info">' + wscT('textAllowUrlsHint', 'Turn off to reject http(s) URLs inside this single-line field.') + '</span></div>' +
+            '<div class="wsc-form-attr wsc-mt-4 wsc-fg-opt-textarea">' +
+            '<p class="wsc-form-label">' + wscT('textareaAllowLinks', 'Allow links in message') + '</p>' +
+            '<div class="wsc-switch-control">' + rad('fg_tlinks_' + ix, 1, tlinks) + rad('fg_tlinks_' + ix, 0, tlinks ? 0 : 1) + '</div></div>' +
+            '<div class="wsc-form-attr wsc-mt-4 wsc-fg-opt-textarea">' +
+            '<p class="wsc-form-label">' + wscT('textareaAiSpam', 'AI spam check') + '</p>' +
+            '<div class="wsc-switch-control">' + rad('fg_tai_' + ix, 1, tai) + rad('fg_tai_' + ix, 0, tai ? 0 : 1) + '</div>' +
+            '<span class="wsc-form-info-message wsc-text-info">' + wscT('textareaAiSpamHint', 'Uses AI settings from WP Span Checker → AI. Runs on the server when validation is enabled.') + '</span></div>' +
+            '<div class="wsc-form-attr wsc-mt-4 wsc-fg-opt-other">' +
+            '<p class="wsc-form-info-message wsc-text-info wsc-mb-0">' + wscT('securityMethodsOtherHint', 'Extra reputation toggles appear for Email/URL. Use “Validation rules” above for required / server validation / regex.') + '</p></div>' +
+            '</fieldset>' +
+            '</div>'
+        );
+    }
+
+    function wscFgRefreshRowNumbers() {
+        $('#wsc-form-fields .wsc-form-field-row').each(function (i) {
+            $(this).find('.wsc-fg-row-badge').text(String(i + 1));
+        });
+    }
+
+    function wscFgAppendRow(item, legacyRow) {
+        const ix = wscFgNextIndex();
+        $('#wsc-form-fields').append(wscFgRowHtml(ix, item, legacyRow));
+        const $nr = $('#wsc-form-fields .wsc-form-field-row[data-field-index="' + ix + '"]');
+        $nr.data('wscPrevField', $nr.find('.form-field').val());
+        wscFgToggleRow($nr);
+        wscFgSyncConditionalRadios($nr);
+        wscFgRefreshRowNumbers();
+    }
+
+    function wscFgResetRows() {
+        $('#wsc-form-fields').empty();
+        wscFgAppendRow(null, {});
+    }
+
+    function wscFgDisplaySelector(row) {
+        const fid = String(row.form_id || '').trim();
+        const fcls = String(row.form_class || '').trim();
+        if (fid.indexOf('#') !== -1 || fid.indexOf('.') !== -1 || fid.indexOf('[') !== -1) {
+            return fid;
+        }
+        let out = '';
+        if (fid) {
+            out += '#' + fid.replace(/^#/, '');
+        }
+        if (fcls) {
+            fcls.split(/\s+/).forEach(function (c) {
+                c = String(c || '').replace(/^\./, '').trim();
+                if (c) {
+                    out += '.' + c;
+                }
+            });
+        }
+        return out;
+    }
+
+    function wscFgFillPresetModal($input) {
+        wscRegexTargetInput = $input;
+        const $list = $('#wsc-regex-preset-list');
+        $list.empty();
+        const regexLists = (typeof WPSpanChecker !== 'undefined' && WPSpanChecker.regexList) ? WPSpanChecker.regexList : [];
+        regexLists.forEach(function (item) {
+            const valid = wscEsc(item.valid_example || item.example || '');
+            const invalid = wscEsc(item.invalid_example || '');
+            const pat = wscEsc(item.pattern || '');
+            const $li = $('<li class="wsc-regex-preset-item wsc-card wsc-p-3 wsc-mb-3"></li>');
+            $li.append('<strong>' + wscEsc(item.name || '') + '</strong>');
+            $li.append('<div class="wsc-regex-preset-pattern">' + pat + '</div>');
+            $li.append('<div class="wsc-text-info wsc-mb-2">' + wscEsc(item.desc || '') + '</div>');
+            $li.append('<div class="wsc-mb-1"><span class="wsc-badge-ok">' + wscT('validExample', 'Valid') + '</span> <code>' + valid + '</code></div>');
+            $li.append('<div class="wsc-mb-2"><span class="wsc-badge-bad">' + wscT('invalidExample', 'Invalid') + '</span> <code>' + invalid + '</code></div>');
+            const $btn = $('<button type="button" class="wsc-btn wsc-btn-primary wsc-use-preset-regex"></button>').text(wscT('usePattern', 'Use pattern'));
+            $btn.attr('data-pattern', item.pattern || '');
+            $li.append($btn);
+            $list.append($li);
+        });
+        $('#wsc-regex-preset-modal').removeClass('wsc-hidden').attr('aria-hidden', 'false');
+    }
+
+    function wscFgClosePresetModal() {
+        $('#wsc-regex-preset-modal').addClass('wsc-hidden').attr('aria-hidden', 'true');
+        wscRegexTargetInput = null;
+    }
+
+    $('#wsc-form-fields').on('click', '.wsc-open-regex-presets', function () {
+        wscFgFillPresetModal($(this).closest('.wsc-form-field-row').find('.field-regex'));
+    });
+
+    $('#wsc-regex-preset-modal').on('click', '.wsc-regex-modal-overlay, .wsc-close-regex-modal', function () {
+        wscFgClosePresetModal();
+    });
+
+    $('#wsc-regex-preset-list').on('click', '.wsc-use-preset-regex', function () {
+        const p = $(this).attr('data-pattern');
+        if (wscRegexTargetInput && p) {
+            wscRegexTargetInput.val(p);
+        }
+        wscFgClosePresetModal();
+    });
+
+        $('#wsc-form-fields').on('change', '.form-field', function () {
+            const $row = $(this).closest('.wsc-form-field-row');
+            const ix = $row.attr('data-field-index');
+            const prev = String($row.data('wscPrevField') || '');
+            const ft = $(this).val();
+            wscFgSyncConditionalRadios($row);
+            if (ft === 'email' && prev !== 'email') {
+                wscFgPickRadio($row, 'fg_webrisk_' + ix, 1);
+                wscFgPickRadio($row, 'fg_vt_' + ix, 0);
+            }
+            if (ft === 'username' && prev !== 'username') {
+                wscFgPickRadio($row, 'fg_userexists_' + ix, 1);
+            }
+            wscFgToggleRow($row);
+            $row.data('wscPrevField', ft);
+        });
+
+    $('#wsc-form-fields').on('click', '.removeFormField', function () {
+        if ($('#wsc-form-fields .wsc-form-field-row').length <= 1) {
+            wscErrToast(wscT('fgNeedOneField', 'Keep at least one field row.'));
+            return;
+        }
+        $(this).closest('.wsc-form-field-row').remove();
+        wscFgRefreshRowNumbers();
+    });
+
     $('#wscAddFormField').on('click', function () {
-        let fieldCounter = $('#wsc-form-fields .wsc-form-group').length; // initial count
-        fieldCounter++; // increment for unique IDs
-
-        // Create new form group HTML
-        let newField = `
-        <div class="wsc-form-group">
-        <span class="removeFormField dashicons dashicons-no-alt" onclick="jQuery(this).parent().remove()"></span>
-            <label class="wsc-form-label" for="form-field-${fieldCounter}">${wscT('formField', 'Form field')}</label>
-            <select id="form-field-${fieldCounter}"  class="wsc-input wsc-input-primary form-field" name="form-field-${fieldCounter}" data-id="${fieldCounter}" required>
-                <option value="">${wscT('selectFieldType', 'Select field type')}</option>
-                <option value="url">${wscT('optionUrl', 'URL')}</option>
-                <option value="email">${wscT('optionEmail', 'Email')}</option>
-                <option value="text">${wscT('optionText', 'Text')}</option>
-            </select>   
-            <label for="form-id-${fieldCounter}" class="wsc-form-label wsc-mt-4">${wscT('fieldId', 'Field ID')}</label>
-            <input id="form-id-${fieldCounter}" type="text" class="wsc-input wsc-input-primary field-id" name="form-field-id-${fieldCounter}" data-id="${fieldCounter}" placeholder="${wscT('fieldId', 'Field ID')}">
-            <label for="form-class-${fieldCounter}" class="wsc-form-label wsc-mt-4">${wscT('fieldClass', 'Field class')}</label>
-            <input id="form-class-${fieldCounter}" type="text" class="wsc-input wsc-input-primary field-class" name="form-field-class-${fieldCounter}" data-class="${fieldCounter}" placeholder="${wscT('fieldClass', 'Field class')}">
-            <label class="wsc-form-label wsc-mt-4" for="form-event-${fieldCounter}">${wscT('javascriptEvent', 'JavaScript event')}</label>
-            <select class="wsc-input wsc-input-primary form-event wsc-mt-4" id="form-event-${fieldCounter}" name="form-event-${fieldCounter}"
-                    data-id="${fieldCounter}">
-                <option value="change">${wscT('optionChange', 'Change')}</option>
-                <option value="input">${wscT('optionInput', 'Input')}</option>
-                <option value="submit">${wscT('optionFormSubmit', 'Form submit')}</option>
-            </select>
-        </div>
-        `;
-
-        // Insert before the Add button
-        $(this).parent().siblings('#wsc-form-fields').append(newField);
+        wscFgAppendRow(null, {});
     });
 
     let formSettingTable = $('#form-setting-table').DataTable({
@@ -321,15 +617,32 @@ jQuery(document).ready(function ($) {
                 }
             },
             {
-                data: 'form_id',
-                render: function (data) {
-                    return data ?? '';
+                data: null,
+                render: function (data, type, row) {
+                    const fid = String(row.form_id || '').trim();
+                    const fcls = String(row.form_class || '').trim();
+                    if (fid.indexOf('#') !== -1 || fid.indexOf('.') !== -1 || fid.indexOf('[') !== -1) {
+                        return fid || '—';
+                    }
+                    let out = '';
+                    if (fid) {
+                        out += '#' + fid.replace(/^#/, '');
+                    }
+                    if (fcls) {
+                        fcls.split(/\s+/).forEach(function (c) {
+                            c = String(c || '').replace(/^\./, '').trim();
+                            if (c) {
+                                out += '.' + c;
+                            }
+                        });
+                    }
+                    return out || fid || '—';
                 }
             },
             {
-                data: 'form_class',
+                data: 'submit_selector',
                 render: function (data) {
-                    return data ?? '';
+                    return data ? String(data) : '—';
                 }
             },
             {
@@ -343,9 +656,44 @@ jQuery(document).ready(function ($) {
                         return '';
                     }
                     if (!Array.isArray(formFields) || formFields.length === 0) return '';
-                    return formFields.map(item =>
-                        `<div class="wsc-form-setting-field wsc-mb-2 wsc-p-2 wsc-text-left">${wscT('fieldType', 'Field type')}: ${item.field ?? ''} <br>${wscT('labelId', 'ID')}: ${item.id ?? ''} <br>${wscT('labelClass', 'Class')}: ${item.class ?? ''} <br> ${wscT('eventName', 'Event name')}: ${item.event}</div>`
-                    ).join("");
+                    return formFields.map(function (item, idx) {
+                        const ft = item.field ?? '';
+                        const wrOn = parseInt(item.is_webrisk, 10) === 1;
+                        const vtOn = parseInt(item.is_virustotal, 10) === 1;
+                        let guards = '';
+                        if (ft === 'email' || ft === 'url') {
+                            guards += '<br>' + wscT('labelWebRiskShort', 'Web Risk') + ': ' + (wrOn ? wscT('onShort', 'On') : wscT('offShort', 'Off'));
+                            guards += ' · ' + wscT('labelVtShort', 'VirusTotal') + ': ' + (vtOn ? wscT('onShort', 'On') : wscT('offShort', 'Off'));
+                        }
+                        if (ft === 'username' && parseInt(item.check_username_exists, 10) === 1) {
+                            guards += '<br>' + wscT('usernameCheckShort', 'Username exists check') + ': ' + wscT('onShort', 'On');
+                        }
+                        if (ft === 'text') {
+                            const tau =
+                                !Object.prototype.hasOwnProperty.call(item, 'text_allow_urls') ||
+                                parseInt(item.text_allow_urls, 10) !== 0;
+                            guards +=
+                                '<br>' +
+                                wscT('textUrlsInFieldShort', 'URLs in text field') +
+                                ': ' +
+                                (tau ? wscT('onShort', 'On') : wscT('offShort', 'Off'));
+                        }
+                        if (ft === 'textarea') {
+                            const allow = !Object.prototype.hasOwnProperty.call(item, 'textarea_allow_links') || parseInt(item.textarea_allow_links, 10) !== 0;
+                            guards += '<br>' + wscT('linksAllowedShort', 'Links allowed') + ': ' + (allow ? wscT('onShort', 'On') : wscT('offShort', 'Off'));
+                            if (parseInt(item.textarea_ai_spam, 10) === 1) {
+                                guards += ' · ' + wscT('aiSpamShort', 'AI spam check') + ': ' + wscT('onShort', 'On');
+                            }
+                        }
+                        if (item.regex && String(item.regex).trim() !== '') {
+                            const rp = String(item.regex).trim();
+                            guards += '<br>' + wscT('regexShort', 'Regex') + ': ' + wscEsc(rp.slice(0, 48)) + (rp.length > 48 ? '…' : '');
+                        }
+                        return '<div class="wsc-form-setting-field wsc-mb-2 wsc-p-2 wsc-text-left"><strong>#' + (idx + 1) + ' · ' + wscEsc(ft) + '</strong><br>' +
+                            wscT('labelId', 'ID') + ': ' + wscEsc(item.id ?? '') + ' · ' + wscT('labelClass', 'Class') + ': ' + wscEsc(item.class ?? '') + '<br>' +
+                            wscT('eventName', 'Event name') + ': ' + wscEsc(item.event ?? '') +
+                            guards + '</div>';
+                    }).join('');
                 }
             },
             {
@@ -415,47 +763,30 @@ jQuery(document).ready(function ($) {
         const formError = $('#wsc-form-error-message');
         formError.html('');
         wscApplyPageTargetsFromRaw(formData.page_id);
-        function wscSetToggleRadios($wrap, val) {
-            const v = String(parseInt(val, 10) || 0);
-            $wrap.find('input[type="radio"]').prop('checked', false);
-            $wrap.find('input[type="radio"][value="' + v + '"]').prop('checked', true);
-        }
-        wscSetToggleRadios($('#wsc-webrisk-status'), formData.is_webrisk);
-        wscSetToggleRadios($('#wsc-virustotal-status'), formData.is_virustotal);
         $('#form_type').val(formData.form_type !== '' ? formData.form_type : '');
-        $('#form_id').val(formData.form_id !== '' ? formData.form_id : '');
-        $('#form_class').val(formData.form_class !== '' ? formData.form_class : '');
-        const formSettings = formData.settings ? formData.settings : {};
-        const formSettingData = JSON.parse(formSettings);
+        $('#form_selector').val(wscFgDisplaySelector(formData));
+        $('#submit_selector').val(formData.submit_selector ? String(formData.submit_selector) : '');
 
-        if (formSettingData.length > 0) {
-            fields.html('');
-            formSettingData.forEach((item, fieldCounter) => {
-                let newField = `
-                    <div class="wsc-form-group">
-                    <span class="removeFormField dashicons dashicons-no-alt" onclick="jQuery(this).parent().remove()"></span>
-                        <label class="wsc-form-label" for="form-field-${fieldCounter + 1}">${wscT('formField', 'Form field')}</label>
-                        <select id="form-field-${fieldCounter + 1}"  class="wsc-input wsc-input-primary form-field" name="form-field-${fieldCounter + 1}" data-id="${fieldCounter + 1}">
-                            <option value="url" ${item.field === 'url' ? 'selected="selected"' : ''}>${wscT('optionUrl', 'URL')}</option>
-                            <option value="email" ${item.field === 'email' ? 'selected="selected"' : ''}>${wscT('optionEmail', 'Email')}</option>
-                            <option value="text" ${item.field === 'text' ? 'selected="selected"' : ''}>${wscT('optionText', 'Text')}</option>
-                        </select>   
-                        <label for="form-id-${fieldCounter + 1}" class="wsc-form-label wsc-mt-4">${wscT('fieldId', 'Field ID')}</label>
-                        <input id="form-id-${fieldCounter + 1}" type="text" class="wsc-input wsc-input-primary field-id" name="form-field-id-${fieldCounter + 1}" data-id="${fieldCounter + 1}" placeholder="${wscT('fieldId', 'Field ID')}" value="${item.id}">
-                        <label for="form-class-${fieldCounter + 1}" class="wsc-form-label wsc-mt-4">${wscT('fieldClass', 'Field class')}</label>
-                        <input id="form-class-${fieldCounter + 1}" type="text" class="wsc-input wsc-input-primary field-class" name="form-field-class-${fieldCounter + 1}" data-class="${fieldCounter + 1}" placeholder="${wscT('fieldClass', 'Field class')}" value="${item.class}">
-                        <label class="wsc-form-label wsc-mt-4" for="form-event-${fieldCounter + 1}">${wscT('javascriptEvent', 'JavaScript event')}</label>
-                        <select class="wsc-input wsc-input-primary form-event wsc-mt-4" id="form-event-${fieldCounter + 1}" name="form-event-${fieldCounter + 1}" data-id="${fieldCounter + 1}">
-                            <option value="change" ${item.event === 'change' ? 'selected="selected"' : ''}>${wscT('optionChange', 'Change')}</option>
-                            <option value="input" ${item.event === 'input' ? 'selected="selected"' : ''}>${wscT('optionInput', 'Input')}</option>
-                            <option value="submit" ${item.event === 'submit' ? 'selected="selected"' : ''}>${wscT('optionFormSubmit', 'Form submit')}</option>
-                        </select>
-                    </div>
-                    `;
-                fields.append(newField);
-            })
+        let formSettingData = [];
+        if (Array.isArray(formData.settings)) {
+            formSettingData = formData.settings;
+        } else if (formData.settings && typeof formData.settings === 'string') {
+            try {
+                formSettingData = JSON.parse(formData.settings);
+            } catch (e2) {
+                formSettingData = [];
+            }
         }
-        loadRequiredField()
+
+        fields.empty();
+        if (!Array.isArray(formSettingData) || formSettingData.length === 0) {
+            wscFgAppendRow(null, formData);
+        } else {
+            formSettingData.forEach(function (item) {
+                wscFgAppendRow(item, formData);
+            });
+        }
+
         $('#wsc-settings-form').toggleClass('wsc-hidden');
         $('#form-setting-table').toggleClass('wsc-hidden');
     });
@@ -468,44 +799,44 @@ jQuery(document).ready(function ($) {
         const formError = $('#wsc-form-error-message');
         const formType = $('#form_type').val();
         const pageId = JSON.stringify(wscCollectPageTargetsArray());
-        const formId = $('#form_id').val();
-        const formClass = $('#form_class').val();
-        const webRiskStatus =
-            parseInt(
-                $('#wsc-webrisk-status input[name="is_webrisk"]:checked').val(),
-                10
-            ) || 0;
-        const virustotalStatus =
-            parseInt(
-                $('#wsc-virustotal-status input[name="is_virustotal"]:checked').val(),
-                10
-            ) || 0;
+        const combinedSel = String($('#form_selector').val() || '').trim();
+        const submitSel = String($('#submit_selector').val() || '').trim();
         const formSettings = [];
 
-        $('#wsc-form-fields .wsc-form-group').each(function (i, item) {
-            const fieldType = $(item).find('.form-field').val();
-            const fieldId = $(item).find('.field-id').val();
-            const fieldClass = $(item).find('.field-class').val();
-            const fieldEvent = $(item).find('.form-event').val();
-            const isRequired = parseInt($(item).find('#wsc-required-status input:checked').val(), 10) || 0;
-            const isValidate = parseInt($(item).find('#wsc-validation-status input:checked').val(), 10) || 0;
-
-            formSettings.push({field: fieldType, id: fieldId, class: fieldClass, event: fieldEvent, isRequired: isRequired, isValidate: isValidate});
-        })
+        $('#wsc-form-fields .wsc-form-field-row').each(function () {
+            const $row = $(this);
+            const ix = $row.attr('data-field-index');
+            const ft = $row.find('.form-field').val();
+            const raw = {
+                field: ft,
+                id: $row.find('.field-id').val(),
+                class: $row.find('.field-class').val(),
+                event: $row.find('.form-event').val(),
+                isRequired: parseInt($row.find('input[name="is_required_f_' + ix + '"]:checked').val(), 10) || 0,
+                isValidate: parseInt($row.find('input[name="is_validate_f_' + ix + '"]:checked').val(), 10) || 0,
+                is_webrisk: parseInt($row.find('input[name="fg_webrisk_' + ix + '"]:checked').val(), 10) || 0,
+                is_virustotal: parseInt($row.find('input[name="fg_vt_' + ix + '"]:checked').val(), 10) || 0,
+                check_username_exists: parseInt($row.find('input[name="fg_userexists_' + ix + '"]:checked').val(), 10) || 0,
+                text_allow_urls: parseInt($row.find('input[name="fg_texturls_' + ix + '"]:checked').val(), 10) || 0,
+                textarea_allow_links: parseInt($row.find('input[name="fg_tlinks_' + ix + '"]:checked').val(), 10) || 0,
+                textarea_ai_spam: parseInt($row.find('input[name="fg_tai_' + ix + '"]:checked').val(), 10) || 0,
+                regex: $row.find('.field-regex').val(),
+            };
+            formSettings.push(wscFgEffectivePayload(ft, raw));
+        });
 
         $.ajax({
             method: 'POST',
             url: WPSpanChecker.ajaxurl,
             data: {
                 action: 'add_form_settings',
-                id: parseInt(id.val()) ?? 0,
+                id: parseInt(id.val(), 10) || 0,
                 formType: formType,
                 pageId: pageId,
-                formId: formId,
-                formClass: formClass,
+                formId: combinedSel,
+                formClass: '',
+                submitSelector: submitSel,
                 formSettings: formSettings,
-                is_webrisk: webRiskStatus,
-                is_virustotal: virustotalStatus,
                 nonce: WPSpanChecker.nonce
             },
             beforeSend: function () {
@@ -520,11 +851,12 @@ jQuery(document).ready(function ($) {
                 formError.html(wscT('saved', 'Saved'));
                 formSettingTable.ajax.reload(null, false);
                 setTimeout(() => {
-                    const formSettingForm = document.getElementById('wsc-settings-form');
-                    formSettingForm.reset();
+                    const formSettingFormEl = document.getElementById('wsc-settings-form');
+                    formSettingFormEl.reset();
                     $('#wsc-settings-form').toggleClass('wsc-hidden');
                     $('#form-setting-table').toggleClass('wsc-hidden');
-                }, 1000)
+                    wscFgResetRows();
+                }, 1000);
             },
             error: function (jqXHR, textStatus, errorThrown) {
                 formError.removeClass('wsc-text-success');
@@ -537,24 +869,12 @@ jQuery(document).ready(function ($) {
                 saveButton.find('.wsc-spinner').addClass('wsc-hidden');
                 id.val(0);
             }
-        })
+        });
     });
 
-    $('#wsc-settings-form').on('change', function () {
-        loadRequiredField();
-    });
-
-    function loadRequiredField() {
-        $('#wsc-form-fields .wsc-form-group').each(function (i, item) {
-            if ($(item).find('.form-field').val() === 'text') {
-                $(item).find('.field-id').attr('required', 'required');
-            } else {
-                $(item).find('.field-id').removeAttr('required');
-            }
-        })
+    if ($('#wsc-form-fields').length) {
+        wscFgResetRows();
     }
-
-    loadRequiredField();
 
     $('#wscAddFormSetting').on('click', function () {
         const wasHidden = $('#wsc-settings-form').hasClass('wsc-hidden');
@@ -563,6 +883,9 @@ jQuery(document).ready(function ($) {
         if (wasHidden) {
             $('#form_settings_id').val('0');
             wscResetPageTargetsForNew();
+            $('#form_selector').val('');
+            $('#submit_selector').val('');
+            wscFgResetRows();
         }
     });
 
@@ -571,11 +894,12 @@ jQuery(document).ready(function ($) {
         $('#form-setting-table').toggleClass('wsc-hidden');
     });
 
-    $('.wsc-switch-option').on('click', function () {
+    $(document).on('click', '.wsc-switch-option', function () {
          const $this = $(this);
-         $this.addClass('wsc-check').siblings().removeClass('wsc-check');
-         $this.find('input').attr('checked', 'checked').siblings().find('input').removeAttr('checked');
-    })
+         $this.addClass('wsc-check').siblings('.wsc-switch-option').removeClass('wsc-check');
+         $this.find('input[type="radio"]').prop('checked', true);
+         $this.siblings('.wsc-switch-option').find('input[type="radio"]').prop('checked', false);
+    });
 
 }); // end jquery
 

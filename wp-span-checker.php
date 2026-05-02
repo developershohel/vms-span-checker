@@ -75,6 +75,7 @@ function wp_span_checker_bootstrap() {
 	require_once WP_SPAN_CHECKER_DIR . 'includes/spam/class-comment-spam-controller.php';
 	require_once WP_SPAN_CHECKER_DIR . 'includes/class-comment-spam-rules.php';
 	require_once WP_SPAN_CHECKER_DIR . 'includes/class-ai-span-comments.php';
+	require_once WP_SPAN_CHECKER_DIR . 'includes/class-form-guard-conditional.php';
 	require_once WP_SPAN_CHECKER_DIR . 'includes/class-ajax.php';
 	require_once WP_SPAN_CHECKER_DIR . 'includes/class-admin-menu.php';
 	require_once WP_SPAN_CHECKER_DIR . 'includes/class-enqueue-scripts.php';

@@ -137,6 +137,78 @@ function wp_span_checker_parse_validation_settings( array $post ) {
 }
 
 /**
+ * Whether a string looks like a CSS selector for Form Guard (combined id/classes).
+ *
+ * @param string $raw Raw stored form_id value.
+ */
+function wp_span_checker_form_guard_is_combined_selector( string $raw ): bool {
+	$raw = trim( $raw );
+	if ( '' === $raw ) {
+		return false;
+	}
+	return false !== strpos( $raw, '#' ) || false !== strpos( $raw, '.' ) || false !== strpos( $raw, '[' );
+}
+
+/**
+ * Safe preg_match for admin-supplied delimited patterns (ReDoS mitigation: length + delimiter form only).
+ *
+ * @param string $pattern Delimited regex e.g. /^abc$/u .
+ * @param string $value   Subject string.
+ */
+function wp_span_checker_form_guard_preg_match_safe( string $pattern, string $value ): bool {
+	$pattern = trim( $pattern );
+	if ( strlen( $pattern ) > 512 || strlen( $pattern ) < 3 ) {
+		return false;
+	}
+	if ( ! preg_match( '#^/.+/[a-zA-Z]*$#', $pattern ) ) {
+		return false;
+	}
+	$m = @preg_match( $pattern, $value );
+
+	return 1 === $m;
+}
+
+/**
+ * Extract URLs from plain text (textarea link policy).
+ *
+ * @return string[]
+ */
+function wp_span_checker_form_guard_extract_urls( string $text ): array {
+	if ( '' === trim( $text ) ) {
+		return array();
+	}
+	if ( ! preg_match_all( '#https?://[^\s<>"\']+#i', $text, $matches ) ) {
+		return array();
+	}
+	$out = array();
+	foreach ( $matches[0] as $u ) {
+		$u = rtrim( $u, '.,);]\'"' );
+		if ( $u !== '' ) {
+			$out[] = $u;
+		}
+	}
+
+	return array_values( array_unique( $out ) );
+}
+
+/**
+ * Merge per-field API flags with legacy row-level defaults.
+ *
+ * @param array<string, mixed> $field Field config from JSON settings.
+ * @param array<string, mixed> $row   Full DB row.
+ * @return array{is_webrisk:bool,is_virustotal:bool}
+ */
+function wp_span_checker_form_guard_field_api_flags( array $field, array $row ): array {
+	$wr = isset( $field['is_webrisk'] ) ? (int) $field['is_webrisk'] : null;
+	$vt = isset( $field['is_virustotal'] ) ? (int) $field['is_virustotal'] : null;
+
+	return array(
+		'is_webrisk'    => null !== $wr ? (bool) $wr : ! empty( $row['is_webrisk'] ),
+		'is_virustotal' => null !== $vt ? (bool) $vt : ! empty( $row['is_virustotal'] ),
+	);
+}
+
+/**
  * Output the standard plugin admin page heading (kicker, H1, optional lede).
  *
  * Use the same translated strings as submenu titles in Admin_Menu for consistency.
@@ -492,11 +564,57 @@ function wp_span_checker_get_js_i18n() {
 		'optionUrl'                => __( 'URL', 'wp-span-checker' ),
 		'optionEmail'              => __( 'Email', 'wp-span-checker' ),
 		'optionText'               => __( 'Text', 'wp-span-checker' ),
+		'optionUsername'           => __( 'Username', 'wp-span-checker' ),
 		'optionChange'             => __( 'Change', 'wp-span-checker' ),
 		'optionInput'              => __( 'Input', 'wp-span-checker' ),
 		'optionFormSubmit'         => __( 'Form submit', 'wp-span-checker' ),
 		'labelId'                  => __( 'ID', 'wp-span-checker' ),
 		'labelClass'               => __( 'Class', 'wp-span-checker' ),
 		'selectFieldType'          => __( 'Select field type', 'wp-span-checker' ),
+		'optionTextarea'           => __( 'Textarea', 'wp-span-checker' ),
+		'optionTel'                => __( 'Telephone', 'wp-span-checker' ),
+		'optionNumber'             => __( 'Number', 'wp-span-checker' ),
+		'optionPassword'           => __( 'Password', 'wp-span-checker' ),
+		'enable'                   => __( 'Enable', 'wp-span-checker' ),
+		'disable'                  => __( 'Disable', 'wp-span-checker' ),
+		'requiredField'            => __( 'Required field', 'wp-span-checker' ),
+		'requiredFieldHint'        => __( 'Mark the field as required in the browser.', 'wp-span-checker' ),
+		'requireValidation'        => __( 'Require validation', 'wp-span-checker' ),
+		'requireValidationHint'    => __( 'Run server-side validation for this field.', 'wp-span-checker' ),
+		'googleWebRisk'            => __( 'Google Web Risk', 'wp-span-checker' ),
+		'virusTotal'               => __( 'VirusTotal scanner', 'wp-span-checker' ),
+		'usernameTakenCheck'       => __( 'Reject if username exists (live check)', 'wp-span-checker' ),
+		'usernameTakenHint'        => __( 'Use for registration/login name inputs. When enabled, checks WordPress while typing (debounced) and on submit.', 'wp-span-checker' ),
+		'textareaAllowLinks'       => __( 'Allow links in message', 'wp-span-checker' ),
+		'textareaAiSpam'           => __( 'AI spam checker (textarea)', 'wp-span-checker' ),
+		'textareaAiSpamHint'       => __( 'Uses AI settings from WP Span Checker → AI. Runs on the server when validation is enabled.', 'wp-span-checker' ),
+		'textAllowUrls'            => __( 'Allow URLs in value', 'wp-span-checker' ),
+		'textAllowUrlsHint'        => __( 'Disable to reject http(s) URLs typed into this single-line field.', 'wp-span-checker' ),
+		'customRegex'              => __( 'Custom regex (delimited)', 'wp-span-checker' ),
+		'customRegexHint'          => __( 'Optional. Must look like /pattern/flags. Checked on the server when validation is enabled.', 'wp-span-checker' ),
+		'presetRegex'              => __( 'Preset patterns', 'wp-span-checker' ),
+		'validExample'             => __( 'Valid', 'wp-span-checker' ),
+		'invalidExample'           => __( 'Invalid', 'wp-span-checker' ),
+		'usePattern'               => __( 'Use pattern', 'wp-span-checker' ),
+		'fgNeedOneField'           => __( 'Keep at least one field row.', 'wp-span-checker' ),
+		'mappedFieldTitle'         => __( 'Mapped form control', 'wp-span-checker' ),
+		'mappedFieldGuardsBlurb'   => __( 'Guards in this row apply only to this field’s ID/class. Use “Add field” for each separate input (10 fields → 10 rows).', 'wp-span-checker' ),
+		'fieldGuardsLegend'        => __( 'Guards for this field only', 'wp-span-checker' ),
+		'securityMethodsLegend'    => __( 'Protection methods (based on field type)', 'wp-span-checker' ),
+		'securityMethodsIntro'     => __( 'Email and URL rows show Web Risk and VirusTotal (Web Risk defaults ON when you switch to Email). Username rows show live “already registered” checks. Plain Text adds URL-in-value rules; textarea adds links + AI spam screening.', 'wp-span-checker' ),
+		'webriskEmailUrlOnly'      => __( 'Used when “Form field” is Email or URL and “Require validation” is enabled for domain checks.', 'wp-span-checker' ),
+		'vtEmailUrlOnly'           => __( 'Same as Web Risk: applies together with Email or URL domain validation.', 'wp-span-checker' ),
+		'securityMethodsOtherHint' => __( 'Email and URL rows use the reputation toggles here together with validation above.', 'wp-span-checker' ),
+		'validationRulesLegend'    => __( 'Validation rules', 'wp-span-checker' ),
+		'labelWebRiskShort'        => __( 'Web Risk', 'wp-span-checker' ),
+		'labelVtShort'             => __( 'VirusTotal', 'wp-span-checker' ),
+		'onShort'                  => __( 'On', 'wp-span-checker' ),
+		'offShort'                 => __( 'Off', 'wp-span-checker' ),
+		'usernameCheckShort'       => __( 'Username exists check', 'wp-span-checker' ),
+		'linksAllowedShort'        => __( 'Links allowed', 'wp-span-checker' ),
+		'aiSpamShort'              => __( 'AI spam check', 'wp-span-checker' ),
+		'textUrlsInFieldShort'     => __( 'URLs in text field', 'wp-span-checker' ),
+		'textUrlsInFieldShort'     => __( 'URLs in text field', 'wp-span-checker' ),
+		'regexShort'               => __( 'Regex', 'wp-span-checker' ),
 	);
 }

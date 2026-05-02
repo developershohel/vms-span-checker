@@ -113,103 +113,27 @@ $wsc_presets = wp_span_checker_page_target_presets();
 				<span class="wsc-form-error-message wsc-form-error"></span>
 			</div>
 			<div class="wsc-form-group">
-				<label for="form_id" class="wsc-form-label"><?php esc_html_e( 'Form ID', 'wp-span-checker' ); ?></label>
-				<input class="wsc-input wsc-input-primary" type="text" name="form_id" id="form_id" value=""
-					placeholder="<?php esc_attr_e( 'login-form', 'wp-span-checker' ); ?>" required/>
-				<span class="wsc-form-info-message wsc-text-info"><?php esc_html_e( 'Do not include “#” in the form ID—use letters, numbers, and hyphens only.', 'wp-span-checker' ); ?></span>
+				<label for="form_selector" class="wsc-form-label"><?php esc_html_e( 'Form id/class', 'wp-span-checker' ); ?></label>
+				<input class="wsc-input wsc-input-primary" type="text" name="form_selector" id="form_selector" value=""
+					placeholder="#contact-form.contact-us"
+					required/>
+				<span class="wsc-form-info-message wsc-text-info"><?php esc_html_e( 'CSS selector for the form element, e.g. #contactus.contact-us (ID plus classes). Old mappings that used separate Form ID + classes still load here.', 'wp-span-checker' ); ?></span>
+				<input type="hidden" name="form_id" id="form_id" value="">
+				<input type="hidden" name="form_class" id="form_class" value="">
 				<span class="wsc-form-error-message wsc-form-error"></span>
 			</div>
 			<div class="wsc-form-group">
-				<label for="form_class" class="wsc-form-label"><?php esc_html_e( 'Form classes', 'wp-span-checker' ); ?></label>
-				<input class="wsc-input wsc-input-primary" type="text" name="form_class" id="form_class" value=""
-					placeholder="<?php esc_attr_e( 'login-form wp-login-form', 'wp-span-checker' ); ?>"/>
-				<span class="wsc-form-info-message wsc-text-info"><?php esc_html_e( 'Do not include leading dots—use space-separated class names.', 'wp-span-checker' ); ?></span>
+				<label for="submit_selector" class="wsc-form-label"><?php esc_html_e( 'Submit button id/class (optional)', 'wp-span-checker' ); ?></label>
+				<input class="wsc-input wsc-input-primary" type="text" name="submit_selector" id="submit_selector" value=""
+					placeholder="#send-message.btn-primary"/>
+				<span class="wsc-form-info-message wsc-text-info"><?php esc_html_e( 'If empty, the first submit button inside the form is used. You may use a selector scoped to the form or a global one.', 'wp-span-checker' ); ?></span>
 				<span class="wsc-form-error-message wsc-form-error"></span>
 			</div>
-			<div class="wsc-form-fields mb-4" id="wsc-form-fields">
-				<div class="wsc-form-group">
-					<label class="wsc-form-label" for="form-field-1"><?php esc_html_e( 'Form field', 'wp-span-checker' ); ?></label>
-					<select class="wsc-input wsc-input-primary form-field" id="form-field-1" name="form-field-1" data-id="1">
-						<option value="text"><?php esc_html_e( 'Text', 'wp-span-checker' ); ?></option>
-						<option value="textarea"><?php esc_html_e( 'Textarea', 'wp-span-checker' ); ?></option>
-						<option value="email"><?php esc_html_e( 'Email', 'wp-span-checker' ); ?></option>
-						<option value="url"><?php esc_html_e( 'URL', 'wp-span-checker' ); ?></option>
-						<option value="tel"><?php esc_html_e( 'Telephone', 'wp-span-checker' ); ?></option>
-						<option value="number"><?php esc_html_e( 'Number', 'wp-span-checker' ); ?></option>
-						<option value="password"><?php esc_html_e( 'Password', 'wp-span-checker' ); ?></option>
-					</select>
-					<label for="form-id-1" class="wsc-form-label wsc-mt-4"><?php esc_html_e( 'Field ID', 'wp-span-checker' ); ?></label>
-					<input id="form-id-1" type="text" class="wsc-input wsc-input-primary field-id"
-						name="form-field-id-1" data-id="1" placeholder="<?php esc_attr_e( 'Field ID', 'wp-span-checker' ); ?>">
-					<label for="form-class-1" class="wsc-form-label wsc-mt-4"><?php esc_html_e( 'Field class', 'wp-span-checker' ); ?></label>
-					<input id="form-class-1" type="text" class="wsc-input wsc-input-primary field-class"
-						name="form-field-class-1" data-class="1" placeholder="<?php esc_attr_e( 'Field class', 'wp-span-checker' ); ?>">
-					<label class="wsc-form-label wsc-mt-4" for="form-event-1"><?php esc_html_e( 'JavaScript event', 'wp-span-checker' ); ?></label>
-					<select class="wsc-input wsc-input-primary form-event wsc-mt-4" id="form-event-1" name="form-event-1" data-id="1">
-						<option value="change"><?php esc_html_e( 'Change', 'wp-span-checker' ); ?></option>
-						<option value="input"><?php esc_html_e( 'Input', 'wp-span-checker' ); ?></option>
-						<option value="submit"><?php esc_html_e( 'Form submit', 'wp-span-checker' ); ?></option>
-					</select>
-					<div class="wsc-form-attr wsc-mt-4">
-						<p class="wsc-form-label"><?php esc_html_e( 'Required field', 'wp-span-checker' ); ?></p>
-						<div class="wsc-switch-control" id="wsc-required-status">
-							<span class="wsc-switch-option wsc-check">
-								<input type="radio" id="is_required-enable" name="is_required" value="1">
-								<label for="is_required-enable"><?php esc_html_e( 'Enable', 'wp-span-checker' ); ?></label>
-							</span>
-							<span class="wsc-switch-option">
-								<input type="radio" id="is_required-disable" name="is_required" value="0" checked="checked">
-								<label for="is_required-disable"><?php esc_html_e( 'Disable', 'wp-span-checker' ); ?></label>
-							</span>
-						</div>
-						<span class="wsc-form-info-message wsc-text-info"><?php esc_html_e( 'Mark the field as required in the browser.', 'wp-span-checker' ); ?></span>
-					</div>
-					<div class="wsc-form-attr wsc-mt-4">
-						<p class="wsc-form-label"><?php esc_html_e( 'Require validation', 'wp-span-checker' ); ?></p>
-						<div class="wsc-switch-control" id="wsc-validation-status">
-							<span class="wsc-switch-option wsc-check">
-								<input type="radio" id="is_validate-enable" name="is_validate" value="1">
-								<label for="is_validate-enable"><?php esc_html_e( 'Enable', 'wp-span-checker' ); ?></label>
-							</span>
-							<span class="wsc-switch-option">
-								<input type="radio" id="is_validate-disable" name="is_validate" value="0" checked="checked">
-								<label for="is_validate-disable"><?php esc_html_e( 'Disable', 'wp-span-checker' ); ?></label>
-							</span>
-						</div>
-						<span class="wsc-form-info-message wsc-text-info"><?php esc_html_e( 'Run server-side validation for this field.', 'wp-span-checker' ); ?></span>
-					</div>
-				</div>
+			<p class="wsc-form-info-message wsc-text-info wsc-mb-4"><?php esc_html_e( 'Each front-end input needs its own row here (for example, 10 inputs → use “Add field” until you have 10 rows). Every row repeats the same validation block (required, server validation, regex) plus shared reputation toggles—Web Risk and VirusTotal run only for Email/URL rows when validation is on. On submit, each configured row is validated separately.', 'wp-span-checker' ); ?></p>
+			<div class="wsc-form-fields mb-4" id="wsc-form-fields"></div>
+			<div class="wsc-form-group">
+				<button type="button" class="wsc-btn wsc-btn-outline-primary" id="wscAddFormField"><?php esc_html_e( 'Add field', 'wp-span-checker' ); ?></button>
 			</div>
-		</div>
-		<div class="wsc-form-group">
-			<p class="wsc-form-label"><?php esc_html_e( 'Google Web Risk', 'wp-span-checker' ); ?></p>
-			<div class="wsc-switch-control" id="wsc-webrisk-status">
-				<span class="wsc-switch-option wsc-check">
-					<input type="radio" id="is_webrisk-enable" name="is_webrisk" value="1" checked>
-					<label for="is_webrisk-enable"><?php esc_html_e( 'Enable', 'wp-span-checker' ); ?></label>
-				</span>
-				<span class="wsc-switch-option">
-					<input type="radio" id="is_webrisk-disable" name="is_webrisk" value="0">
-					<label for="is_webrisk-disable"><?php esc_html_e( 'Disable', 'wp-span-checker' ); ?></label>
-				</span>
-			</div>
-			<span class="wsc-form-info-message wsc-text-info"><?php esc_html_e( 'Call Google Web Risk when validating this form.', 'wp-span-checker' ); ?></span>
-			<span class="wsc-form-error-message wsc-form-error"></span>
-		</div>
-		<div class="wsc-form-group">
-			<p class="wsc-form-label"><?php esc_html_e( 'VirusTotal scanner', 'wp-span-checker' ); ?></p>
-			<div class="wsc-switch-control" id="wsc-virustotal-status">
-				<span class="wsc-switch-option">
-					<input type="radio" id="is_virustotal-enable" name="is_virustotal" value="1" />
-					<label for="is_virustotal-enable"><?php esc_html_e( 'Enable', 'wp-span-checker' ); ?></label>
-				</span>
-				<span class="wsc-switch-option wsc-check">
-					<input type="radio" id="is_virustotal-disable" name="is_virustotal" value="0" checked />
-					<label for="is_virustotal-disable"><?php esc_html_e( 'Disable', 'wp-span-checker' ); ?></label>
-				</span>
-			</div>
-			<span class="wsc-form-info-message wsc-text-info"><?php esc_html_e( 'Query VirusTotal when validating this form.', 'wp-span-checker' ); ?></span>
-			<span class="wsc-form-error-message wsc-form-error"></span>
 		</div>
 		<div class="wsc-form-group">
 			<button type="submit" class="wsc-btn wsc-btn-success wsc-flex wsc-items-center" id="saveFormSetting">
@@ -228,16 +152,27 @@ $wsc_presets = wp_span_checker_page_target_presets();
 					<th><?php esc_html_e( 'ID', 'wp-span-checker' ); ?></th>
 					<th><?php esc_html_e( 'Form type', 'wp-span-checker' ); ?></th>
 					<th><?php esc_html_e( 'Page', 'wp-span-checker' ); ?></th>
-					<th><?php esc_html_e( 'Form ID', 'wp-span-checker' ); ?></th>
-					<th><?php esc_html_e( 'Form class', 'wp-span-checker' ); ?></th>
+					<th><?php esc_html_e( 'Form id/class', 'wp-span-checker' ); ?></th>
+					<th><?php esc_html_e( 'Submit', 'wp-span-checker' ); ?></th>
 					<th class="wsc-min-w-300"><?php esc_html_e( 'Form fields', 'wp-span-checker' ); ?></th>
-					<th><?php esc_html_e( 'Web Risk', 'wp-span-checker' ); ?></th>
-					<th><?php esc_html_e( 'VirusTotal', 'wp-span-checker' ); ?></th>
+					<th><?php esc_html_e( 'Web Risk (summary)', 'wp-span-checker' ); ?></th>
+					<th><?php esc_html_e( 'VirusTotal (summary)', 'wp-span-checker' ); ?></th>
 					<th><?php esc_html_e( 'Actions', 'wp-span-checker' ); ?></th>
 				</tr>
 				</thead>
 				<tbody></tbody>
 			</table>
+		</div>
+	</div>
+	<div id="wsc-regex-preset-modal" class="wsc-regex-modal-wrap wsc-hidden" aria-hidden="true">
+		<div class="wsc-regex-modal-overlay"></div>
+		<div class="wsc-regex-modal-panel wsc-card wsc-p-6">
+			<div class="wsc-flex wsc-justify-between wsc-items-center wsc-mb-4">
+				<strong><?php esc_html_e( 'Preset regex patterns', 'wp-span-checker' ); ?></strong>
+				<button type="button" class="wsc-btn wsc-btn-outline-primary wsc-close-regex-modal" aria-label="<?php esc_attr_e( 'Close', 'wp-span-checker' ); ?>">&times;</button>
+			</div>
+			<p class="wsc-text-info wsc-mb-4"><?php esc_html_e( 'Each preset shows a valid and invalid example. Choose “Use pattern” to copy it into the custom regex field for the active row.', 'wp-span-checker' ); ?></p>
+			<ul id="wsc-regex-preset-list" class="wsc-regex-preset-list" role="list"></ul>
 		</div>
 	</div>
 </div>
