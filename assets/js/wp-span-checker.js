@@ -7,9 +7,7 @@ const wpSpanCheckerToast = Swal.mixin({
 });
 
 /**
- * Install submit listener synchronously when this file parses (before jQuery.ready).
- * Later code assigns wpSpanCheckerFormGuard.submitCaptureHandler so Form Guard runs
- * before most plugins that hook ready/bubble-only handlers.
+ * Form Guard registry for tracking guarded forms.
  */
 (function () {
     if (typeof window === 'undefined') {
@@ -20,22 +18,11 @@ const wpSpanCheckerToast = Swal.mixin({
         g.registry =
             typeof WeakMap !== 'undefined' ? new WeakMap() : typeof Map !== 'undefined' ? new Map() : null;
     }
-    if (g._submitCaptureBound || !g.registry) {
-        return;
-    }
-    g._submitCaptureBound = true;
-    window.addEventListener(
-        'submit',
-        function (ev) {
-            if (typeof g.submitCaptureHandler === 'function') {
-                g.submitCaptureHandler(ev);
-            }
-        },
-        true
-    );
 })();
 
 jQuery(function ($) {
+    console.log('[WP Span Checker] Form Guard initializing...');
+    
     const I = typeof WPSpanChecker !== 'undefined' && WPSpanChecker.i18n ? WPSpanChecker.i18n : {};
     const t = function (key, fallback) {
         return I[key] !== undefined && I[key] !== '' ? I[key] : fallback;
@@ -44,6 +31,11 @@ jQuery(function ($) {
     const settings = WPSpanChecker.settings || [];
     const ajaxUrl = WPSpanChecker.ajaxUrl;
     const nonce = WPSpanChecker.nonce;
+
+    console.log('WPSpanChecker', WPSpanChecker);
+    console.log('ajaxUrl', ajaxUrl);
+    console.log('nonce', nonce);
+    console.log('[WP Span Checker] Settings loaded:', settings.length, 'mapping(s)');
 
     function wscLooksCombinedSelector(fid) {
         const s = String(fid || '').trim();
@@ -94,14 +86,55 @@ jQuery(function ($) {
 
     function resolveSubmit$($form, submitSelector) {
         const raw = String(submitSelector || '').trim();
-        if (!raw) {
-            return $form.find('[type="submit"]').first();
+        if (raw) {
+            let $btn = $form.find(raw);
+            if (!$btn.length) {
+                $btn = $(raw);
+            }
+            if ($btn.length) {
+                console.log('[WP Span Checker] Found submit button with custom selector:', raw);
+                return $btn.first();
+            }
         }
-        let $btn = $form.find(raw);
-        if (!$btn.length) {
-            $btn = $(raw);
+        
+        let $btn = $form.find('input[type="submit"]').first();
+        if ($btn.length) {
+            console.log('[WP Span Checker] Found input[type="submit"]');
+            return $btn;
         }
-        return $btn.first();
+        
+        $btn = $form.find('button[type="submit"]').first();
+        if ($btn.length) {
+            console.log('[WP Span Checker] Found button[type="submit"]');
+            return $btn;
+        }
+        
+        $btn = $form.find('.wpcf7-submit').first();
+        if ($btn.length) {
+            console.log('[WP Span Checker] Found .wpcf7-submit');
+            return $btn;
+        }
+        
+        $btn = $form.find('[type="submit"]').first();
+        if ($btn.length) {
+            console.log('[WP Span Checker] Found [type="submit"]');
+            return $btn;
+        }
+        
+        $btn = $form.find('button:not([type="button"]):not([type="reset"])').first();
+        if ($btn.length) {
+            console.log('[WP Span Checker] Found button (default type=submit)');
+            return $btn;
+        }
+        
+        $btn = $form.find('button').last();
+        if ($btn.length) {
+            console.log('[WP Span Checker] Found last button as fallback');
+            return $btn;
+        }
+        
+        console.log('[WP Span Checker] No submit button found in form');
+        return $();
     }
 
     function generateFieldClassId($form, fieldId, fieldClass) {
@@ -464,7 +497,7 @@ jQuery(function ($) {
     }
 
     /**
-     * Form Guard registry lives on window (bootstrap registers capture before ready).
+     * Form Guard registry lives on window.
      */
     function wscGuardRegistry() {
         return window.wpSpanCheckerFormGuard && window.wpSpanCheckerFormGuard.registry;
@@ -479,8 +512,9 @@ jQuery(function ($) {
         if (!entry) {
             entry = {
                 configs: [],
-                bypassOnce: false,
                 validating: false,
+                originalSubmitBtn: null,
+                validationBtn: null,
             };
             reg.set(formEl, entry);
         }
@@ -495,118 +529,235 @@ jQuery(function ($) {
         entry.configs.push(config);
     }
 
-    function wscAttachFormGuardSubmitImpl() {
-        const guard = window.wpSpanCheckerFormGuard;
-        const reg = wscGuardRegistry();
-        if (!guard || !reg) {
+    /**
+     * Create validation button and hide original submit button.
+     * This is the new approach: validation button triggers validation,
+     * then clicks the original hidden submit button on success.
+     */
+    function wscSetupValidationButton($form, $originalSubmit, entry) {
+        if (!$originalSubmit.length) {
+            console.log('[WP Span Checker] No submit button found in form');
+            return;
+        }
+        
+        if (entry.validationBtn) {
+            console.log('[WP Span Checker] Validation button already exists');
             return;
         }
 
-        guard.submitCaptureHandler = function (ev) {
-                const formEl = ev.target;
-                if (!formEl || formEl.tagName !== 'FORM') {
-                    return;
+        const formEl = $form.get(0);
+        const originalEl = $originalSubmit.get(0);
+
+        const btnText = $originalSubmit.val() || $originalSubmit.text() || t('submit', 'Submit');
+        const btnType = ($originalSubmit.prop('tagName') || 'button').toLowerCase();
+
+        let $validationBtn;
+        if (btnType === 'input') {
+            $validationBtn = $('<input type="button">').val(btnText);
+        } else {
+            $validationBtn = $('<button type="button">').html($originalSubmit.html() || btnText);
+        }
+
+        const originalClasses = $originalSubmit.attr('class') || '';
+        if (originalClasses) {
+            const classesWithoutSubmit = originalClasses.replace(/\bwpcf7-submit\b/g, '').trim();
+            $validationBtn.attr('class', classesWithoutSubmit);
+        }
+        $validationBtn.addClass('wsc-validation-btn');
+
+        const computedStyle = window.getComputedStyle(originalEl);
+        const cssProps = [
+            'background', 'backgroundColor', 'color', 'fontSize', 'fontWeight', 'fontFamily',
+            'padding', 'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft',
+            'margin', 'marginTop', 'marginRight', 'marginBottom', 'marginLeft',
+            'border', 'borderRadius', 'width', 'height', 'minWidth', 'minHeight',
+            'lineHeight', 'textTransform', 'letterSpacing', 'boxShadow', 'cursor',
+            'display', 'textAlign', 'verticalAlign'
+        ];
+        cssProps.forEach(function(prop) {
+            try {
+                const val = computedStyle.getPropertyValue(prop.replace(/([A-Z])/g, '-$1').toLowerCase());
+                if (val && val !== '') {
+                    $validationBtn.css(prop.replace(/([A-Z])/g, '-$1').toLowerCase(), val);
                 }
-                const entry = reg.get(formEl);
-                if (!entry || !entry.configs.length) {
-                    return;
-                }
+            } catch(e) {}
+        });
 
-                if (entry.bypassOnce) {
-                    entry.bypassOnce = false;
-                    formEl.dispatchEvent(
-                        new CustomEvent('wp_span_checker:native_submit', {
-                            bubbles: true,
-                            detail: { form: formEl },
-                        })
-                    );
-                    return;
-                }
+        $originalSubmit.hide();
+        $originalSubmit.css({
+            'position': 'absolute',
+            'left': '-9999px',
+            'visibility': 'hidden',
+            'pointer-events': 'none',
+            'opacity': '0',
+            'width': '0',
+            'height': '0'
+        });
 
-                if (entry.validating) {
-                    ev.preventDefault();
-                    ev.stopImmediatePropagation();
-                    return;
-                }
+        $validationBtn.insertAfter($originalSubmit);
 
-                ev.preventDefault();
-                ev.stopImmediatePropagation();
+        entry.originalSubmitBtn = originalEl;
+        entry.validationBtn = $validationBtn.get(0);
+        entry.originalBtnText = btnText;
 
-                let submitter = null;
-                if (ev && typeof ev === 'object' && 'submitter' in ev) {
-                    submitter = ev.submitter;
-                }
+        console.log('[WP Span Checker] Validation button created for form, original text:', btnText);
 
-                const before = new CustomEvent('wp_span_checker:guard_before_validate', {
-                    cancelable: true,
-                    bubbles: true,
-                    detail: { form: formEl, originalEvent: ev, submitter: submitter },
-                });
-                if (!formEl.dispatchEvent(before)) {
-                    return;
-                }
+        $validationBtn.on('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
 
-                entry.validating = true;
+            if (entry.validating) {
+                return;
+            }
 
-                const jobs = [];
-                entry.configs.forEach(function (cfg) {
-                    const mappingId = cfg.mappingId;
-                    const formSettingData = cfg.formSettingData || [];
-                    formSettingData.forEach(function (fs, idx) {
-                        const ft = fs.field_type || fs.field || '';
-                        const $el = generateFieldClassId($(formEl), fs.id, fs.class);
-                        const val = readFieldValue($el, ft);
-                        const required = parseInt(fs.isRequired, 10) || 0;
-                        const nonEmpty = String(val).trim() !== '';
-                        if (required || (nonEmpty && fieldServerGate(fs))) {
-                            jobs.push({ mappingId: mappingId, idx: idx, val: val });
-                        }
-                    });
-                });
-
-                let step = Promise.resolve(true);
-                jobs.forEach(function (job) {
-                    step = step.then(function () {
-                        return validateGuardFieldServer(job.mappingId, job.idx, job.val).then(function (data) {
-                            if (!data || !data.status) {
-                                throw new Error((data && data.message) || t('validationFailed', 'Validation failed'));
-                            }
-                        });
-                    });
-                });
-
-                step
-                    .then(function () {
-                        formEl.dispatchEvent(
-                            new CustomEvent('wp_span_checker:guard_validated', {
-                                bubbles: true,
-                                detail: { form: formEl, submitter: submitter },
-                            })
-                        );
-                        entry.bypassOnce = true;
-                        if (typeof formEl.requestSubmit === 'function') {
-                            try {
-                                formEl.requestSubmit(submitter || undefined);
-                            } catch (err) {
-                                HTMLFormElement.prototype.submit.call(formEl);
-                            }
-                        } else {
-                            HTMLFormElement.prototype.submit.call(formEl);
-                        }
-                    })
-                    .catch(function (err) {
-                        wpSpanCheckerToast.fire({
-                            icon: 'error',
-                            title: err.message || t('validationFailed', 'Validation failed'),
-                        });
-                    })
-                    .then(function () {
-                        entry.validating = false;
-                    });
-        };
+            wscRunValidation(formEl, entry, $validationBtn);
+        });
     }
 
-    wscAttachFormGuardSubmitImpl();
+    /**
+     * Run validation for all configured fields, then submit if valid.
+     */
+    function wscRunValidation(formEl, entry, $validationBtn) {
+        entry.validating = true;
+        const originalBtnText = entry.originalBtnText || ($validationBtn.is('input') ? $validationBtn.val() : $validationBtn.html());
+        const validatingText = t('validating', 'Validating...');
+
+        console.log('[WP Span Checker] Starting validation...');
+
+        if ($validationBtn.is('input')) {
+            $validationBtn.val(validatingText);
+        } else {
+            $validationBtn.html(validatingText);
+        }
+        $validationBtn.prop('disabled', true);
+
+        const before = new CustomEvent('wp_span_checker:guard_before_validate', {
+            cancelable: true,
+            bubbles: true,
+            detail: { form: formEl },
+        });
+        if (!formEl.dispatchEvent(before)) {
+            wscResetValidationBtn($validationBtn, originalBtnText, entry);
+            return;
+        }
+
+        const jobs = [];
+        entry.configs.forEach(function (cfg) {
+            const mappingId = cfg.mappingId;
+            const formSettingData = cfg.formSettingData || [];
+            formSettingData.forEach(function (fs, idx) {
+                const ft = fs.field_type || fs.field || '';
+                const $el = generateFieldClassId($(formEl), fs.id, fs.class);
+                const val = readFieldValue($el, ft);
+                const required = parseInt(fs.isRequired, 10) || 0;
+                const nonEmpty = String(val).trim() !== '';
+                if (required || (nonEmpty && fieldServerGate(fs))) {
+                    jobs.push({ mappingId: mappingId, idx: idx, val: val, fieldName: fs.id || fs.class || '' });
+                }
+            });
+        });
+
+        if (jobs.length === 0) {
+            console.log('[WP Span Checker] No validation jobs, submitting directly');
+            wscSubmitOriginalForm(formEl, entry, $validationBtn, originalBtnText);
+            return;
+        }
+
+        console.log('[WP Span Checker] Validation jobs:', jobs.length);
+
+        let step = Promise.resolve(true);
+        jobs.forEach(function (job) {
+            step = step.then(function () {
+                return validateGuardFieldServer(job.mappingId, job.idx, job.val).then(function (data) {
+                    if (!data || !data.status) {
+                        throw new Error((data && data.message) || t('validationFailed', 'Validation failed'));
+                    }
+                });
+            });
+        });
+
+        step
+            .then(function () {
+                console.log('[WP Span Checker] Validation passed');
+                formEl.dispatchEvent(
+                    new CustomEvent('wp_span_checker:guard_validated', {
+                        bubbles: true,
+                        detail: { form: formEl },
+                    })
+                );
+                wscSubmitOriginalForm(formEl, entry, $validationBtn, originalBtnText);
+            })
+            .catch(function (err) {
+                console.log('[WP Span Checker] Validation failed:', err.message);
+                wpSpanCheckerToast.fire({
+                    icon: 'error',
+                    title: err.message || t('validationFailed', 'Validation failed'),
+                });
+                wscResetValidationBtn($validationBtn, originalBtnText, entry);
+            });
+    }
+
+    /**
+     * Submit the form by clicking the original hidden submit button.
+     */
+    function wscSubmitOriginalForm(formEl, entry, $validationBtn, originalBtnText) {
+        const submittingText = t('submitting', 'Submitting...');
+        if ($validationBtn.is('input')) {
+            $validationBtn.val(submittingText);
+        } else {
+            $validationBtn.html(submittingText);
+        }
+
+        console.log('[WP Span Checker] Submitting form...');
+
+        setTimeout(function() {
+            if (entry.originalSubmitBtn) {
+                const $orig = $(entry.originalSubmitBtn);
+                $orig.css({
+                    'position': '',
+                    'left': '',
+                    'visibility': '',
+                    'pointer-events': '',
+                    'opacity': '',
+                    'width': '',
+                    'height': ''
+                }).show();
+
+                entry.originalSubmitBtn.click();
+
+                setTimeout(function() {
+                    $orig.hide().css({
+                        'position': 'absolute',
+                        'left': '-9999px',
+                        'visibility': 'hidden',
+                        'pointer-events': 'none',
+                        'opacity': '0',
+                        'width': '0',
+                        'height': '0'
+                    });
+                }, 100);
+            } else {
+                HTMLFormElement.prototype.submit.call(formEl);
+            }
+
+            setTimeout(function() {
+                wscResetValidationBtn($validationBtn, originalBtnText, entry);
+            }, 1000);
+        }, 100);
+    }
+
+    /**
+     * Reset validation button to original state.
+     */
+    function wscResetValidationBtn($validationBtn, originalBtnText, entry) {
+        if ($validationBtn.is('input')) {
+            $validationBtn.val(originalBtnText);
+        } else {
+            $validationBtn.html(originalBtnText);
+        }
+        $validationBtn.prop('disabled', false);
+        entry.validating = false;
+    }
 
     settings.forEach(function (setting) {
         const mappingId = parseInt(setting.id, 10) || 0;
@@ -626,19 +777,41 @@ jQuery(function ($) {
             formSettingData = [];
         }
 
-        const $form = resolveForm$(form_id, form_class);
-        if (!$form.length) {
-            wpSpanCheckerToast.fire({
-                icon: 'error',
-                title: t('formNotFound', 'Form not found. Check Form ID / class in WP Span Checker settings.'),
-            });
+        const hasFormSelector = String(form_id || '').trim() !== '' || String(form_class || '').trim() !== '';
+        const hasSubmitSelector = String(submit_selector || '').trim() !== '';
+        
+        let $form;
+        let submitButton;
+        
+        if (hasFormSelector) {
+            $form = resolveForm$(form_id, form_class);
+            if (!$form.length) {
+                console.log('[WP Span Checker] Form not found for selector:', form_id || form_class);
+                return;
+            }
+            console.log('[WP Span Checker] Form found by form selector for mapping ID:', mappingId);
+            submitButton = resolveSubmit$($form, submit_selector);
+        } else if (hasSubmitSelector) {
+            const $submitBtn = $(submit_selector).first();
+            if (!$submitBtn.length) {
+                console.log('[WP Span Checker] Submit button not found for selector:', submit_selector);
+                return;
+            }
+            $form = $submitBtn.closest('form');
+            if (!$form.length) {
+                console.log('[WP Span Checker] No form found containing submit button:', submit_selector);
+                return;
+            }
+            console.log('[WP Span Checker] Form found by submit selector for mapping ID:', mappingId);
+            submitButton = $submitBtn;
+        } else {
+            console.log('[WP Span Checker] No form selector or submit selector configured for mapping ID:', mappingId);
             return;
         }
 
-        const submitButton = resolveSubmit$($form, submit_selector);
-
         const formEl = $form.get(0);
         if (!formEl || formEl.tagName !== 'FORM') {
+            console.log('[WP Span Checker] Element is not a FORM, skipping');
             return;
         }
 
@@ -646,6 +819,11 @@ jQuery(function ($) {
             mappingId: mappingId,
             formSettingData: formSettingData,
         });
+
+        const entry = wscGetFormGuardEntry(formEl);
+
+        console.log('[WP Span Checker] Setting up validation button for form');
+        wscSetupValidationButton($form, submitButton, entry);
 
         formSettingData.forEach(function (formSetting, fieldIndex) {
             const eventType = formSetting.event;
@@ -684,8 +862,6 @@ jQuery(function ($) {
                 bindUsernameLiveCheck($field, submitButton, mappingId, fieldIndex);
             }
         });
-
-        /* Submit validation runs via document capture listener (see wscInstallDocumentSubmitCapture). */
     });
 
     /* Optional demo hooks: only bind when matching markup exists */

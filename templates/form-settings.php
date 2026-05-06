@@ -113,10 +113,9 @@ $wsc_presets = wp_span_checker_page_target_presets();
 				<span class="wsc-form-error-message wsc-form-error"></span>
 			</div>
 			<div class="wsc-form-group">
-				<label for="form_selector" class="wsc-form-label"><?php esc_html_e( 'Form id/class', 'wp-span-checker' ); ?></label>
+				<label for="form_selector" class="wsc-form-label"><?php esc_html_e( 'Form id/class (optional)', 'wp-span-checker' ); ?></label>
 				<input class="wsc-input wsc-input-primary" type="text" name="form_selector" id="form_selector" value=""
-					placeholder="#contact-form.contact-us"
-					required/>
+					placeholder="#contact-form.contact-us"/>
 				<span class="wsc-form-info-message wsc-text-info"><?php esc_html_e( 'CSS selector for the form element, e.g. #contactus.contact-us (ID plus classes). Old mappings that used separate Form ID + classes still load here.', 'wp-span-checker' ); ?></span>
 				<input type="hidden" name="form_id" id="form_id" value="">
 				<input type="hidden" name="form_class" id="form_class" value="">

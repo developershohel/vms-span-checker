@@ -31,14 +31,14 @@ jQuery(document).ready(function ($) {
 
     function wscNormalizePageTargetsRaw(raw) {
         if (raw === null || raw === undefined) {
-            return ['all-pages'];
+            return [];
         }
         if (Array.isArray(raw)) {
             return raw.map(String).filter(Boolean);
         }
         const s = String(raw).trim();
         if (!s) {
-            return ['all-pages'];
+            return [];
         }
         try {
             const d = JSON.parse(s);
@@ -77,7 +77,7 @@ jQuery(document).ready(function ($) {
                 uniq.push(x);
             }
         });
-        return uniq.length ? uniq : ['all-pages'];
+        return uniq;
     }
 
     function wscApplyPageTargetsFromRaw(raw) {
@@ -97,17 +97,19 @@ jQuery(document).ready(function ($) {
                 $('#wsc-target-pages option[value="' + token + '"], #wsc-target-posts option[value="' + token + '"]').prop('selected', true);
             }
         });
-        if (!list.length) {
-            $('.wsc-page-target[value="all-pages"]').prop('checked', true);
-        }
     }
 
     function wscResetPageTargetsForNew() {
-        wscApplyPageTargetsFromRaw(['all-pages']);
+        $('.wsc-page-target').prop('checked', false);
+        $('#wsc-target-pages option:selected').prop('selected', false);
+        $('#wsc-target-posts option:selected').prop('selected', false);
     }
 
     function wscFormatPageTargetsCell(raw) {
         const list = wscNormalizePageTargetsRaw(raw);
+        if (!list.length) {
+            return '—';
+        }
         const parts = list.slice(0, 4).map(function (t) {
             if (pageTargetLabels[t]) {
                 return pageTargetLabels[t];
@@ -359,8 +361,8 @@ jQuery(document).ready(function ($) {
             const n = parseInt(v, 10);
             return Number.isFinite(n) ? n : def;
         };
-        const req = num(d.isRequired, 0);
-        const val = num(d.isValidate, 0);
+        const req = num(d.isRequired ?? d.is_required, 0);
+        const val = num(d.isValidate ?? d.is_validate, 0);
         let wr = api.wr ? 1 : 0;
         let vt = api.vt ? 1 : 0;
         if (field === 'email') {
@@ -371,24 +373,29 @@ jQuery(document).ready(function ($) {
                 vt = 0;
             }
         }
-        let tun = num(d.check_username_exists, 0);
-        if (field === 'username' && !Object.prototype.hasOwnProperty.call(d, 'check_username_exists')) {
+        let tun = num(d.check_username_exists ?? d.checkUsernameExists, 0);
+        if (field === 'username' && !Object.prototype.hasOwnProperty.call(d, 'check_username_exists') && !Object.prototype.hasOwnProperty.call(d, 'checkUsernameExists')) {
             tun = 1;
         }
-        const tlinks = Object.prototype.hasOwnProperty.call(d, 'textarea_allow_links')
-            ? (parseInt(d.textarea_allow_links, 10) || 0)
+        const hasTextareaLinks = Object.prototype.hasOwnProperty.call(d, 'textarea_allow_links') || Object.prototype.hasOwnProperty.call(d, 'textareaAllowLinks');
+        const tlinks = hasTextareaLinks
+            ? (parseInt(d.textarea_allow_links ?? d.textareaAllowLinks, 10) || 0)
             : 1;
-        const tai = num(d.textarea_ai_spam, 0);
-        const textUrlsAllow = Object.prototype.hasOwnProperty.call(d, 'text_allow_urls')
-            ? (parseInt(d.text_allow_urls, 10) !== 0)
+        const tai = num(d.textarea_ai_spam ?? d.textareaAiSpam, 0);
+        const hasTextUrls = Object.prototype.hasOwnProperty.call(d, 'text_allow_urls') || Object.prototype.hasOwnProperty.call(d, 'textAllowUrls');
+        const textUrlsAllow = hasTextUrls
+            ? (parseInt(d.text_allow_urls ?? d.textAllowUrls, 10) !== 0)
             : true;
         const regexVal = wscEsc(d.regex || '');
         const selEv = d.event || 'change';
 
         function rad(name, val, cur) {
             const lab = val ? wscT('enable', 'Enable') : wscT('disable', 'Disable');
-            return '<span class="wsc-switch-option' + (cur === val ? ' wsc-check' : '') + '">' +
-                '<input type="radio" name="' + name + '" value="' + val + '"' + (cur === val ? ' checked="checked"' : '') + '>' +
+            const numVal = parseInt(val, 10) || 0;
+            const numCur = parseInt(cur, 10) || 0;
+            const isChecked = numCur === numVal;
+            return '<span class="wsc-switch-option' + (isChecked ? ' wsc-check' : '') + '">' +
+                '<input type="radio" name="' + name + '" value="' + numVal + '"' + (isChecked ? ' checked="checked"' : '') + '>' +
                 '<label>' + lab + '</label></span>';
         }
 
@@ -424,11 +431,11 @@ jQuery(document).ready(function ($) {
             '<legend class="wsc-form-label">' + wscT('validationRulesLegend', 'Validation rules') + '</legend>' +
             '<div class="wsc-form-attr wsc-mt-2">' +
             '<p class="wsc-form-label">' + wscT('requiredField', 'Required field') + '</p>' +
-            '<div class="wsc-switch-control">' + rad('is_required_f_' + ix, 1, req) + rad('is_required_f_' + ix, 0, req ? 0 : 1) + '</div>' +
+            '<div class="wsc-switch-control">' + rad('is_required_f_' + ix, 1, req) + rad('is_required_f_' + ix, 0, req) + '</div>' +
             '<span class="wsc-form-info-message wsc-text-info">' + wscT('requiredFieldHint', 'Mark the field as required in the browser.') + '</span></div>' +
             '<div class="wsc-form-attr wsc-mt-4">' +
             '<p class="wsc-form-label">' + wscT('requireValidation', 'Require validation') + '</p>' +
-            '<div class="wsc-switch-control">' + rad('is_validate_f_' + ix, 1, val) + rad('is_validate_f_' + ix, 0, val ? 0 : 1) + '</div>' +
+            '<div class="wsc-switch-control">' + rad('is_validate_f_' + ix, 1, val) + rad('is_validate_f_' + ix, 0, val) + '</div>' +
             '<span class="wsc-form-info-message wsc-text-info">' + wscT('requireValidationHint', 'Run server-side validation for this field.') + '</span></div>' +
             '<label class="wsc-form-label wsc-mt-4" for="field-regex-' + ix + '">' + wscT('customRegex', 'Custom regex (delimited)') + '</label>' +
             '<div class="wsc-flex wsc-gap-2 wsc-items-center wsc-flex-wrap">' +
@@ -441,26 +448,26 @@ jQuery(document).ready(function ($) {
             '<p class="wsc-form-info-message wsc-text-info wsc-mb-4">' + wscT('securityMethodsIntro', 'Email and URL rows can enable Web Risk and VirusTotal (Google Web Risk defaults ON when you pick Email). Username rows can enable live “already registered” checks. Text adds URL-in-value rules; textarea adds links + AI spam screening.') + '</p>' +
             '<div class="wsc-form-attr wsc-mt-2 wsc-fg-opt-email">' +
             '<p class="wsc-form-label">' + wscT('googleWebRisk', 'Google Web Risk') + '</p>' +
-            '<div class="wsc-switch-control">' + rad('fg_webrisk_' + ix, 1, wr) + rad('fg_webrisk_' + ix, 0, wr ? 0 : 1) + '</div>' +
+            '<div class="wsc-switch-control">' + rad('fg_webrisk_' + ix, 1, wr) + rad('fg_webrisk_' + ix, 0, wr) + '</div>' +
             '<span class="wsc-form-info-message wsc-text-info">' + wscT('webriskEmailUrlOnly', 'Used when “Form field” is Email or URL and “Require validation” is enabled for domain checks.') + '</span></div>' +
             '<div class="wsc-form-attr wsc-mt-4 wsc-fg-opt-email">' +
             '<p class="wsc-form-label">' + wscT('virusTotal', 'VirusTotal scanner') + '</p>' +
-            '<div class="wsc-switch-control">' + rad('fg_vt_' + ix, 1, vt) + rad('fg_vt_' + ix, 0, vt ? 0 : 1) + '</div>' +
+            '<div class="wsc-switch-control">' + rad('fg_vt_' + ix, 1, vt) + rad('fg_vt_' + ix, 0, vt) + '</div>' +
             '<span class="wsc-form-info-message wsc-text-info">' + wscT('vtEmailUrlOnly', 'Same as Web Risk: applies together with Email or URL domain validation.') + '</span></div>' +
             '<div class="wsc-form-attr wsc-mt-4 wsc-fg-opt-username">' +
             '<p class="wsc-form-label">' + wscT('usernameTakenCheck', 'Reject if username exists') + '</p>' +
-            '<div class="wsc-switch-control">' + rad('fg_userexists_' + ix, 1, tun) + rad('fg_userexists_' + ix, 0, tun ? 0 : 1) + '</div>' +
+            '<div class="wsc-switch-control">' + rad('fg_userexists_' + ix, 1, tun) + rad('fg_userexists_' + ix, 0, tun) + '</div>' +
             '<span class="wsc-form-info-message wsc-text-info">' + wscT('usernameTakenHint', 'Maps to a normal text/username input. When enabled, checks WordPress on change/input (debounced) and again on submit.') + '</span></div>' +
             '<div class="wsc-form-attr wsc-mt-4 wsc-fg-opt-text">' +
             '<p class="wsc-form-label">' + wscT('textAllowUrls', 'Allow URLs in value') + '</p>' +
-            '<div class="wsc-switch-control">' + rad('fg_texturls_' + ix, 1, textUrlsAllow ? 1 : 0) + rad('fg_texturls_' + ix, 0, textUrlsAllow ? 0 : 1) + '</div>' +
+            '<div class="wsc-switch-control">' + rad('fg_texturls_' + ix, 1, textUrlsAllow ? 1 : 0) + rad('fg_texturls_' + ix, 0, textUrlsAllow ? 1 : 0) + '</div>' +
             '<span class="wsc-form-info-message wsc-text-info">' + wscT('textAllowUrlsHint', 'Turn off to reject http(s) URLs inside this single-line field.') + '</span></div>' +
             '<div class="wsc-form-attr wsc-mt-4 wsc-fg-opt-textarea">' +
             '<p class="wsc-form-label">' + wscT('textareaAllowLinks', 'Allow links in message') + '</p>' +
-            '<div class="wsc-switch-control">' + rad('fg_tlinks_' + ix, 1, tlinks) + rad('fg_tlinks_' + ix, 0, tlinks ? 0 : 1) + '</div></div>' +
+            '<div class="wsc-switch-control">' + rad('fg_tlinks_' + ix, 1, tlinks) + rad('fg_tlinks_' + ix, 0, tlinks) + '</div></div>' +
             '<div class="wsc-form-attr wsc-mt-4 wsc-fg-opt-textarea">' +
             '<p class="wsc-form-label">' + wscT('textareaAiSpam', 'AI spam check') + '</p>' +
-            '<div class="wsc-switch-control">' + rad('fg_tai_' + ix, 1, tai) + rad('fg_tai_' + ix, 0, tai ? 0 : 1) + '</div>' +
+            '<div class="wsc-switch-control">' + rad('fg_tai_' + ix, 1, tai) + rad('fg_tai_' + ix, 0, tai) + '</div>' +
             '<span class="wsc-form-info-message wsc-text-info">' + wscT('textareaAiSpamHint', 'Uses AI settings from WP Span Checker → AI. Runs on the server when validation is enabled.') + '</span></div>' +
             '<div class="wsc-form-attr wsc-mt-4 wsc-fg-opt-other">' +
             '<p class="wsc-form-info-message wsc-text-info wsc-mb-0">' + wscT('securityMethodsOtherHint', 'Extra reputation toggles appear for Email/URL. Use “Validation rules” above for required / server validation / regex.') + '</p></div>' +
@@ -600,24 +607,28 @@ jQuery(document).ready(function ($) {
         columns: [
             {
                 data: 'id',
+                responsivePriority: 2,
                 render: function (data) {
-                    return data ?? ''; // If null/undefined, return empty string
+                    return data ?? '';
                 }
             },
             {
                 data: 'form_type',
+                responsivePriority: 3,
                 render: function (data) {
                     return data ?? '';
                 }
             },
             {
                 data: 'page_id',
+                responsivePriority: 5,
                 render: function (data) {
                     return wscFormatPageTargetsCell(data);
                 }
             },
             {
                 data: null,
+                responsivePriority: 4,
                 render: function (data, type, row) {
                     const fid = String(row.form_id || '').trim();
                     const fcls = String(row.form_class || '').trim();
@@ -641,12 +652,14 @@ jQuery(document).ready(function ($) {
             },
             {
                 data: 'submit_selector',
+                responsivePriority: 6,
                 render: function (data) {
                     return data ? String(data) : '—';
                 }
             },
             {
                 data: 'settings',
+                responsivePriority: 7,
                 render: function (data) {
                     if (!data) return '';
                     let formFields;
@@ -697,22 +710,33 @@ jQuery(document).ready(function ($) {
                 }
             },
             {
-                data: 'is_webrisk'
+                data: 'is_webrisk',
+                responsivePriority: 8
             },
             {
-                data: 'is_virustotal'
+                data: 'is_virustotal',
+                responsivePriority: 9
             },
             {
                 data: null,
+                responsivePriority: 1,
+                className: 'wsc-actions-cell',
                 render: function (data, type, row) {
                     const rowId = row.id ?? '';
                     const jsonData = JSON.stringify(row) ?? '{}';
-                    return `<button class="wsc-btn wsc-btn-primary edit-form-setting" data-json='${jsonData}' data-id="${rowId}">${wscT('edit', 'Edit')}</button> 
-                    <button class="wsc-btn wsc-btn-danger delete-form-setting" data-id="${rowId}">${wscT('delete', 'Delete')}</button>`;
+                    return '<div class="wsc-action-buttons">' +
+                        '<button class="wsc-btn wsc-btn-primary edit-form-setting" data-json=\'' + jsonData.replace(/'/g, '&#39;') + '\' data-id="' + rowId + '">' + wscT('edit', 'Edit') + '</button>' +
+                        '<button class="wsc-btn wsc-btn-danger delete-form-setting" data-id="' + rowId + '">' + wscT('delete', 'Delete') + '</button>' +
+                        '</div>';
                 }
             }
         ],
-        responsive: true,   // Keep responsive enabled
+        responsive: {
+            details: {
+                type: 'column',
+                target: 'tr'
+            }
+        },
         paging: false,      // Disable pagination
         searching: false,   // Disable search box
         ordering: false,    // Disable column sorting
@@ -798,10 +822,34 @@ jQuery(document).ready(function ($) {
         const saveButton = $('#saveFormSetting');
         const formError = $('#wsc-form-error-message');
         const formType = $('#form_type').val();
-        const pageId = JSON.stringify(wscCollectPageTargetsArray());
+        const pageTargets = wscCollectPageTargetsArray();
+        const pageId = JSON.stringify(pageTargets);
         const combinedSel = String($('#form_selector').val() || '').trim();
         const submitSel = String($('#submit_selector').val() || '').trim();
         const formSettings = [];
+
+        const hasPageTarget = pageTargets.length > 0 && !(pageTargets.length === 1 && pageTargets[0] === 'all-pages' && !$('.wsc-page-target[value="all-pages"]').is(':checked'));
+        const hasAnySelection = $('.wsc-page-target:checked').length > 0 ||
+            $('#wsc-target-pages option:selected').length > 0 ||
+            $('#wsc-target-posts option:selected').length > 0;
+
+        if (!hasAnySelection) {
+            formError.removeClass('wsc-text-success');
+            formError.addClass('wsc-form-error');
+            formError.html(wscT('locationRequired', 'Please select at least one location (Common locations, Specific pages, or Specific posts).'));
+            wscErrToast(wscT('locationRequired', 'Please select at least one location.'));
+            return;
+        }
+
+        const hasFormSelector = combinedSel !== '';
+        const hasSubmitSelector = submitSel !== '';
+        if (!hasFormSelector && !hasSubmitSelector) {
+            formError.removeClass('wsc-text-success');
+            formError.addClass('wsc-form-error');
+            formError.html(wscT('formSelectorRequired', 'Please enter a Form id/class or Submit button selector to identify the form.'));
+            wscErrToast(wscT('formSelectorRequired', 'Form id/class or Submit selector is required.'));
+            return;
+        }
 
         $('#wsc-form-fields .wsc-form-field-row').each(function () {
             const $row = $(this);

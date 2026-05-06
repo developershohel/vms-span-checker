@@ -555,6 +555,10 @@ function wp_span_checker_get_js_i18n() {
 		'examplePrefix'            => __( 'Example:', 'wp-span-checker' ),
 		'copyFailed'               => __( 'Could not copy.', 'wp-span-checker' ),
 		'requestFailed'            => __( 'Request failed', 'wp-span-checker' ),
+		'validating'               => __( 'Validating...', 'wp-span-checker' ),
+		'submitting'               => __( 'Submitting...', 'wp-span-checker' ),
+		'validationPassed'         => __( 'Validation passed', 'wp-span-checker' ),
+		'submit'                   => __( 'Submit', 'wp-span-checker' ),
 		'fieldType'                => __( 'Field type', 'wp-span-checker' ),
 		'fieldId'                  => __( 'Field ID', 'wp-span-checker' ),
 		'fieldClass'               => __( 'Field class', 'wp-span-checker' ),
@@ -614,7 +618,8 @@ function wp_span_checker_get_js_i18n() {
 		'linksAllowedShort'        => __( 'Links allowed', 'wp-span-checker' ),
 		'aiSpamShort'              => __( 'AI spam check', 'wp-span-checker' ),
 		'textUrlsInFieldShort'     => __( 'URLs in text field', 'wp-span-checker' ),
-		'textUrlsInFieldShort'     => __( 'URLs in text field', 'wp-span-checker' ),
 		'regexShort'               => __( 'Regex', 'wp-span-checker' ),
+		'locationRequired'         => __( 'Please select at least one location (Common locations, Specific pages, or Specific posts).', 'wp-span-checker' ),
+		'formSelectorRequired'     => __( 'Please enter a Form id/class or Submit button selector to identify the form.', 'wp-span-checker' ),
 	);
 }

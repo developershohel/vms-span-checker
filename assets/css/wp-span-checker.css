@@ -2133,6 +2133,31 @@ body.wsc-plugin-admin .wsc-switch-control .wsc-switch-option.wsc-check {
   text-align: center;
 }
 
+/* Action buttons inline */
+.wsc-action-buttons {
+  display: inline-flex !important;
+  flex-wrap: nowrap !important;
+  gap: 0.5rem !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.wsc-action-buttons .wsc-btn {
+  white-space: nowrap !important;
+  padding: 0.25rem 0.5rem !important;
+  font-size: 0.875rem !important;
+}
+
+/* Keep actions column always visible */
+#form-setting-table .wsc-actions-cell {
+  white-space: nowrap !important;
+}
+
+#form-setting-table td.wsc-actions-cell,
+#form-setting-table th:last-child {
+  min-width: 150px !important;
+}
+
 #domains-table_wrapper #domains-table_info, #domains-table_wrapper .dt-paging {
   margin-top: 25px;
 }

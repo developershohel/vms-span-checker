@@ -110,6 +110,7 @@ class Activator {
 		}
 
 		self::maybe_seed_disposable_domains();
+		self::maybe_seed_whitelist_domains();
 
 		update_option( 'wp_span_checker_db_version', WP_SPAN_CHECKER_VERSION );
 		update_option( 'wp_span_checker_schema_version', '5' );
@@ -260,6 +261,48 @@ class Activator {
 
 		foreach ( $domains as $domain ) {
 			$domain = sanitize_text_field( $domain );
+			if ( $domain === '' ) {
+				continue;
+			}
+			$wpdb->insert(
+				$table,
+				array( 'domain' => $domain ),
+				array( '%s' )
+			);
+		}
+	}
+
+	/**
+	 * Insert bundled whitelist email provider domains when the table is empty.
+	 */
+	private static function maybe_seed_whitelist_domains(): void {
+		global $wpdb;
+
+		$table = $wpdb->prefix . 'span_whitelist_domains';
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name uses trusted prefix.
+		$count = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table}" );
+		if ( $count > 0 ) {
+			return;
+		}
+
+		$file = WP_SPAN_CHECKER_DIR . 'includes/data/whitelist.sql';
+		if ( ! is_readable( $file ) ) {
+			return;
+		}
+
+		$sql_content = file_get_contents( $file );
+		if ( empty( $sql_content ) ) {
+			return;
+		}
+
+		preg_match_all( "/VALUES\s*\(\s*'([^']+)'\s*\)/i", $sql_content, $matches );
+		if ( empty( $matches[1] ) ) {
+			return;
+		}
+
+		$domains = array_unique( $matches[1] );
+		foreach ( $domains as $domain ) {
+			$domain = sanitize_text_field( strtolower( trim( $domain ) ) );
 			if ( $domain === '' ) {
 				continue;
 			}
