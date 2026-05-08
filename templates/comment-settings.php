@@ -386,7 +386,7 @@ $caps_val = isset( $cfg['comment_max_caps_ratio'] ) ? (float) $cfg['comment_max_
 					<th scope="row"><label for="comment_site_ban_strikes"><?php esc_html_e( 'Strikes before permanent restriction', 'wp-span-checker' ); ?></label></th>
 					<td>
 						<input type="number" name="comment_site_ban_strikes" id="comment_site_ban_strikes" value="<?php echo esc_attr( (string) (int) ( $cfg['comment_site_ban_strikes'] ?? 10 ) ); ?>" min="2" max="500" class="small-text">
-						<p class="description"><?php esc_html_e( 'Must be at least the “max strikes before block” value. Shared IPs can affect guests—unblock from Blocked commenters if needed.', 'wp-span-checker' ); ?></p>
+						<p class="description"><?php esc_html_e( 'Must be at least the “max strikes before block” value. Shared IPs can affect guests—unblock from Blocked Users if needed.', 'wp-span-checker' ); ?></p>
 					</td>
 				</tr>
 				<tr>

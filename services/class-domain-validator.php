@@ -78,11 +78,19 @@ class Domain_Validator {
 	public function validate_domain( $domain, $type = 'registration', $ip = '', $settings = array() ) {
 		$domain = strtolower( trim( $domain ) );
 
-		$skip_https = ! empty( $settings['skip_https'] );
+		$skip_https  = ! empty( $settings['skip_https'] );
+		$use_webrisk = ! empty( $settings['is_webrisk'] );
+		$use_vt      = ! empty( $settings['is_virustotal'] );
+
+		// If Web Risk or VirusTotal is enabled, DNS and MX become mandatory prerequisites
+		$needs_api_checks = $use_webrisk || $use_vt;
 
 		$require_dns = array_key_exists( 'require_dns_live', $settings )
 			? ! empty( $settings['require_dns_live'] )
 			: true;
+
+		// Force DNS check if API checks are enabled
+		$require_dns = $require_dns || $needs_api_checks;
 
 		$whitelist_domains = array_column( $this->whitelist->get_all(), 'domain' );
 		if ( in_array( $domain, $whitelist_domains, true ) ) {
@@ -94,18 +102,23 @@ class Domain_Validator {
 			return $this->log_and_return( $type, $ip, $domain, 'failed', __( 'Disposable email or domain detected.', 'wp-span-checker' ), false );
 		}
 
-		if ( $require_dns && ! $this->domain_dns_is_live( $domain ) ) {
-			return $this->log_and_return(
-				$type,
-				$ip,
-				$domain,
-				'failed',
-				__( 'This email domain does not resolve in DNS (no live mail or host records). Use an address at a real, active domain.', 'wp-span-checker' ),
-				false
-			);
+		// Check DNS A record (domain exists) - mandatory if API checks enabled OR if explicitly required
+		if ( $require_dns ) {
+			$has_a_record = wp_span_checker_check_domain_dns( $domain );
+			if ( ! $has_a_record ) {
+				return $this->log_and_return(
+					$type,
+					$ip,
+					$domain,
+					'failed',
+					__( 'This email domain does not exist (no DNS A record found). Use an address at a real, active domain.', 'wp-span-checker' ),
+					false
+				);
+			}
 		}
 
-		if ( ! empty( $settings['require_mx'] ) ) {
+		// Check MX record - mandatory if API checks enabled OR if explicitly required
+		if ( ! empty( $settings['require_mx'] ) || $needs_api_checks ) {
 			$mx_ok = $this->domain_has_inbound_mail_dns( $domain, ! empty( $settings['mx_allow_a_fallback'] ) );
 			if ( ! $mx_ok ) {
 				return $this->log_and_return(
@@ -113,7 +126,7 @@ class Domain_Validator {
 					$ip,
 					$domain,
 					'failed',
-					__( 'Email domain has no MX (or acceptable A) DNS records — mail may not be deliverable.', 'wp-span-checker' ),
+					__( 'Email domain cannot receive emails (no MX record found). Use an address at a domain that can receive mail.', 'wp-span-checker' ),
 					false
 				);
 			}
@@ -126,21 +139,15 @@ class Domain_Validator {
 			}
 		}
 
-		$use_webrisk = ! empty( $settings['is_webrisk'] );
-		$use_vt      = ! empty( $settings['is_virustotal'] );
-
+		// Run API checks only after DNS and MX validation passed
 		if ( $use_webrisk ) {
 			$webrisk_result = $this->webrisk->check_url( 'https://' . $domain );
 			if ( ! $webrisk_result['status'] ) {
 				return $this->log_and_return( $type, $ip, $domain, 'failed', $webrisk_result['message'], false );
 			}
-			if ( $use_vt ) {
-				$vt_result = $this->virustotal->check_domain( $domain );
-				if ( ! $vt_result['status'] ) {
-					return $this->log_and_return( $type, $ip, $domain, 'failed', $vt_result['message'], false );
-				}
-			}
-		} elseif ( $use_vt ) {
+		}
+
+		if ( $use_vt ) {
 			$vt_result = $this->virustotal->check_domain( $domain );
 			if ( ! $vt_result['status'] ) {
 				return $this->log_and_return( $type, $ip, $domain, 'failed', $vt_result['message'], false );

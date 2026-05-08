@@ -43,6 +43,8 @@ class Activator {
 				form_id varchar(191) NOT NULL DEFAULT '',
 				form_class varchar(500) NOT NULL DEFAULT '',
 				submit_selector varchar(500) NOT NULL DEFAULT '',
+				auto_validation tinyint(1) NOT NULL DEFAULT 1,
+				auto_rules longtext NULL,
 				settings longtext NULL,
 				is_webrisk tinyint(1) NOT NULL DEFAULT 0,
 				is_virustotal tinyint(1) NOT NULL DEFAULT 0,
@@ -91,17 +93,23 @@ class Activator {
 				id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 				actor_key varchar(191) NOT NULL,
 				actor_label varchar(191) NOT NULL DEFAULT '',
+				user_id bigint(20) unsigned NULL,
 				strikes int(10) unsigned NOT NULL DEFAULT 0,
 				blocked tinyint(1) NOT NULL DEFAULT 0,
 				site_banned tinyint(1) NOT NULL DEFAULT 0,
+				login_blocked tinyint(1) NOT NULL DEFAULT 0,
 				last_ip varchar(45) NOT NULL DEFAULT '',
 				blocked_at datetime NULL,
 				last_strike_at datetime NULL,
+				strikes_expire_at datetime NULL,
 				last_reason varchar(500) NOT NULL DEFAULT '',
+				strike_source varchar(50) NOT NULL DEFAULT 'comment',
 				PRIMARY KEY  (id),
 				UNIQUE KEY actor_key (actor_key),
 				KEY blocked (blocked),
-				KEY site_banned_ip (site_banned, last_ip(40))
+				KEY site_banned_ip (site_banned, last_ip(40)),
+				KEY user_id (user_id),
+				KEY login_blocked (login_blocked)
 			) $charset_collate;",
 		);
 
@@ -113,7 +121,7 @@ class Activator {
 		self::maybe_seed_whitelist_domains();
 
 		update_option( 'wp_span_checker_db_version', WP_SPAN_CHECKER_VERSION );
-		update_option( 'wp_span_checker_schema_version', '5' );
+		update_option( 'wp_span_checker_schema_version', '7' );
 	}
 
 	/**
@@ -189,6 +197,89 @@ class Activator {
 				}
 			}
 			update_option( 'wp_span_checker_schema_version', '6' );
+			$current = '6';
+		}
+
+		if ( version_compare( $current, '7', '<' ) ) {
+			$table = $wpdb->prefix . 'span_checker_form_settings';
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name uses trusted prefix.
+			$exists = $wpdb->get_var( "SHOW TABLES LIKE '{$table}'" );
+			if ( $exists ) {
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$has_auto = $wpdb->get_results( "SHOW COLUMNS FROM {$table} LIKE 'auto_validation'" );
+				if ( empty( $has_auto ) ) {
+					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+					$wpdb->query( "ALTER TABLE {$table} ADD COLUMN auto_validation tinyint(1) NOT NULL DEFAULT 1 AFTER submit_selector" );
+				}
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$has_rules = $wpdb->get_results( "SHOW COLUMNS FROM {$table} LIKE 'auto_rules'" );
+				if ( empty( $has_rules ) ) {
+					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+					$wpdb->query( "ALTER TABLE {$table} ADD COLUMN auto_rules longtext NULL AFTER auto_validation" );
+				}
+			}
+			update_option( 'wp_span_checker_schema_version', '7' );
+			$current = '7';
+		}
+
+		if ( version_compare( $current, '8', '<' ) ) {
+			$table = $wpdb->prefix . 'span_checker_form_settings';
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name uses trusted prefix.
+			$exists = $wpdb->get_var( "SHOW TABLES LIKE '{$table}'" );
+			if ( $exists ) {
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$has_col = $wpdb->get_results( "SHOW COLUMNS FROM {$table} LIKE 'enable_recaptcha'" );
+				if ( empty( $has_col ) ) {
+					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+					$wpdb->query( "ALTER TABLE {$table} ADD COLUMN enable_recaptcha tinyint(1) NOT NULL DEFAULT 0 AFTER auto_rules" );
+				}
+			}
+			update_option( 'wp_span_checker_schema_version', '8' );
+			$current = '8';
+		}
+
+		if ( version_compare( $current, '9', '<' ) ) {
+			$table = $wpdb->prefix . 'span_checker_comment_enforcement';
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name uses trusted prefix.
+			$exists = $wpdb->get_var( "SHOW TABLES LIKE '{$table}'" );
+			if ( $exists ) {
+				// Add user_id column for logged-in users
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$has_user_id = $wpdb->get_results( "SHOW COLUMNS FROM {$table} LIKE 'user_id'" );
+				if ( empty( $has_user_id ) ) {
+					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+					$wpdb->query( "ALTER TABLE {$table} ADD COLUMN user_id bigint(20) unsigned NULL AFTER actor_label" );
+				}
+				// Add login_blocked column
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$has_login_blocked = $wpdb->get_results( "SHOW COLUMNS FROM {$table} LIKE 'login_blocked'" );
+				if ( empty( $has_login_blocked ) ) {
+					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+					$wpdb->query( "ALTER TABLE {$table} ADD COLUMN login_blocked tinyint(1) NOT NULL DEFAULT 0 AFTER site_banned" );
+				}
+				// Add strike_source column to track where strikes came from
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$has_strike_source = $wpdb->get_results( "SHOW COLUMNS FROM {$table} LIKE 'strike_source'" );
+				if ( empty( $has_strike_source ) ) {
+					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+					$wpdb->query( "ALTER TABLE {$table} ADD COLUMN strike_source varchar(50) NOT NULL DEFAULT 'comment' AFTER last_reason" );
+				}
+				// Add strikes_expire_at column for auto-expiry
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$has_expire = $wpdb->get_results( "SHOW COLUMNS FROM {$table} LIKE 'strikes_expire_at'" );
+				if ( empty( $has_expire ) ) {
+					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+					$wpdb->query( "ALTER TABLE {$table} ADD COLUMN strikes_expire_at datetime NULL AFTER last_strike_at" );
+				}
+				// Add index on user_id
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$has_idx = $wpdb->get_results( "SHOW INDEX FROM {$table} WHERE Key_name = 'user_id'" );
+				if ( empty( $has_idx ) ) {
+					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+					$wpdb->query( "ALTER TABLE {$table} ADD INDEX user_id (user_id)" );
+				}
+			}
+			update_option( 'wp_span_checker_schema_version', '9' );
 		}
 	}
 
@@ -218,17 +309,23 @@ class Activator {
 				id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 				actor_key varchar(191) NOT NULL,
 				actor_label varchar(191) NOT NULL DEFAULT '',
+				user_id bigint(20) unsigned NULL,
 				strikes int(10) unsigned NOT NULL DEFAULT 0,
 				blocked tinyint(1) NOT NULL DEFAULT 0,
 				site_banned tinyint(1) NOT NULL DEFAULT 0,
+				login_blocked tinyint(1) NOT NULL DEFAULT 0,
 				last_ip varchar(45) NOT NULL DEFAULT '',
 				blocked_at datetime NULL,
 				last_strike_at datetime NULL,
+				strikes_expire_at datetime NULL,
 				last_reason varchar(500) NOT NULL DEFAULT '',
+				strike_source varchar(50) NOT NULL DEFAULT 'comment',
 				PRIMARY KEY  (id),
 				UNIQUE KEY actor_key (actor_key),
 				KEY blocked (blocked),
-				KEY site_banned_ip (site_banned, last_ip(40))
+				KEY site_banned_ip (site_banned, last_ip(40)),
+				KEY user_id (user_id),
+				KEY login_blocked (login_blocked)
 			) $charset_collate;",
 		);
 

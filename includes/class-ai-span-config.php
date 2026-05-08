@@ -26,28 +26,58 @@ class AI_Span_Config {
 	public static function defaults(): array {
 		return array(
 			'ai_enabled'                 => false,
-			'provider'                   => 'openai',
+			'provider'                   => 'gemini',
 			'openai_api_key'             => '',
 			'openai_model'               => 'gpt-4o-mini',
 			'anthropic_api_key'          => '',
-			'anthropic_model'            => 'claude-3-5-haiku-20241022',
+			'anthropic_model'            => 'claude-3-5-haiku-latest',
 			'gemini_api_key'             => '',
-			'gemini_model'               => 'gemini-1.5-flash',
+			'gemini_model'               => 'gemini-2.0-flash-lite',
 			'deepseek_api_key'           => '',
 			'deepseek_model'             => 'deepseek-chat',
-			'bedrock_access_key'         => '',
-			'bedrock_secret_key'         => '',
-			'bedrock_region'             => 'us-east-1',
-			'bedrock_model'              => 'anthropic.claude-3-haiku-20240307-v1:0',
 			'system_prompt'              => self::default_system_prompt(),
 			'summary_post_types'         => array( 'post' ),
+			// Block User / Strike system settings
+			'block_user_enabled'            => true,
+			'block_user_max_strikes'        => 5,
+			'block_user_login_block'        => true,
+			'block_user_strike_expiry_days' => 30,
+			'block_user_auto_logout'        => true,
+			'block_user_exempt_admins'      => true,
 			'comment_max_strikes'           => 5,
 			'comment_contact_page_id'       => 0,
+			'contact_guard_enabled'         => false,
 			'contact_guard_page_id'         => 0,
+			'contact_guard_scope'           => 'site',
+			'contact_guard_page_ids'        => '',
+			'contact_guard_form_selector'   => '',
+			'contact_guard_check_dns'       => true,
+			'contact_guard_check_mx'        => true,
+			'contact_guard_check_disposable' => true,
+			'contact_guard_webrisk'         => false,
+			'contact_guard_virustotal'      => false,
+			'contact_guard_ai_spam'         => false,
+			'contact_guard_recaptcha'       => false,
 			'subscribe_guard_enabled'       => false,
 			'subscribe_guard_scope'         => 'site',
 			'subscribe_guard_page_ids'      => '',
-			'subscribe_guard_form_id'       => '',
+			'subscribe_guard_form_selector' => '',
+			'subscribe_guard_check_dns'     => true,
+			'subscribe_guard_check_mx'      => true,
+			'subscribe_guard_check_disposable' => true,
+			'subscribe_guard_webrisk'       => false,
+			'subscribe_guard_virustotal'    => false,
+			'subscribe_guard_recaptcha'     => false,
+			// Login Guard
+			'login_guard_enabled'           => false,
+			'login_guard_recaptcha'         => false,
+			'login_guard_scope'             => 'default',
+			'login_guard_page_ids'          => '',
+			// Registration Guard Frontend
+			'registration_guard_frontend'        => false,
+			'registration_guard_recaptcha'       => false,
+			'registration_guard_scope'           => 'default',
+			'registration_guard_page_ids'        => '',
 			'comment_site_ban_enabled'      => false,
 			'comment_site_ban_strikes'      => 10,
 			'comment_allow_links'           => true,
@@ -116,9 +146,9 @@ class AI_Span_Config {
 		$d = self::defaults();
 
 		$c['ai_enabled']            = ! empty( $c['ai_enabled'] );
-		$c['provider']              = in_array( $c['provider'] ?? '', array( 'openai', 'anthropic', 'gemini', 'deepseek', 'bedrock' ), true )
+		$c['provider']              = in_array( $c['provider'] ?? '', array( 'openai', 'anthropic', 'gemini', 'deepseek' ), true )
 			? $c['provider']
-			: 'openai';
+			: 'gemini';
 		$c['openai_api_key']        = sanitize_text_field( (string) ( $c['openai_api_key'] ?? '' ) );
 		$c['openai_model']          = sanitize_text_field( (string) ( $c['openai_model'] ?? $d['openai_model'] ) );
 		$c['anthropic_api_key']     = sanitize_text_field( (string) ( $c['anthropic_api_key'] ?? '' ) );
@@ -127,19 +157,56 @@ class AI_Span_Config {
 		$c['gemini_model']          = sanitize_text_field( (string) ( $c['gemini_model'] ?? $d['gemini_model'] ) );
 		$c['deepseek_api_key']      = sanitize_text_field( (string) ( $c['deepseek_api_key'] ?? '' ) );
 		$c['deepseek_model']        = sanitize_text_field( (string) ( $c['deepseek_model'] ?? $d['deepseek_model'] ) );
-		$c['bedrock_access_key']    = sanitize_text_field( (string) ( $c['bedrock_access_key'] ?? '' ) );
-		$c['bedrock_secret_key']    = sanitize_text_field( (string) ( $c['bedrock_secret_key'] ?? '' ) );
-		$c['bedrock_region']        = preg_replace( '/[^a-z0-9\-]/', '', strtolower( (string) ( $c['bedrock_region'] ?? 'us-east-1' ) ) );
-		$c['bedrock_model']         = sanitize_text_field( (string) ( $c['bedrock_model'] ?? $d['bedrock_model'] ) );
 		$c['system_prompt']         = wp_kses_post( (string) ( $c['system_prompt'] ?? $d['system_prompt'] ) );
+
+		// Block User / Strike system
+		$c['block_user_enabled']            = ! empty( $c['block_user_enabled'] );
+		$c['block_user_max_strikes']        = max( 1, min( 100, absint( $c['block_user_max_strikes'] ?? 5 ) ) );
+		$c['block_user_login_block']        = ! empty( $c['block_user_login_block'] );
+		$c['block_user_strike_expiry_days'] = max( 0, min( 365, absint( $c['block_user_strike_expiry_days'] ?? 30 ) ) );
+		$c['block_user_auto_logout']        = ! empty( $c['block_user_auto_logout'] );
+		$c['block_user_exempt_admins']      = ! empty( $c['block_user_exempt_admins'] );
+
 		$c['comment_max_strikes']   = max( 1, min( 100, absint( $c['comment_max_strikes'] ?? 5 ) ) );
 		$c['comment_contact_page_id'] = absint( $c['comment_contact_page_id'] ?? 0 );
+		
+		// Contact Guard settings
+		$c['contact_guard_enabled'] = ! empty( $c['contact_guard_enabled'] );
 		$c['contact_guard_page_id'] = absint( $c['contact_guard_page_id'] ?? 0 );
+		$cg_scope = (string) ( $c['contact_guard_scope'] ?? 'site' );
+		$c['contact_guard_scope'] = in_array( $cg_scope, array( 'site', 'specific' ), true ) ? $cg_scope : 'site';
+		$c['contact_guard_page_ids'] = sanitize_text_field( (string) ( $c['contact_guard_page_ids'] ?? '' ) );
+		$c['contact_guard_form_selector'] = sanitize_text_field( (string) ( $c['contact_guard_form_selector'] ?? '' ) );
+		$c['contact_guard_check_dns'] = isset( $c['contact_guard_check_dns'] ) ? ! empty( $c['contact_guard_check_dns'] ) : true;
+		$c['contact_guard_check_mx'] = isset( $c['contact_guard_check_mx'] ) ? ! empty( $c['contact_guard_check_mx'] ) : true;
+		$c['contact_guard_check_disposable'] = isset( $c['contact_guard_check_disposable'] ) ? ! empty( $c['contact_guard_check_disposable'] ) : true;
+		$c['contact_guard_webrisk'] = ! empty( $c['contact_guard_webrisk'] );
+		$c['contact_guard_virustotal'] = ! empty( $c['contact_guard_virustotal'] );
+		$c['contact_guard_ai_spam'] = ! empty( $c['contact_guard_ai_spam'] );
+		$c['contact_guard_recaptcha'] = ! empty( $c['contact_guard_recaptcha'] );
 		$c['subscribe_guard_enabled'] = ! empty( $c['subscribe_guard_enabled'] );
 		$scope = (string) ( $c['subscribe_guard_scope'] ?? 'site' );
 		$c['subscribe_guard_scope'] = in_array( $scope, array( 'site', 'specific' ), true ) ? $scope : 'site';
 		$c['subscribe_guard_page_ids'] = sanitize_text_field( (string) ( $c['subscribe_guard_page_ids'] ?? '' ) );
-		$c['subscribe_guard_form_id']  = sanitize_text_field( (string) ( $c['subscribe_guard_form_id'] ?? '' ) );
+		$c['subscribe_guard_form_selector'] = sanitize_text_field( (string) ( $c['subscribe_guard_form_selector'] ?? '' ) );
+		$c['subscribe_guard_check_dns'] = isset( $c['subscribe_guard_check_dns'] ) ? ! empty( $c['subscribe_guard_check_dns'] ) : true;
+		$c['subscribe_guard_check_mx'] = isset( $c['subscribe_guard_check_mx'] ) ? ! empty( $c['subscribe_guard_check_mx'] ) : true;
+		$c['subscribe_guard_check_disposable'] = isset( $c['subscribe_guard_check_disposable'] ) ? ! empty( $c['subscribe_guard_check_disposable'] ) : true;
+		$c['subscribe_guard_webrisk'] = ! empty( $c['subscribe_guard_webrisk'] );
+		$c['subscribe_guard_virustotal'] = ! empty( $c['subscribe_guard_virustotal'] );
+		$c['subscribe_guard_recaptcha'] = ! empty( $c['subscribe_guard_recaptcha'] );
+		// Login Guard
+		$c['login_guard_enabled'] = ! empty( $c['login_guard_enabled'] );
+		$c['login_guard_recaptcha'] = ! empty( $c['login_guard_recaptcha'] );
+		$lg_scope = (string) ( $c['login_guard_scope'] ?? 'default' );
+		$c['login_guard_scope'] = in_array( $lg_scope, array( 'default', 'specific' ), true ) ? $lg_scope : 'default';
+		$c['login_guard_page_ids'] = sanitize_text_field( (string) ( $c['login_guard_page_ids'] ?? '' ) );
+		// Registration Guard Frontend
+		$c['registration_guard_frontend'] = ! empty( $c['registration_guard_frontend'] );
+		$c['registration_guard_recaptcha'] = ! empty( $c['registration_guard_recaptcha'] );
+		$rg_scope = (string) ( $c['registration_guard_scope'] ?? 'default' );
+		$c['registration_guard_scope'] = in_array( $rg_scope, array( 'default', 'specific' ), true ) ? $rg_scope : 'default';
+		$c['registration_guard_page_ids'] = sanitize_text_field( (string) ( $c['registration_guard_page_ids'] ?? '' ) );
 		$c['comment_site_ban_enabled'] = ! empty( $c['comment_site_ban_enabled'] );
 		$ban_at                      = max( 2, min( 500, absint( $c['comment_site_ban_strikes'] ?? 10 ) ) );
 		$c['comment_site_ban_strikes'] = max( $ban_at, $c['comment_max_strikes'] );

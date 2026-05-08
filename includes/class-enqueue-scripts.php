@@ -33,6 +33,9 @@ class Enqueue_Scripts {
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ), 1 );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ), 5 );
 		add_filter( 'admin_body_class', array( $this, 'admin_body_class' ) );
+		
+		// Login page scripts
+		add_action( 'login_enqueue_scripts', array( $this, 'enqueue_login_scripts' ), 5 );
 	}
 
 	/**
@@ -232,7 +235,11 @@ class Enqueue_Scripts {
 	 */
 	public function enqueue_admin_scripts( $hook_suffix = '' ) {
 		$hook_suffix = (string) $hook_suffix;
-		if ( false === strpos( $hook_suffix, 'wp-span-checker' ) ) {
+		$is_plugin_page = (
+			false !== strpos( $hook_suffix, 'wp-span-checker' )
+			|| false !== strpos( $hook_suffix, 'wsc-' )
+		);
+		if ( ! $is_plugin_page ) {
 			return;
 		}
 
@@ -302,6 +309,28 @@ class Enqueue_Scripts {
 			);
 		}
 
+		// Email templates page needs media uploader for logo selection.
+		$needs_media_uploader = ( false !== strpos( $hook_suffix, 'wsc-email-templates' ) );
+		if ( $needs_media_uploader ) {
+			wp_enqueue_media();
+		}
+
+		// Auth forms and email templates admin pages need nonce for AJAX.
+		$needs_nonce_only = (
+			false !== strpos( $hook_suffix, 'wsc-auth-forms' )
+			|| false !== strpos( $hook_suffix, 'wsc-email-templates' )
+		);
+		if ( $needs_nonce_only ) {
+			wp_localize_script(
+				'wsc-admin-toast',
+				'WPSpanChecker',
+				array(
+					'ajaxurl' => admin_url( 'admin-ajax.php' ),
+					'nonce'   => wp_create_nonce( 'wp_span_checker_nonce' ),
+				)
+			);
+		}
+
 		if ( ! $needs_datatables ) {
 			return;
 		}
@@ -350,11 +379,19 @@ class Enqueue_Scripts {
 			}
 		}
 
-		if ( empty( $filtered ) ) {
+		// Check Subscribe Guard and Contact Guard
+		$subscribe_guard_active = $this->should_load_subscribe_guard( $page_id );
+		$contact_guard_active = $this->should_load_contact_guard( $page_id );
+		$login_guard_active = $this->should_load_login_guard_frontend( $page_id );
+		$registration_guard_active = $this->should_load_registration_guard_frontend( $page_id );
+		$auth_forms_active = $this->should_load_auth_forms();
+
+		if ( empty( $filtered ) && ! $subscribe_guard_active && ! $contact_guard_active && ! $login_guard_active && ! $registration_guard_active && ! $auth_forms_active ) {
 			return;
 		}
 
 		wp_enqueue_style( 'wp-span-checker-sweetalert', WP_Span_Checker_ASSETS_URL . 'plugins/sweetalert2/sweetalert2.min.css', array(), WP_Span_Checker_VERSION );
+		wp_enqueue_style( 'wp-span-checker-frontend', WP_Span_Checker_ASSETS_URL . 'css/wp-span-checker.css', array( 'wp-span-checker-sweetalert' ), WP_Span_Checker_VERSION );
 		wp_enqueue_script( 'wp-span-checker-sweetalert', WP_Span_Checker_ASSETS_URL . 'plugins/sweetalert2/sweetalert2.all.min.js', array( 'jquery' ), WP_Span_Checker_VERSION, true );
 		wp_enqueue_script(
 			'wp-span-checker',
@@ -369,16 +406,512 @@ class Enqueue_Scripts {
 
 		wp_set_script_translations( 'wp-span-checker', 'wp-span-checker', WP_SPAN_CHECKER_DIR . 'languages' );
 
+		// Get reCAPTCHA config
+		$recaptcha_config = get_option( 'wsc-recaptcha-config', array() );
+		$recaptcha_data   = array(
+			'enabled'  => false,
+			'siteKey'  => '',
+			'version'  => 'v2',
+		);
+		if ( ! empty( $recaptcha_config['site_key'] ) && ! empty( $recaptcha_config['secret_key'] ) ) {
+			$recaptcha_data['siteKey'] = $recaptcha_config['site_key'];
+			$recaptcha_data['version'] = $recaptcha_config['version'] ?? 'v2';
+		}
+
 		wp_localize_script(
 			'wp-span-checker',
 			'WPSpanChecker',
 			array(
-				'ajaxUrl'   => admin_url( 'admin-ajax.php' ),
-				'nonce'     => wp_create_nonce( 'wp_span_checker_nonce' ),
-				'pageID'    => $page_id,
-				'settings'  => $filtered,
-				'regexList' => $this->regex_list,
-				'i18n'      => wp_span_checker_get_js_i18n(),
+				'ajaxUrl'       => admin_url( 'admin-ajax.php' ),
+				'nonce'         => wp_create_nonce( 'wp_span_checker_nonce' ),
+				'pageID'        => $page_id,
+				'pageType'      => wp_span_checker_get_current_page_type(),
+				'bodyClasses'   => wp_span_checker_get_current_body_classes(),
+				'presetClasses' => wp_span_checker_preset_body_classes(),
+				'settings'      => $filtered,
+				'regexList'     => $this->regex_list,
+				'recaptcha'     => $recaptcha_data,
+				'i18n'          => wp_span_checker_get_js_i18n(),
+			)
+		);
+
+		// Enqueue Subscribe Guard if active
+		if ( $subscribe_guard_active ) {
+			$this->enqueue_subscribe_guard();
+		}
+
+		// Enqueue Contact Guard if active
+		if ( $contact_guard_active ) {
+			$this->enqueue_contact_guard();
+		}
+
+		// Enqueue Login Guard on custom pages
+		if ( $login_guard_active ) {
+			$this->enqueue_login_guard_frontend();
+		}
+
+		// Enqueue Registration Guard on custom pages
+		if ( $registration_guard_active ) {
+			$this->enqueue_registration_guard_frontend();
+		}
+
+		// Enqueue Auth Forms if page has shortcode
+		if ( $auth_forms_active ) {
+			$this->enqueue_auth_forms();
+		}
+	}
+
+	/**
+	 * Check if Subscribe Guard should load on this page.
+	 *
+	 * @param int $page_id Current page ID.
+	 * @return bool
+	 */
+	private function should_load_subscribe_guard( int $page_id ): bool {
+		$cfg = AI_Span_Config::get();
+
+		if ( empty( $cfg['subscribe_guard_enabled'] ) ) {
+			return false;
+		}
+
+		// Form selector is required for Subscribe Guard
+		if ( empty( $cfg['subscribe_guard_form_selector'] ) ) {
+			return false;
+		}
+
+		$scope = $cfg['subscribe_guard_scope'] ?? 'site';
+
+		if ( 'site' === $scope ) {
+			return true;
+		}
+
+		// Check specific pages
+		$page_ids_str = $cfg['subscribe_guard_page_ids'] ?? '';
+		if ( empty( $page_ids_str ) ) {
+			return false;
+		}
+
+		$page_ids = array_map( 'absint', array_filter( array_map( 'trim', explode( ',', $page_ids_str ) ) ) );
+		return in_array( $page_id, $page_ids, true );
+	}
+
+	/**
+	 * Enqueue Subscribe Guard scripts.
+	 */
+	private function enqueue_subscribe_guard(): void {
+		$cfg            = AI_Span_Config::get();
+		$recaptcha_cfg  = get_option( 'wsc-recaptcha-config', array() );
+		$recaptcha_enabled = ! empty( $cfg['subscribe_guard_recaptcha'] ) 
+			&& ! empty( $recaptcha_cfg['site_key'] ) 
+			&& ! empty( $recaptcha_cfg['secret_key'] );
+
+		wp_enqueue_script(
+			'wp-span-subscribe-guard',
+			WP_Span_Checker_ASSETS_URL . 'js/subscribe-guard.js',
+			array( 'jquery', 'wp-span-checker-sweetalert' ),
+			WP_Span_Checker_VERSION,
+			true
+		);
+
+		wp_localize_script(
+			'wp-span-subscribe-guard',
+			'WPSpanSubscribeGuard',
+			array(
+				'ajaxUrl'          => admin_url( 'admin-ajax.php' ),
+				'nonce'            => wp_create_nonce( 'wp_span_checker_nonce' ),
+				'formSelector'     => $cfg['subscribe_guard_form_selector'] ?? '',
+				'recaptchaEnabled' => $recaptcha_enabled,
+				'recaptchaSiteKey' => $recaptcha_enabled ? $recaptcha_cfg['site_key'] : '',
+				'recaptchaVersion' => $recaptcha_cfg['version'] ?? 'v2',
+				'i18n'             => array(
+					'validating'        => __( 'Validating...', 'wp-span-checker' ),
+					'submit'            => __( 'Subscribe', 'wp-span-checker' ),
+					'emailRequired'     => __( 'Email address is required.', 'wp-span-checker' ),
+					'emailInvalid'      => __( 'Please enter a valid email address.', 'wp-span-checker' ),
+					'validationFailed'  => __( 'Validation failed.', 'wp-span-checker' ),
+					'serverError'       => __( 'Server error. Please try again.', 'wp-span-checker' ),
+					'recaptchaRequired' => __( 'Please complete the reCAPTCHA verification.', 'wp-span-checker' ),
+					'userBlocked'       => __( 'You have been blocked due to repeated violations.', 'wp-span-checker' ),
+					'blocked'           => __( 'Blocked', 'wp-span-checker' ),
+				),
+			)
+		);
+	}
+
+	/**
+	 * Check if Login Guard should load on frontend (custom login pages).
+	 *
+	 * @param int $page_id Current page ID.
+	 * @return bool
+	 */
+	private function should_load_login_guard_frontend( int $page_id ): bool {
+		$cfg           = AI_Span_Config::get();
+		$recaptcha_cfg = get_option( 'wsc-recaptcha-config', array() );
+		$has_recaptcha = ! empty( $recaptcha_cfg['site_key'] ) && ! empty( $recaptcha_cfg['secret_key'] );
+
+		if ( empty( $cfg['login_guard_enabled'] ) || empty( $cfg['login_guard_recaptcha'] ) || ! $has_recaptcha ) {
+			return false;
+		}
+
+		$scope = $cfg['login_guard_scope'] ?? 'default';
+		if ( 'default' === $scope ) {
+			return false; // Handled by login_enqueue_scripts
+		}
+
+		$page_ids_str = $cfg['login_guard_page_ids'] ?? '';
+		if ( empty( $page_ids_str ) ) {
+			return false;
+		}
+
+		$page_ids = array_map( 'absint', array_filter( array_map( 'trim', explode( ',', $page_ids_str ) ) ) );
+		return in_array( $page_id, $page_ids, true );
+	}
+
+	/**
+	 * Check if Registration Guard should load on frontend (custom registration pages).
+	 *
+	 * @param int $page_id Current page ID.
+	 * @return bool
+	 */
+	private function should_load_registration_guard_frontend( int $page_id ): bool {
+		$cfg           = AI_Span_Config::get();
+		$recaptcha_cfg = get_option( 'wsc-recaptcha-config', array() );
+		$has_recaptcha = ! empty( $recaptcha_cfg['site_key'] ) && ! empty( $recaptcha_cfg['secret_key'] );
+
+		$reg_frontend_enabled  = ! empty( $cfg['registration_guard_frontend'] );
+		$reg_recaptcha_enabled = ! empty( $cfg['registration_guard_recaptcha'] ) && $has_recaptcha;
+
+		if ( ! $reg_frontend_enabled && ! $reg_recaptcha_enabled ) {
+			return false;
+		}
+
+		$scope = $cfg['registration_guard_scope'] ?? 'default';
+		if ( 'default' === $scope ) {
+			return false; // Handled by login_enqueue_scripts
+		}
+
+		$page_ids_str = $cfg['registration_guard_page_ids'] ?? '';
+		if ( empty( $page_ids_str ) ) {
+			return false;
+		}
+
+		$page_ids = array_map( 'absint', array_filter( array_map( 'trim', explode( ',', $page_ids_str ) ) ) );
+		return in_array( $page_id, $page_ids, true );
+	}
+
+	/**
+	 * Check if Contact Guard should load on this page.
+	 *
+	 * @param int $page_id Current page ID.
+	 * @return bool
+	 */
+	private function should_load_contact_guard( int $page_id ): bool {
+		$cfg = AI_Span_Config::get();
+
+		if ( empty( $cfg['contact_guard_enabled'] ) ) {
+			return false;
+		}
+
+		$scope = $cfg['contact_guard_scope'] ?? 'site';
+
+		if ( 'site' === $scope ) {
+			return true;
+		}
+
+		$page_ids_str = $cfg['contact_guard_page_ids'] ?? '';
+		if ( empty( $page_ids_str ) ) {
+			return false;
+		}
+
+		$page_ids = array_map( 'absint', array_filter( array_map( 'trim', explode( ',', $page_ids_str ) ) ) );
+		return in_array( $page_id, $page_ids, true );
+	}
+
+	/**
+	 * Enqueue Contact Guard scripts.
+	 */
+	private function enqueue_contact_guard(): void {
+		$cfg            = AI_Span_Config::get();
+		$recaptcha_cfg  = get_option( 'wsc-recaptcha-config', array() );
+		$recaptcha_enabled = ! empty( $cfg['contact_guard_recaptcha'] ) 
+			&& ! empty( $recaptcha_cfg['site_key'] ) 
+			&& ! empty( $recaptcha_cfg['secret_key'] );
+
+		wp_enqueue_script(
+			'wp-span-contact-guard',
+			WP_Span_Checker_ASSETS_URL . 'js/contact-guard.js',
+			array( 'jquery', 'wp-span-checker-sweetalert' ),
+			WP_Span_Checker_VERSION,
+			true
+		);
+
+		wp_localize_script(
+			'wp-span-contact-guard',
+			'WPSpanContactGuard',
+			array(
+				'ajaxUrl'          => admin_url( 'admin-ajax.php' ),
+				'nonce'            => wp_create_nonce( 'wp_span_checker_nonce' ),
+				'formSelector'     => $cfg['contact_guard_form_selector'] ?? '',
+				'recaptchaEnabled' => $recaptcha_enabled,
+				'recaptchaSiteKey' => $recaptcha_enabled ? $recaptcha_cfg['site_key'] : '',
+				'recaptchaVersion' => $recaptcha_cfg['version'] ?? 'v2',
+				'i18n'             => array(
+					'validating'        => __( 'Validating...', 'wp-span-checker' ),
+					'submit'            => __( 'Submit', 'wp-span-checker' ),
+					'emailRequired'     => __( 'Email address is required.', 'wp-span-checker' ),
+					'emailInvalid'      => __( 'Please enter a valid email address.', 'wp-span-checker' ),
+					'validationFailed'  => __( 'Validation failed.', 'wp-span-checker' ),
+					'serverError'       => __( 'Server error. Please try again.', 'wp-span-checker' ),
+					'spamDetected'      => __( 'Your message appears to be spam.', 'wp-span-checker' ),
+					'recaptchaRequired' => __( 'Please complete the reCAPTCHA verification.', 'wp-span-checker' ),
+					'userBlocked'       => __( 'You have been blocked due to repeated violations.', 'wp-span-checker' ),
+					'blocked'           => __( 'Blocked', 'wp-span-checker' ),
+					'fieldRequired'     => __( 'This field is required.', 'wp-span-checker' ),
+					'checkFields'       => __( 'Please fill in all required fields.', 'wp-span-checker' ),
+				),
+			)
+		);
+	}
+
+	/**
+	 * Enqueue Login Guard on custom frontend pages.
+	 */
+	private function enqueue_login_guard_frontend(): void {
+		$cfg           = AI_Span_Config::get();
+		$recaptcha_cfg = get_option( 'wsc-recaptcha-config', array() );
+
+		wp_enqueue_script(
+			'wp-span-login-guard',
+			WP_Span_Checker_ASSETS_URL . 'js/login-guard.js',
+			array( 'jquery' ),
+			WP_Span_Checker_VERSION,
+			true
+		);
+
+		wp_localize_script(
+			'wp-span-login-guard',
+			'WPSpanLoginGuard',
+			array(
+				'recaptchaEnabled' => true,
+				'recaptchaSiteKey' => $recaptcha_cfg['site_key'],
+				'recaptchaVersion' => $recaptcha_cfg['version'] ?? 'v2',
+				'i18n'             => array(
+					'recaptchaRequired' => __( 'Please complete the reCAPTCHA verification.', 'wp-span-checker' ),
+				),
+			)
+		);
+	}
+
+	/**
+	 * Enqueue Registration Guard on custom frontend pages.
+	 */
+	private function enqueue_registration_guard_frontend(): void {
+		$cfg           = AI_Span_Config::get();
+		$recaptcha_cfg = get_option( 'wsc-recaptcha-config', array() );
+		$has_recaptcha = ! empty( $recaptcha_cfg['site_key'] ) && ! empty( $recaptcha_cfg['secret_key'] );
+
+		$reg_frontend_enabled  = ! empty( $cfg['registration_guard_frontend'] );
+		$reg_recaptcha_enabled = ! empty( $cfg['registration_guard_recaptcha'] ) && $has_recaptcha;
+
+		wp_enqueue_script(
+			'wp-span-registration-guard',
+			WP_Span_Checker_ASSETS_URL . 'js/registration-guard.js',
+			array( 'jquery', 'wp-span-checker-sweetalert' ),
+			WP_Span_Checker_VERSION,
+			true
+		);
+
+		wp_localize_script(
+			'wp-span-registration-guard',
+			'WPSpanRegistrationGuard',
+			array(
+				'ajaxUrl'          => admin_url( 'admin-ajax.php' ),
+				'nonce'            => wp_create_nonce( 'wp_span_checker_nonce' ),
+				'frontendEnabled'  => $reg_frontend_enabled,
+				'recaptchaEnabled' => $reg_recaptcha_enabled,
+				'recaptchaSiteKey' => $has_recaptcha ? $recaptcha_cfg['site_key'] : '',
+				'recaptchaVersion' => $recaptcha_cfg['version'] ?? 'v2',
+				'i18n'             => array(
+					'validating'        => __( 'Validating...', 'wp-span-checker' ),
+					'register'          => __( 'Register', 'wp-span-checker' ),
+					'emailRequired'     => __( 'Email address is required.', 'wp-span-checker' ),
+					'emailInvalid'      => __( 'Please enter a valid email address.', 'wp-span-checker' ),
+					'validationFailed'  => __( 'Validation failed.', 'wp-span-checker' ),
+					'serverError'       => __( 'Server error. Please try again.', 'wp-span-checker' ),
+					'recaptchaRequired' => __( 'Please complete the reCAPTCHA verification.', 'wp-span-checker' ),
+				),
+			)
+		);
+	}
+
+	/**
+	 * Enqueue login page scripts (Login Guard + Registration Guard).
+	 */
+	public function enqueue_login_scripts(): void {
+		$cfg           = AI_Span_Config::get();
+		$recaptcha_cfg = get_option( 'wsc-recaptcha-config', array() );
+		$has_recaptcha = ! empty( $recaptcha_cfg['site_key'] ) && ! empty( $recaptcha_cfg['secret_key'] );
+
+		// Check if Login Guard should be active (scope check - default wp-login.php only)
+		$login_guard_enabled = ! empty( $cfg['login_guard_enabled'] ) && ! empty( $cfg['login_guard_recaptcha'] ) && $has_recaptcha;
+		$login_guard_scope   = $cfg['login_guard_scope'] ?? 'default';
+		
+		// For wp-login.php, only load if scope is 'default'
+		if ( $login_guard_enabled && 'specific' === $login_guard_scope ) {
+			$login_guard_enabled = false; // Will be loaded on frontend pages instead
+		}
+
+		// Check if Registration Guard should be active (scope check)
+		$reg_frontend_enabled  = ! empty( $cfg['registration_guard_frontend'] );
+		$reg_recaptcha_enabled = ! empty( $cfg['registration_guard_recaptcha'] ) && $has_recaptcha;
+		$reg_guard_scope       = $cfg['registration_guard_scope'] ?? 'default';
+		
+		// For wp-login.php?action=register, only load if scope is 'default'
+		if ( ( $reg_frontend_enabled || $reg_recaptcha_enabled ) && 'specific' === $reg_guard_scope ) {
+			$reg_frontend_enabled  = false;
+			$reg_recaptcha_enabled = false;
+		}
+
+		// Check current action
+		$action = isset( $_REQUEST['action'] ) ? sanitize_key( $_REQUEST['action'] ) : '';
+		$is_login = empty( $action ) || 'login' === $action || 'postpass' === $action;
+		$is_register = 'register' === $action;
+
+		// Enqueue Login Guard
+		if ( $login_guard_enabled && $is_login ) {
+			wp_enqueue_script(
+				'wp-span-login-guard',
+				WP_Span_Checker_ASSETS_URL . 'js/login-guard.js',
+				array( 'jquery' ),
+				WP_Span_Checker_VERSION,
+				true
+			);
+
+			wp_localize_script(
+				'wp-span-login-guard',
+				'WPSpanLoginGuard',
+				array(
+					'recaptchaEnabled' => true,
+					'recaptchaSiteKey' => $recaptcha_cfg['site_key'],
+					'recaptchaVersion' => $recaptcha_cfg['version'] ?? 'v2',
+					'i18n'             => array(
+						'recaptchaRequired' => __( 'Please complete the reCAPTCHA verification.', 'wp-span-checker' ),
+					),
+				)
+			);
+		}
+
+		// Enqueue Registration Guard
+		if ( ( $reg_frontend_enabled || $reg_recaptcha_enabled ) && $is_register ) {
+			wp_enqueue_style( 'wp-span-checker-sweetalert', WP_Span_Checker_ASSETS_URL . 'plugins/sweetalert2/sweetalert2.min.css', array(), WP_Span_Checker_VERSION );
+			wp_enqueue_script( 'wp-span-checker-sweetalert', WP_Span_Checker_ASSETS_URL . 'plugins/sweetalert2/sweetalert2.all.min.js', array( 'jquery' ), WP_Span_Checker_VERSION, true );
+
+			wp_enqueue_script(
+				'wp-span-registration-guard',
+				WP_Span_Checker_ASSETS_URL . 'js/registration-guard.js',
+				array( 'jquery', 'wp-span-checker-sweetalert' ),
+				WP_Span_Checker_VERSION,
+				true
+			);
+
+			wp_localize_script(
+				'wp-span-registration-guard',
+				'WPSpanRegistrationGuard',
+				array(
+					'ajaxUrl'          => admin_url( 'admin-ajax.php' ),
+					'nonce'            => wp_create_nonce( 'wp_span_checker_nonce' ),
+					'frontendEnabled'  => $reg_frontend_enabled,
+					'recaptchaEnabled' => $reg_recaptcha_enabled,
+					'recaptchaSiteKey' => $has_recaptcha ? $recaptcha_cfg['site_key'] : '',
+					'recaptchaVersion' => $recaptcha_cfg['version'] ?? 'v2',
+					'i18n'             => array(
+						'validating'        => __( 'Validating...', 'wp-span-checker' ),
+						'register'          => __( 'Register', 'wp-span-checker' ),
+						'emailRequired'     => __( 'Email address is required.', 'wp-span-checker' ),
+						'emailInvalid'      => __( 'Please enter a valid email address.', 'wp-span-checker' ),
+						'validationFailed'  => __( 'Validation failed.', 'wp-span-checker' ),
+						'serverError'       => __( 'Server error. Please try again.', 'wp-span-checker' ),
+						'recaptchaRequired' => __( 'Please complete the reCAPTCHA verification.', 'wp-span-checker' ),
+					),
+				)
+			);
+		}
+	}
+
+	/**
+	 * Check if Auth Forms should be loaded.
+	 *
+	 * @return bool
+	 */
+	private function should_load_auth_forms(): bool {
+		global $post;
+
+		if ( ! $post instanceof \WP_Post ) {
+			return false;
+		}
+
+		// Check for auth form shortcodes
+		$shortcodes = array(
+			'wsc_login_form',
+			'wsc_register_form',
+			'wsc_forgot_password_form',
+			'wsc_reset_password_form',
+			'wsc_otp_verify_form',
+			'wsc_activation_form',
+		);
+
+		foreach ( $shortcodes as $shortcode ) {
+			if ( has_shortcode( $post->post_content, $shortcode ) ) {
+				return true;
+			}
+		}
+
+		// Check for page meta
+		$form_type = get_post_meta( $post->ID, '_wsc_auth_form_type', true );
+		if ( ! empty( $form_type ) ) {
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
+	 * Enqueue Auth Forms scripts and styles.
+	 */
+	private function enqueue_auth_forms(): void {
+		$recaptcha_cfg = get_option( 'wsc-recaptcha-config', array() );
+		$has_recaptcha = ! empty( $recaptcha_cfg['site_key'] ) && ! empty( $recaptcha_cfg['secret_key'] );
+		$settings      = Auth_Forms::get_settings();
+
+		wp_enqueue_style( 'dashicons' );
+		wp_enqueue_style(
+			'wsc-auth-forms',
+			WP_Span_Checker_ASSETS_URL . 'css/auth-forms.css',
+			array(),
+			WP_Span_Checker_VERSION
+		);
+
+		wp_enqueue_script(
+			'wsc-auth-forms',
+			WP_Span_Checker_ASSETS_URL . 'js/auth-forms.js',
+			array( 'jquery' ),
+			WP_Span_Checker_VERSION,
+			true
+		);
+
+		wp_localize_script(
+			'wsc-auth-forms',
+			'WSCAuthForms',
+			array(
+				'ajaxUrl'          => admin_url( 'admin-ajax.php' ),
+				'recaptchaSiteKey' => $has_recaptcha ? $recaptcha_cfg['site_key'] : '',
+				'recaptchaVersion' => $recaptcha_cfg['version'] ?? 'v2',
+				'i18n'             => array(
+					'completeRecaptcha'  => __( 'Please complete the reCAPTCHA.', 'wp-span-checker' ),
+					'networkError'       => __( 'Network error. Please try again.', 'wp-span-checker' ),
+					'passwordsMismatch'  => __( 'Passwords do not match.', 'wp-span-checker' ),
+					'passwordTooShort'   => __( 'Password must be at least 8 characters.', 'wp-span-checker' ),
+				),
 			)
 		);
 	}

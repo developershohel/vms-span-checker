@@ -17,9 +17,20 @@ $virustotal_defaults = array(
 	'max_malicious'   => 0,
 	'max_suspicious'  => -1,
 );
+$recaptcha_defaults = array(
+	'site_key'   => '',
+	'secret_key' => '',
+	'version'    => 'v2',
+);
 
 $google_raw        = get_option( 'wsc-google-config', $google_defaults );
 $virustotal_config = get_option( 'wsc-virustotal-config', $virustotal_defaults );
+$recaptcha_config  = get_option( 'wsc-recaptcha-config', $recaptcha_defaults );
+
+if ( ! is_array( $recaptcha_config ) ) {
+	$recaptcha_config = $recaptcha_defaults;
+}
+$recaptcha_config = wp_parse_args( $recaptcha_config, $recaptcha_defaults );
 
 if ( ! is_array( $google_raw ) ) {
 	$google_raw = $google_defaults;
@@ -81,6 +92,16 @@ if ( isset( $_SERVER['REQUEST_METHOD'] ) && 'POST' === $_SERVER['REQUEST_METHOD'
 		update_option( 'wsc-virustotal-config', $virustotal_config );
 		echo '<div class="updated"><p>' . esc_html__( 'VirusTotal thresholds saved.', 'wp-span-checker' ) . '</p></div>';
 	}
+
+	if ( isset( $_POST['recaptcha_save'] ) ) {
+		$recaptcha_config = array(
+			'site_key'   => isset( $_POST['recaptcha_site_key'] ) ? sanitize_text_field( wp_unslash( $_POST['recaptcha_site_key'] ) ) : '',
+			'secret_key' => isset( $_POST['recaptcha_secret_key'] ) ? sanitize_text_field( wp_unslash( $_POST['recaptcha_secret_key'] ) ) : '',
+			'version'    => isset( $_POST['recaptcha_version'] ) && in_array( $_POST['recaptcha_version'], array( 'v2', 'v3' ), true ) ? $_POST['recaptcha_version'] : 'v2',
+		);
+		update_option( 'wsc-recaptcha-config', $recaptcha_config );
+		echo '<div class="updated"><p>' . esc_html__( 'Google reCAPTCHA configuration saved.', 'wp-span-checker' ) . '</p></div>';
+	}
 }
 // phpcs:enable WordPress.Security.NonceVerification.Missing
 ?>
@@ -89,9 +110,67 @@ if ( isset( $_SERVER['REQUEST_METHOD'] ) && 'POST' === $_SERVER['REQUEST_METHOD'
 	<?php
 	wp_span_checker_admin_page_header(
 		__( 'API Settings', 'wp-span-checker' ),
-		__( 'Connect Google Web Risk and VirusTotal for optional reputation checks on mapped forms.', 'wp-span-checker' )
+		__( 'Connect Google Web Risk, VirusTotal, and reCAPTCHA for enhanced form protection.', 'wp-span-checker' )
 	);
 	?>
+
+	<div class="wsc-card wsc-api-section">
+		<h2 class="wsc-card__title"><?php esc_html_e( 'Google reCAPTCHA', 'wp-span-checker' ); ?></h2>
+		<p class="description" style="margin-top:0;">
+			<?php esc_html_e( 'Add Google reCAPTCHA v2 (checkbox) or v3 (invisible) to protect your forms from bots and spam.', 'wp-span-checker' ); ?>
+		</p>
+		<form method="post">
+			<?php wp_nonce_field( 'wsc_api_action', 'wsc_api_nonce' ); ?>
+			<input type="hidden" name="recaptcha_save" value="1">
+			<table class="form-table" role="presentation">
+				<tr>
+					<th scope="row"><label for="recaptcha_version"><?php esc_html_e( 'reCAPTCHA Version', 'wp-span-checker' ); ?></label></th>
+					<td>
+						<select name="recaptcha_version" id="recaptcha_version" class="regular-text">
+							<option value="v2" <?php selected( $recaptcha_config['version'], 'v2' ); ?>><?php esc_html_e( 'reCAPTCHA v2 (Checkbox)', 'wp-span-checker' ); ?></option>
+							<option value="v3" <?php selected( $recaptcha_config['version'], 'v3' ); ?>><?php esc_html_e( 'reCAPTCHA v3 (Invisible)', 'wp-span-checker' ); ?></option>
+						</select>
+						<p class="description">
+							<?php esc_html_e( 'v2: Shows "I\'m not a robot" checkbox. v3: Invisible, scores user behavior.', 'wp-span-checker' ); ?>
+						</p>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row"><label for="recaptcha_site_key"><?php esc_html_e( 'Site Key', 'wp-span-checker' ); ?></label></th>
+					<td>
+						<input type="text" name="recaptcha_site_key" id="recaptcha_site_key" value="<?php echo esc_attr( $recaptcha_config['site_key'] ); ?>" class="regular-text" autocomplete="off">
+					</td>
+				</tr>
+				<tr>
+					<th scope="row"><label for="recaptcha_secret_key"><?php esc_html_e( 'Secret Key', 'wp-span-checker' ); ?></label></th>
+					<td>
+						<input type="password" name="recaptcha_secret_key" id="recaptcha_secret_key" value="<?php echo esc_attr( $recaptcha_config['secret_key'] ); ?>" class="regular-text" autocomplete="off">
+						<p class="description">
+							<?php
+							echo wp_kses(
+								sprintf(
+									/* translators: %s: URL to Google reCAPTCHA admin */
+									__( 'Get your keys from <a href="%s" rel="noopener noreferrer" target="_blank">Google reCAPTCHA Admin Console</a>.', 'wp-span-checker' ),
+									esc_url( 'https://www.google.com/recaptcha/admin' )
+								),
+								array(
+									'a' => array(
+										'href'   => true,
+										'rel'    => true,
+										'target' => true,
+									),
+								)
+							);
+							?>
+						</p>
+					</td>
+				</tr>
+			</table>
+			<p class="submit">
+				<input type="submit" class="button button-primary" value="<?php esc_attr_e( 'Save reCAPTCHA configuration', 'wp-span-checker' ); ?>">
+			</p>
+		</form>
+	</div>
 
 	<div class="wsc-card wsc-api-section">
 		<h2 class="wsc-card__title"><?php esc_html_e( 'Google Web Risk', 'wp-span-checker' ); ?></h2>

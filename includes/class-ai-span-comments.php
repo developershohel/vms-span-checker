@@ -448,7 +448,7 @@ class AI_Span_Comments {
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name uses trusted prefix.
 		$result = $wpdb->query(
 			$wpdb->prepare(
-				"UPDATE {$table} SET blocked = 0, site_banned = 0, strikes = 0, blocked_at = NULL, last_ip = '' WHERE actor_key = %s",
+				"UPDATE {$table} SET blocked = 0, site_banned = 0, login_blocked = 0, strikes = 0, blocked_at = NULL, strikes_expire_at = NULL, last_ip = '' WHERE actor_key = %s",
 				$actor_key
 			)
 		);

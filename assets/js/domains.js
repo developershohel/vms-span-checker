@@ -53,24 +53,26 @@ jQuery(document).ready(function ($) {
 
     function wscCollectPageTargetsArray() {
         const out = [];
-        $('.wsc-page-target:checked').each(function () {
+        
+        $('.wsc-page-target:checked:not(:disabled)').each(function () {
             const v = $(this).val();
             if (v) {
                 out.push(String(v));
             }
         });
-        $('#wsc-target-pages option:selected').each(function () {
-            const v = $(this).val();
-            if (v) {
-                out.push(String(v));
-            }
-        });
-        $('#wsc-target-posts option:selected').each(function () {
-            const v = $(this).val();
-            if (v) {
-                out.push(String(v));
-            }
-        });
+        
+        if (!$('#wsc-panel-pages').hasClass('wsc-target-panel--disabled')) {
+            wscSelectedPages.forEach((title, id) => {
+                out.push(String(id));
+            });
+        }
+        
+        if (!$('#wsc-panel-posts').hasClass('wsc-target-panel--disabled')) {
+            wscSelectedPosts.forEach((title, id) => {
+                out.push(String(id));
+            });
+        }
+        
         const uniq = [];
         out.forEach(function (x) {
             if (uniq.indexOf(x) === -1) {
@@ -80,11 +82,49 @@ jQuery(document).ready(function ($) {
         return uniq;
     }
 
+    function wscCollectTargetsByType() {
+        const result = {
+            common: [],
+            page: [],
+            post: []
+        };
+        
+        $('.wsc-page-target:checked:not(:disabled)').each(function () {
+            const v = $(this).val();
+            if (v) {
+                result.common.push(String(v));
+            }
+        });
+        
+        if (!$('#wsc-panel-pages').hasClass('wsc-target-panel--disabled')) {
+            wscSelectedPages.forEach((title, id) => {
+                result.page.push(String(id));
+            });
+        }
+        
+        if (!$('#wsc-panel-posts').hasClass('wsc-target-panel--disabled')) {
+            wscSelectedPosts.forEach((title, id) => {
+                result.post.push(String(id));
+            });
+        }
+        
+        return result;
+    }
+
     function wscApplyPageTargetsFromRaw(raw) {
-        $('.wsc-page-target').prop('checked', false);
-        $('#wsc-target-pages option:selected').prop('selected', false);
-        $('#wsc-target-posts option:selected').prop('selected', false);
+        // Reset common locations
+        $('.wsc-page-target').prop('checked', false).prop('disabled', false);
+        
+        // Clear badge selections
+        wscSelectedPages.clear();
+        wscSelectedPosts.clear();
+        $('#wsc-pages-selected').empty();
+        $('#wsc-posts-selected').empty();
+        
         const list = wscNormalizePageTargetsRaw(raw);
+        const pageIdsToFetch = [];
+        const postIdsToFetch = [];
+        
         list.forEach(function (token) {
             const $cb = $('.wsc-page-target').filter(function () {
                 return $(this).val() === token;
@@ -94,15 +134,408 @@ jQuery(document).ready(function ($) {
                 return;
             }
             if (/^\d+$/.test(token)) {
-                $('#wsc-target-pages option[value="' + token + '"], #wsc-target-posts option[value="' + token + '"]').prop('selected', true);
+                // We'll need to fetch the title for this ID
+                pageIdsToFetch.push(token);
+                postIdsToFetch.push(token);
             }
         });
+        
+        // Fetch titles for numeric IDs (pages)
+        if (pageIdsToFetch.length > 0) {
+            $.post(WPSpanChecker.ajaxurl, {
+                action: 'wsc_search_pages',
+                nonce: WPSpanChecker.nonce,
+                search: '',
+                per_page: 100,
+                page: 1
+            }, function(response) {
+                if (response.success && response.data.items) {
+                    response.data.items.forEach(function(item) {
+                        if (pageIdsToFetch.indexOf(String(item.id)) !== -1) {
+                            wscSelectedPages.set(String(item.id), item.title);
+                        }
+                    });
+                    wscRenderSelectedBadges('#wsc-pages-selected', wscSelectedPages, 'page');
+                    // Update dropdown checkmarks
+                    $('#wsc-pages-list .wsc-badge-dropdown-item').each(function() {
+                        const id = String($(this).data('id'));
+                        if (wscSelectedPages.has(id)) {
+                            $(this).addClass('wsc-item-selected');
+                            $(this).find('.wsc-item-checkbox').text('✓');
+                        }
+                    });
+                }
+            });
+        }
+        
+        // Fetch titles for numeric IDs (posts)
+        if (postIdsToFetch.length > 0) {
+            $.post(WPSpanChecker.ajaxurl, {
+                action: 'wsc_search_posts',
+                nonce: WPSpanChecker.nonce,
+                search: '',
+                per_page: 100,
+                page: 1
+            }, function(response) {
+                if (response.success && response.data.items) {
+                    response.data.items.forEach(function(item) {
+                        if (postIdsToFetch.indexOf(String(item.id)) !== -1) {
+                            wscSelectedPosts.set(String(item.id), item.title);
+                        }
+                    });
+                    wscRenderSelectedBadges('#wsc-posts-selected', wscSelectedPosts, 'post');
+                    // Update dropdown checkmarks
+                    $('#wsc-posts-list .wsc-badge-dropdown-item').each(function() {
+                        const id = String($(this).data('id'));
+                        if (wscSelectedPosts.has(id)) {
+                            $(this).addClass('wsc-item-selected');
+                            $(this).find('.wsc-item-checkbox').text('✓');
+                        }
+                    });
+                }
+            });
+        }
+        
+        wscUpdateTargetConstraints();
+        wscUpdateFormSelectorRequirement();
     }
 
     function wscResetPageTargetsForNew() {
         $('.wsc-page-target').prop('checked', false);
-        $('#wsc-target-pages option:selected').prop('selected', false);
-        $('#wsc-target-posts option:selected').prop('selected', false);
+        wscSelectedPages.clear();
+        wscSelectedPosts.clear();
+        $('#wsc-pages-selected').empty();
+        $('#wsc-posts-selected').empty();
+        // Reset dropdown checkmarks
+        $('#wsc-pages-list .wsc-badge-dropdown-item').removeClass('wsc-item-selected').find('.wsc-item-checkbox').text('');
+        $('#wsc-posts-list .wsc-badge-dropdown-item').removeClass('wsc-item-selected').find('.wsc-item-checkbox').text('');
+        wscUpdateTargetConstraints();
+        wscUpdateFormSelectorRequirement();
+    }
+
+    function wscUpdateTargetConstraints() {
+        const allPagesChecked = $('.wsc-page-target[value="all-pages"]').is(':checked');
+        const singularPageChecked = $('.wsc-page-target[value="singular-page"]').is(':checked');
+        const singularPostChecked = $('.wsc-page-target[value="singular-post"]').is(':checked');
+        const singularAnyChecked = $('.wsc-page-target[value="singular-any"]').is(':checked');
+
+        if (allPagesChecked) {
+            $('.wsc-common-target').not('[value="all-pages"]').prop('disabled', true).prop('checked', false);
+            $('#wsc-panel-pages').addClass('wsc-target-panel--disabled');
+            $('#wsc-panel-posts').addClass('wsc-target-panel--disabled');
+            // Clear badge selections when disabled
+            wscSelectedPages.clear();
+            wscSelectedPosts.clear();
+            $('#wsc-pages-selected').empty();
+            $('#wsc-posts-selected').empty();
+        } else {
+            $('.wsc-common-target').prop('disabled', false);
+            $('#wsc-panel-pages').removeClass('wsc-target-panel--disabled');
+            $('#wsc-panel-posts').removeClass('wsc-target-panel--disabled');
+
+            if (singularAnyChecked) {
+                $('#wsc-panel-pages').addClass('wsc-target-panel--disabled');
+                $('#wsc-panel-posts').addClass('wsc-target-panel--disabled');
+                wscSelectedPages.clear();
+                wscSelectedPosts.clear();
+                $('#wsc-pages-selected').empty();
+                $('#wsc-posts-selected').empty();
+            } else {
+                if (singularPageChecked) {
+                    $('#wsc-panel-pages').addClass('wsc-target-panel--disabled');
+                    wscSelectedPages.clear();
+                    $('#wsc-pages-selected').empty();
+                } else {
+                    $('#wsc-panel-pages').removeClass('wsc-target-panel--disabled');
+                }
+
+                if (singularPostChecked) {
+                    $('#wsc-panel-posts').addClass('wsc-target-panel--disabled');
+                    wscSelectedPosts.clear();
+                    $('#wsc-posts-selected').empty();
+                } else {
+                    $('#wsc-panel-posts').removeClass('wsc-target-panel--disabled');
+                }
+            }
+        }
+    }
+
+    function wscUpdateFormSelectorRequirement() {
+        const allPagesChecked = $('.wsc-page-target[value="all-pages"]').is(':checked');
+        
+        $('#wsc-form-selector-optional').toggleClass('wsc-hidden', allPagesChecked);
+        $('#wsc-form-selector-required').toggleClass('wsc-hidden', !allPagesChecked);
+        $('#wsc-entire-site-notice').toggleClass('wsc-hidden', !allPagesChecked);
+    }
+
+    // Badge selection state
+    const wscSelectedPages = new Map();
+    const wscSelectedPosts = new Map();
+    let wscPagesSearchTimeout = null;
+    let wscPostsSearchTimeout = null;
+
+    function wscRenderSelectedBadges(container, selectedMap, type) {
+        const $container = $(container);
+        $container.empty();
+        
+        selectedMap.forEach((title, id) => {
+            const $badge = $('<span class="wsc-selected-badge" data-id="' + id + '" data-type="' + type + '"></span>');
+            $badge.append('<span class="wsc-badge-title">' + wscEsc(title) + '</span>');
+            $badge.append('<span class="wsc-badge-remove dashicons dashicons-no-alt" role="button" tabindex="0" title="' + wscT('remove', 'Remove') + '"></span>');
+            $container.append($badge);
+        });
+    }
+
+    function wscLoadItems(type, search, page) {
+        const action = type === 'page' ? 'wsc_search_pages' : 'wsc_search_posts';
+        const $dropdown = type === 'page' ? $('#wsc-pages-dropdown') : $('#wsc-posts-dropdown');
+        const $list = type === 'page' ? $('#wsc-pages-list') : $('#wsc-posts-list');
+        const $loading = $dropdown.find('.wsc-badge-dropdown-loading');
+        const $empty = $dropdown.find('.wsc-badge-dropdown-empty');
+        const selectedMap = type === 'page' ? wscSelectedPages : wscSelectedPosts;
+
+        $dropdown.removeClass('wsc-hidden');
+        $loading.removeClass('wsc-hidden');
+        $empty.addClass('wsc-hidden');
+        
+        if (page === 1) {
+            $list.empty();
+        }
+
+        $.post(WPSpanChecker.ajaxurl, {
+            action: action,
+            nonce: WPSpanChecker.nonce,
+            search: search,
+            per_page: 20,
+            page: page
+        }, function(response) {
+            $loading.addClass('wsc-hidden');
+            
+            if (response.success && response.data.items) {
+                const items = response.data.items;
+                
+                if (items.length === 0 && page === 1) {
+                    $empty.removeClass('wsc-hidden');
+                    return;
+                }
+
+                items.forEach(function(item) {
+                    const isSelected = selectedMap.has(String(item.id));
+                    const $item = $('<div class="wsc-badge-dropdown-item' + (isSelected ? ' wsc-item-selected' : '') + '" data-id="' + item.id + '" data-title="' + wscEsc(item.title) + '" data-type="' + type + '"></div>');
+                    $item.append('<span class="wsc-item-checkbox">' + (isSelected ? '✓' : '') + '</span>');
+                    $item.append('<span class="wsc-item-title">' + wscEsc(item.title) + '</span>');
+                    $item.append('<span class="wsc-item-id">#' + item.id + '</span>');
+                    $list.append($item);
+                });
+
+                // Add load more button if there are more pages
+                if (response.data.page < response.data.total_pages) {
+                    const $loadMore = $('<div class="wsc-badge-load-more" data-page="' + (response.data.page + 1) + '" data-search="' + wscEsc(search) + '" data-type="' + type + '"></div>');
+                    $loadMore.text(wscT('loadMore', 'Load more') + ' (' + response.data.total + ' ' + wscT('total', 'total') + ')');
+                    $list.append($loadMore);
+                }
+            }
+        }).fail(function() {
+            $loading.addClass('wsc-hidden');
+            $empty.removeClass('wsc-hidden');
+        });
+    }
+
+    // Initialize badge selectors on page load
+    function wscInitBadgeSelectors() {
+        // Load initial pages
+        wscLoadItems('page', '', 1);
+        // Load initial posts
+        wscLoadItems('post', '', 1);
+    }
+
+    // Search pages with debounce
+    $('#wsc-search-pages').on('input', function() {
+        const search = $(this).val().trim();
+        clearTimeout(wscPagesSearchTimeout);
+        wscPagesSearchTimeout = setTimeout(function() {
+            wscLoadItems('page', search, 1);
+        }, 300);
+    });
+
+    // Search posts with debounce
+    $('#wsc-search-posts').on('input', function() {
+        const search = $(this).val().trim();
+        clearTimeout(wscPostsSearchTimeout);
+        wscPostsSearchTimeout = setTimeout(function() {
+            wscLoadItems('post', search, 1);
+        }, 300);
+    });
+
+    // Focus on search shows dropdown
+    $('#wsc-search-pages').on('focus', function() {
+        $('#wsc-pages-dropdown').removeClass('wsc-hidden');
+    });
+
+    $('#wsc-search-posts').on('focus', function() {
+        $('#wsc-posts-dropdown').removeClass('wsc-hidden');
+    });
+
+    // Load more items
+    $(document).on('click', '.wsc-badge-load-more', function() {
+        const page = parseInt($(this).data('page'), 10);
+        const search = $(this).data('search') || '';
+        const type = $(this).data('type');
+        $(this).remove();
+        wscLoadItems(type, search, page);
+    });
+
+    // Select/deselect item from dropdown
+    $(document).on('click', '.wsc-badge-dropdown-item', function() {
+        const $item = $(this);
+        const id = String($item.data('id'));
+        const title = $item.data('title');
+        const type = $item.data('type');
+        const selectedMap = type === 'page' ? wscSelectedPages : wscSelectedPosts;
+        const containerSelector = type === 'page' ? '#wsc-pages-selected' : '#wsc-posts-selected';
+
+        if (selectedMap.has(id)) {
+            selectedMap.delete(id);
+            $item.removeClass('wsc-item-selected');
+            $item.find('.wsc-item-checkbox').text('');
+        } else {
+            selectedMap.set(id, title);
+            $item.addClass('wsc-item-selected');
+            $item.find('.wsc-item-checkbox').text('✓');
+        }
+
+        wscRenderSelectedBadges(containerSelector, selectedMap, type);
+        wscUpdateTargetConstraints();
+        wscUpdateFormSelectorRequirement();
+    });
+
+    // Remove badge
+    $(document).on('click', '.wsc-badge-remove', function(e) {
+        e.stopPropagation();
+        const $badge = $(this).closest('.wsc-selected-badge');
+        const id = String($badge.data('id'));
+        const type = $badge.data('type');
+        const selectedMap = type === 'page' ? wscSelectedPages : wscSelectedPosts;
+        const containerSelector = type === 'page' ? '#wsc-pages-selected' : '#wsc-posts-selected';
+        const $dropdownItem = (type === 'page' ? $('#wsc-pages-list') : $('#wsc-posts-list')).find('.wsc-badge-dropdown-item[data-id="' + id + '"]');
+
+        selectedMap.delete(id);
+        $dropdownItem.removeClass('wsc-item-selected');
+        $dropdownItem.find('.wsc-item-checkbox').text('');
+        
+        wscRenderSelectedBadges(containerSelector, selectedMap, type);
+        wscUpdateTargetConstraints();
+        wscUpdateFormSelectorRequirement();
+    });
+
+    // Close dropdown when clicking outside
+    $(document).on('click', function(e) {
+        if (!$(e.target).closest('#wsc-pages-badge-wrap').length) {
+            $('#wsc-pages-dropdown').addClass('wsc-hidden');
+        }
+        if (!$(e.target).closest('#wsc-posts-badge-wrap').length) {
+            $('#wsc-posts-dropdown').addClass('wsc-hidden');
+        }
+    });
+
+    $(document).on('change', '.wsc-common-target', function() {
+        wscUpdateTargetConstraints();
+        wscUpdateFormSelectorRequirement();
+    });
+
+    if ($('#wsc-panel-common').length) {
+        wscInitBadgeSelectors();
+        wscUpdateTargetConstraints();
+        wscUpdateFormSelectorRequirement();
+    }
+
+    function wscUpdateAutoValidationMode() {
+        const isAuto = $('#wsc-auto-validation').is(':checked');
+        $('#wsc-auto-validation-rules').toggleClass('wsc-hidden', !isAuto);
+        $('#wsc-manual-fields-section').toggleClass('wsc-hidden', isAuto);
+    }
+
+    $('#wsc-auto-validation').on('change', function() {
+        wscUpdateAutoValidationMode();
+    });
+
+    function wscCollectAutoValidationRules() {
+        return {
+            email: {
+                validate: $('#auto_email_validate').is(':checked'),
+                mx: $('#auto_email_mx').is(':checked'),
+                disposable: $('#auto_email_disposable').is(':checked'),
+                webrisk: $('#auto_email_webrisk').is(':checked'),
+                virustotal: $('#auto_email_virustotal').is(':checked')
+            },
+            url: {
+                validate: $('#auto_url_validate').is(':checked'),
+                webrisk: $('#auto_url_webrisk').is(':checked'),
+                virustotal: $('#auto_url_virustotal').is(':checked')
+            },
+            textarea: {
+                block_links: $('#auto_textarea_links').is(':checked'),
+                ai_spam: $('#auto_textarea_ai').is(':checked')
+            },
+            username: {
+                check_exists: $('#auto_username_exists').is(':checked')
+            },
+            password: {
+                strength: $('#auto_password_strength').is(':checked')
+            },
+            text: {
+                block_urls: $('#auto_text_no_urls').is(':checked')
+            }
+        };
+    }
+
+    function wscApplyAutoValidationRules(rules) {
+        if (!rules) return;
+        if (rules.email) {
+            $('#auto_email_validate').prop('checked', !!rules.email.validate);
+            $('#auto_email_mx').prop('checked', !!rules.email.mx);
+            $('#auto_email_disposable').prop('checked', !!rules.email.disposable);
+            $('#auto_email_webrisk').prop('checked', !!rules.email.webrisk);
+            $('#auto_email_virustotal').prop('checked', !!rules.email.virustotal);
+        }
+        if (rules.url) {
+            $('#auto_url_validate').prop('checked', !!rules.url.validate);
+            $('#auto_url_webrisk').prop('checked', !!rules.url.webrisk);
+            $('#auto_url_virustotal').prop('checked', !!rules.url.virustotal);
+        }
+        if (rules.textarea) {
+            $('#auto_textarea_links').prop('checked', !!rules.textarea.block_links);
+            $('#auto_textarea_ai').prop('checked', !!rules.textarea.ai_spam);
+        }
+        if (rules.username) {
+            $('#auto_username_exists').prop('checked', !!rules.username.check_exists);
+        }
+        if (rules.password) {
+            $('#auto_password_strength').prop('checked', !!rules.password.strength);
+        }
+        if (rules.text) {
+            $('#auto_text_no_urls').prop('checked', !!rules.text.block_urls);
+        }
+    }
+
+    function wscResetAutoValidationRules() {
+        $('#auto_email_validate').prop('checked', true);
+        $('#auto_email_mx').prop('checked', true);
+        $('#auto_email_disposable').prop('checked', true);
+        $('#auto_email_webrisk').prop('checked', false);
+        $('#auto_email_virustotal').prop('checked', false);
+        $('#auto_url_validate').prop('checked', true);
+        $('#auto_url_webrisk').prop('checked', false);
+        $('#auto_url_virustotal').prop('checked', false);
+        $('#auto_textarea_links').prop('checked', false);
+        $('#auto_textarea_ai').prop('checked', false);
+        $('#auto_username_exists').prop('checked', false);
+        $('#auto_password_strength').prop('checked', false);
+        $('#auto_text_no_urls').prop('checked', false);
+    }
+
+    if ($('#wsc-auto-validation').length) {
+        wscUpdateAutoValidationMode();
     }
 
     function wscFormatPageTargetsCell(raw) {
@@ -658,64 +1091,72 @@ jQuery(document).ready(function ($) {
                 }
             },
             {
-                data: 'settings',
+                data: 'auto_validation',
                 responsivePriority: 7,
-                render: function (data) {
-                    if (!data) return '';
-                    let formFields;
-                    try {
-                        formFields = (typeof data === "string") ? JSON.parse(data) : data;
-                    } catch (e) {
-                        return '';
+                render: function (data, type, row) {
+                    const isAuto = parseInt(data, 10) === 1 || data === true || data === '1';
+                    if (isAuto) {
+                        return '<span class="wsc-mode-badge wsc-mode-badge--auto">' + wscT('autoMode', 'Auto') + '</span>';
                     }
-                    if (!Array.isArray(formFields) || formFields.length === 0) return '';
-                    return formFields.map(function (item, idx) {
-                        const ft = item.field ?? '';
-                        const wrOn = parseInt(item.is_webrisk, 10) === 1;
-                        const vtOn = parseInt(item.is_virustotal, 10) === 1;
-                        let guards = '';
-                        if (ft === 'email' || ft === 'url') {
-                            guards += '<br>' + wscT('labelWebRiskShort', 'Web Risk') + ': ' + (wrOn ? wscT('onShort', 'On') : wscT('offShort', 'Off'));
-                            guards += ' · ' + wscT('labelVtShort', 'VirusTotal') + ': ' + (vtOn ? wscT('onShort', 'On') : wscT('offShort', 'Off'));
-                        }
-                        if (ft === 'username' && parseInt(item.check_username_exists, 10) === 1) {
-                            guards += '<br>' + wscT('usernameCheckShort', 'Username exists check') + ': ' + wscT('onShort', 'On');
-                        }
-                        if (ft === 'text') {
-                            const tau =
-                                !Object.prototype.hasOwnProperty.call(item, 'text_allow_urls') ||
-                                parseInt(item.text_allow_urls, 10) !== 0;
-                            guards +=
-                                '<br>' +
-                                wscT('textUrlsInFieldShort', 'URLs in text field') +
-                                ': ' +
-                                (tau ? wscT('onShort', 'On') : wscT('offShort', 'Off'));
-                        }
-                        if (ft === 'textarea') {
-                            const allow = !Object.prototype.hasOwnProperty.call(item, 'textarea_allow_links') || parseInt(item.textarea_allow_links, 10) !== 0;
-                            guards += '<br>' + wscT('linksAllowedShort', 'Links allowed') + ': ' + (allow ? wscT('onShort', 'On') : wscT('offShort', 'Off'));
-                            if (parseInt(item.textarea_ai_spam, 10) === 1) {
-                                guards += ' · ' + wscT('aiSpamShort', 'AI spam check') + ': ' + wscT('onShort', 'On');
-                            }
-                        }
-                        if (item.regex && String(item.regex).trim() !== '') {
-                            const rp = String(item.regex).trim();
-                            guards += '<br>' + wscT('regexShort', 'Regex') + ': ' + wscEsc(rp.slice(0, 48)) + (rp.length > 48 ? '…' : '');
-                        }
-                        return '<div class="wsc-form-setting-field wsc-mb-2 wsc-p-2 wsc-text-left"><strong>#' + (idx + 1) + ' · ' + wscEsc(ft) + '</strong><br>' +
-                            wscT('labelId', 'ID') + ': ' + wscEsc(item.id ?? '') + ' · ' + wscT('labelClass', 'Class') + ': ' + wscEsc(item.class ?? '') + '<br>' +
-                            wscT('eventName', 'Event name') + ': ' + wscEsc(item.event ?? '') +
-                            guards + '</div>';
-                    }).join('');
+                    return '<span class="wsc-mode-badge wsc-mode-badge--manual">' + wscT('manualMode', 'Manual') + '</span>';
                 }
             },
             {
-                data: 'is_webrisk',
-                responsivePriority: 8
-            },
-            {
-                data: 'is_virustotal',
-                responsivePriority: 9
+                data: null,
+                responsivePriority: 8,
+                render: function (data, type, row) {
+                    const isAuto = parseInt(row.auto_validation, 10) === 1 || row.auto_validation === true || row.auto_validation === '1';
+                    
+                    if (isAuto) {
+                        let autoRules;
+                        try {
+                            autoRules = typeof row.auto_rules === 'string' ? JSON.parse(row.auto_rules) : row.auto_rules;
+                        } catch (e) {
+                            autoRules = {};
+                        }
+                        autoRules = autoRules || {};
+                        
+                        const tags = [];
+                        if (autoRules.email) {
+                            if (autoRules.email.validate) tags.push('<span class="wsc-validation-tag wsc-validation-tag--on">Email</span>');
+                            if (autoRules.email.webrisk) tags.push('<span class="wsc-validation-tag wsc-validation-tag--on">Web Risk</span>');
+                            if (autoRules.email.virustotal) tags.push('<span class="wsc-validation-tag wsc-validation-tag--on">VirusTotal</span>');
+                        }
+                        if (autoRules.textarea && autoRules.textarea.ai_spam) {
+                            tags.push('<span class="wsc-validation-tag wsc-validation-tag--on">AI Spam</span>');
+                        }
+                        if (autoRules.username && autoRules.username.check_exists) {
+                            tags.push('<span class="wsc-validation-tag wsc-validation-tag--on">Username</span>');
+                        }
+                        if (autoRules.password && autoRules.password.strength) {
+                            tags.push('<span class="wsc-validation-tag wsc-validation-tag--on">Password</span>');
+                        }
+                        
+                        return tags.length ? '<div class="wsc-validation-summary">' + tags.join('') + '</div>' : wscT('defaultRules', 'Default rules');
+                    }
+                    
+                    let formFields;
+                    try {
+                        formFields = (typeof row.settings === "string") ? JSON.parse(row.settings) : row.settings;
+                    } catch (e) {
+                        return '';
+                    }
+                    if (!Array.isArray(formFields) || formFields.length === 0) return '—';
+                    
+                    return formFields.map(function (item, idx) {
+                        const ft = item.field ?? '';
+                        let guards = [];
+                        if (ft === 'email' || ft === 'url') {
+                            if (parseInt(item.is_webrisk, 10) === 1) guards.push('WR');
+                            if (parseInt(item.is_virustotal, 10) === 1) guards.push('VT');
+                        }
+                        if (ft === 'textarea' && parseInt(item.textarea_ai_spam, 10) === 1) {
+                            guards.push('AI');
+                        }
+                        const guardStr = guards.length ? ' (' + guards.join(', ') + ')' : '';
+                        return '<span class="wsc-validation-tag">' + wscEsc(ft) + guardStr + '</span>';
+                    }).join(' ');
+                }
             },
             {
                 data: null,
@@ -791,6 +1232,27 @@ jQuery(document).ready(function ($) {
         $('#form_selector').val(wscFgDisplaySelector(formData));
         $('#submit_selector').val(formData.submit_selector ? String(formData.submit_selector) : '');
 
+        const isAuto = parseInt(formData.auto_validation, 10) === 1 || formData.auto_validation === true || formData.auto_validation === '1';
+        $('#wsc-auto-validation').prop('checked', isAuto);
+        
+        if (isAuto) {
+            let autoRules;
+            try {
+                autoRules = typeof formData.auto_rules === 'string' ? JSON.parse(formData.auto_rules) : formData.auto_rules;
+            } catch (e) {
+                autoRules = {};
+            }
+            wscApplyAutoValidationRules(autoRules || {});
+        } else {
+            wscResetAutoValidationRules();
+        }
+        
+        // Set reCAPTCHA checkbox
+        const enableRecaptcha = parseInt(formData.enable_recaptcha, 10) === 1;
+        $('#wsc-enable-recaptcha').prop('checked', enableRecaptcha);
+        
+        wscUpdateAutoValidationMode();
+
         let formSettingData = [];
         if (Array.isArray(formData.settings)) {
             formSettingData = formData.settings;
@@ -830,8 +1292,8 @@ jQuery(document).ready(function ($) {
 
         const hasPageTarget = pageTargets.length > 0 && !(pageTargets.length === 1 && pageTargets[0] === 'all-pages' && !$('.wsc-page-target[value="all-pages"]').is(':checked'));
         const hasAnySelection = $('.wsc-page-target:checked').length > 0 ||
-            $('#wsc-target-pages option:selected').length > 0 ||
-            $('#wsc-target-posts option:selected').length > 0;
+            wscSelectedPages.size > 0 ||
+            wscSelectedPosts.size > 0;
 
         if (!hasAnySelection) {
             formError.removeClass('wsc-text-success');
@@ -843,35 +1305,47 @@ jQuery(document).ready(function ($) {
 
         const hasFormSelector = combinedSel !== '';
         const hasSubmitSelector = submitSel !== '';
-        if (!hasFormSelector && !hasSubmitSelector) {
+        const allPagesChecked = $('.wsc-page-target[value="all-pages"]').is(':checked');
+        
+        // Form ID/class is ONLY required when "Entire site" is selected
+        // For specific pages/posts or common locations, we'll find the first form on the page
+        if (allPagesChecked && !hasFormSelector) {
             formError.removeClass('wsc-text-success');
             formError.addClass('wsc-form-error');
-            formError.html(wscT('formSelectorRequired', 'Please enter a Form id/class or Submit button selector to identify the form.'));
-            wscErrToast(wscT('formSelectorRequired', 'Form id/class or Submit selector is required.'));
+            formError.html(wscT('formSelectorRequiredForEntireSite', 'Form id/class is required when targeting the entire site.'));
+            wscErrToast(wscT('formSelectorRequiredForEntireSite', 'Form id/class is required for Entire site.'));
             return;
         }
+        
+        // For specific pages/posts or common locations, form selector is optional
+        // The frontend will find the first <form> on the matching page
 
-        $('#wsc-form-fields .wsc-form-field-row').each(function () {
-            const $row = $(this);
-            const ix = $row.attr('data-field-index');
-            const ft = $row.find('.form-field').val();
-            const raw = {
-                field: ft,
-                id: $row.find('.field-id').val(),
-                class: $row.find('.field-class').val(),
-                event: $row.find('.form-event').val(),
-                isRequired: parseInt($row.find('input[name="is_required_f_' + ix + '"]:checked').val(), 10) || 0,
-                isValidate: parseInt($row.find('input[name="is_validate_f_' + ix + '"]:checked').val(), 10) || 0,
-                is_webrisk: parseInt($row.find('input[name="fg_webrisk_' + ix + '"]:checked').val(), 10) || 0,
-                is_virustotal: parseInt($row.find('input[name="fg_vt_' + ix + '"]:checked').val(), 10) || 0,
-                check_username_exists: parseInt($row.find('input[name="fg_userexists_' + ix + '"]:checked').val(), 10) || 0,
-                text_allow_urls: parseInt($row.find('input[name="fg_texturls_' + ix + '"]:checked').val(), 10) || 0,
-                textarea_allow_links: parseInt($row.find('input[name="fg_tlinks_' + ix + '"]:checked').val(), 10) || 0,
-                textarea_ai_spam: parseInt($row.find('input[name="fg_tai_' + ix + '"]:checked').val(), 10) || 0,
-                regex: $row.find('.field-regex').val(),
-            };
-            formSettings.push(wscFgEffectivePayload(ft, raw));
-        });
+        const isAutoValidation = $('#wsc-auto-validation').is(':checked');
+        const autoRules = isAutoValidation ? wscCollectAutoValidationRules() : {};
+        
+        if (!isAutoValidation) {
+            $('#wsc-form-fields .wsc-form-field-row').each(function () {
+                const $row = $(this);
+                const ix = $row.attr('data-field-index');
+                const ft = $row.find('.form-field').val();
+                const raw = {
+                    field: ft,
+                    id: $row.find('.field-id').val(),
+                    class: $row.find('.field-class').val(),
+                    event: $row.find('.form-event').val(),
+                    isRequired: parseInt($row.find('input[name="is_required_f_' + ix + '"]:checked').val(), 10) || 0,
+                    isValidate: parseInt($row.find('input[name="is_validate_f_' + ix + '"]:checked').val(), 10) || 0,
+                    is_webrisk: parseInt($row.find('input[name="fg_webrisk_' + ix + '"]:checked').val(), 10) || 0,
+                    is_virustotal: parseInt($row.find('input[name="fg_vt_' + ix + '"]:checked').val(), 10) || 0,
+                    check_username_exists: parseInt($row.find('input[name="fg_userexists_' + ix + '"]:checked').val(), 10) || 0,
+                    text_allow_urls: parseInt($row.find('input[name="fg_texturls_' + ix + '"]:checked').val(), 10) || 0,
+                    textarea_allow_links: parseInt($row.find('input[name="fg_tlinks_' + ix + '"]:checked').val(), 10) || 0,
+                    textarea_ai_spam: parseInt($row.find('input[name="fg_tai_' + ix + '"]:checked').val(), 10) || 0,
+                    regex: $row.find('.field-regex').val(),
+                };
+                formSettings.push(wscFgEffectivePayload(ft, raw));
+            });
+        }
 
         $.ajax({
             method: 'POST',
@@ -884,6 +1358,9 @@ jQuery(document).ready(function ($) {
                 formId: combinedSel,
                 formClass: '',
                 submitSelector: submitSel,
+                autoValidation: isAutoValidation ? 1 : 0,
+                autoRules: JSON.stringify(autoRules),
+                enableRecaptcha: $('#wsc-enable-recaptcha').is(':checked') ? 1 : 0,
                 formSettings: formSettings,
                 nonce: WPSpanChecker.nonce
             },
@@ -933,6 +1410,10 @@ jQuery(document).ready(function ($) {
             wscResetPageTargetsForNew();
             $('#form_selector').val('');
             $('#submit_selector').val('');
+            $('#wsc-auto-validation').prop('checked', true);
+            $('#wsc-enable-recaptcha').prop('checked', false);
+            wscResetAutoValidationRules();
+            wscUpdateAutoValidationMode();
             wscFgResetRows();
         }
     });

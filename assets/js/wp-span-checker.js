@@ -31,11 +31,640 @@ jQuery(function ($) {
     const settings = WPSpanChecker.settings || [];
     const ajaxUrl = WPSpanChecker.ajaxUrl;
     const nonce = WPSpanChecker.nonce;
+    const pageID = WPSpanChecker.pageID || 0;
+    const pageType = WPSpanChecker.pageType || 'common';
+    const bodyClasses = WPSpanChecker.bodyClasses || [];
+    const presetClasses = WPSpanChecker.presetClasses || {};
+
+    /**
+     * Check if a form should be skipped (admin bar, wp-admin forms, etc.)
+     */
+    function wscShouldSkipForm($form) {
+        if (!$form.length) return true;
+        
+        // Skip admin bar search form
+        if ($form.attr('id') === 'adminbarsearch') return true;
+        
+        // Skip any form inside wp-admin bar
+        if ($form.closest('#wpadminbar').length) return true;
+        
+        // Skip forms with admin-related IDs
+        const formId = ($form.attr('id') || '').toLowerCase();
+        if (formId.indexOf('adminbar') !== -1) return true;
+        
+        // Skip forms with action pointing to wp-admin
+        const action = ($form.attr('action') || '').toLowerCase();
+        if (action.indexOf('/wp-admin/') !== -1) return true;
+        
+        return false;
+    }
+
+    /**
+     * Get all content forms (excluding admin bar and wp-admin forms)
+     */
+    function wscGetContentForms() {
+        return $('form').filter(function() {
+            return !wscShouldSkipForm($(this));
+        });
+    }
 
     console.log('WPSpanChecker', WPSpanChecker);
     console.log('ajaxUrl', ajaxUrl);
     console.log('nonce', nonce);
+    console.log('pageType', pageType);
+    console.log('bodyClasses', bodyClasses);
     console.log('[WP Span Checker] Settings loaded:', settings.length, 'mapping(s)');
+
+    function wscBodyHasClass(className) {
+        if (!className) return false;
+        return $('body').hasClass(className) || bodyClasses.indexOf(className) !== -1;
+    }
+
+    function wscNormalizePageTargets(raw) {
+        if (!raw) return [];
+        if (Array.isArray(raw)) return raw.map(String).filter(Boolean);
+        const s = String(raw).trim();
+        if (!s) return [];
+        try {
+            const d = JSON.parse(s);
+            if (Array.isArray(d)) return d.map(String).filter(Boolean);
+        } catch (e) {}
+        return [s];
+    }
+
+    function wscSettingMatchesCurrentPage(setting) {
+        const targets = wscNormalizePageTargets(setting.page_id);
+        const formSelector = String(setting.form_id || '').trim();
+        
+        if (targets.length === 0) {
+            return { matches: true, requiresFormSelector: false };
+        }
+        
+        for (let i = 0; i < targets.length; i++) {
+            const target = targets[i];
+            
+            if (target === 'all-pages') {
+                if (!formSelector) {
+                    console.log('[WP Span Checker] Entire site target requires form selector');
+                    return { matches: false, requiresFormSelector: true };
+                }
+                return { matches: true, requiresFormSelector: true };
+            }
+            
+            if (/^\d+$/.test(target)) {
+                const targetId = parseInt(target, 10);
+                if (pageType === 'page' && wscBodyHasClass('page-id-' + targetId)) {
+                    console.log('[WP Span Checker] Matched page ID:', targetId);
+                    return { matches: true, requiresFormSelector: false };
+                }
+                if (pageType === 'post' && wscBodyHasClass('postid-' + targetId)) {
+                    console.log('[WP Span Checker] Matched post ID:', targetId);
+                    return { matches: true, requiresFormSelector: false };
+                }
+                if (targetId === pageID) {
+                    console.log('[WP Span Checker] Matched by pageID:', targetId);
+                    return { matches: true, requiresFormSelector: false };
+                }
+                continue;
+            }
+            
+            const presetClass = presetClasses[target];
+            if (presetClass && wscBodyHasClass(presetClass)) {
+                console.log('[WP Span Checker] Matched preset:', target, 'via class:', presetClass);
+                return { matches: true, requiresFormSelector: false };
+            }
+            
+            if (target === 'front-page' && wscBodyHasClass('home')) {
+                return { matches: true, requiresFormSelector: false };
+            }
+            if (target === 'home-blog' && wscBodyHasClass('blog')) {
+                return { matches: true, requiresFormSelector: false };
+            }
+            if (target === 'singular-page' && pageType === 'page') {
+                return { matches: true, requiresFormSelector: false };
+            }
+            if (target === 'singular-post' && pageType === 'post') {
+                return { matches: true, requiresFormSelector: false };
+            }
+            if (target === 'singular-any' && (pageType === 'page' || pageType === 'post' || wscBodyHasClass('singular'))) {
+                return { matches: true, requiresFormSelector: false };
+            }
+            if (target === 'archive-any' && wscBodyHasClass('archive')) {
+                return { matches: true, requiresFormSelector: false };
+            }
+            if (target === 'archive-category' && wscBodyHasClass('category')) {
+                return { matches: true, requiresFormSelector: false };
+            }
+            if (target === 'archive-tag' && wscBodyHasClass('tag')) {
+                return { matches: true, requiresFormSelector: false };
+            }
+            if (target === 'search' && wscBodyHasClass('search')) {
+                return { matches: true, requiresFormSelector: false };
+            }
+            if (target === '404' && wscBodyHasClass('error404')) {
+                return { matches: true, requiresFormSelector: false };
+            }
+        }
+        
+        return { matches: false, requiresFormSelector: false };
+    }
+
+    const AUTO_FIELD_NAMES = {
+        email: ['email', 'user_email', 'your-email', 'mail', 'e-mail'],
+        username: ['username', 'user_login', 'user_name', 'login', 'user', 'nickname'],
+        password: ['password', 'user_pass', 'pass', 'pwd', 'user_password'],
+        message: ['message', 'comment', 'content', 'body', 'your-message', 'description'],
+        name: ['name', 'first_name', 'last_name', 'full_name', 'your-name', 'author'],
+        phone: ['phone', 'tel', 'telephone', 'mobile', 'cell'],
+        url: ['url', 'website', 'web', 'site', 'link', 'homepage', 'webpage', 'your-url', 'your-website']
+    };
+
+    function wscDetectFieldType($field) {
+        const type = ($field.attr('type') || '').toLowerCase();
+        const name = ($field.attr('name') || '').toLowerCase();
+        const tagName = ($field.prop('tagName') || '').toLowerCase();
+        
+        if (type === 'email' || AUTO_FIELD_NAMES.email.some(function(n) { return name.indexOf(n) !== -1; })) {
+            return 'email';
+        }
+        if (type === 'url' || AUTO_FIELD_NAMES.url.some(function(n) { return name.indexOf(n) !== -1; })) {
+            return 'url';
+        }
+        if (type === 'password' || AUTO_FIELD_NAMES.password.some(function(n) { return name.indexOf(n) !== -1; })) {
+            return 'password';
+        }
+        if (tagName === 'textarea' || AUTO_FIELD_NAMES.message.some(function(n) { return name.indexOf(n) !== -1; })) {
+            return 'textarea';
+        }
+        if (AUTO_FIELD_NAMES.username.some(function(n) { return name.indexOf(n) !== -1; })) {
+            return 'username';
+        }
+        if (type === 'tel' || AUTO_FIELD_NAMES.phone.some(function(n) { return name.indexOf(n) !== -1; })) {
+            return 'tel';
+        }
+        if (type === 'text') {
+            return 'text';
+        }
+        return null;
+    }
+
+    function wscAutoDetectFormFields($form, autoRules) {
+        const fields = [];
+        const rules = autoRules || {};
+        
+        console.log('[WP Span Checker] Auto-detecting fields with rules:', rules);
+        
+        $form.find('input, textarea, select').each(function() {
+            const $field = $(this);
+            const type = ($field.attr('type') || '').toLowerCase();
+            const name = ($field.attr('name') || '').toLowerCase();
+            
+            // Skip hidden, submit, button, reset fields
+            if (type === 'hidden' || type === 'submit' || type === 'button' || type === 'reset') {
+                return;
+            }
+            
+            // Skip fields inside admin bar
+            if ($field.closest('#wpadminbar').length) {
+                return;
+            }
+            
+            const detectedType = wscDetectFieldType($field);
+            if (!detectedType) return;
+            
+            const isRequired = $field.prop('required') || $field.attr('required') !== undefined;
+            
+            const fieldConfig = {
+                $el: $field,
+                type: detectedType,
+                name: $field.attr('name') || '',
+                required: isRequired,
+                rules: {}
+            };
+            
+            switch (detectedType) {
+                case 'email':
+                    if (rules.email) {
+                        fieldConfig.rules = {
+                            validate: !!rules.email.validate,
+                            mx: !!rules.email.mx,
+                            disposable: !!rules.email.disposable,
+                            webrisk: !!rules.email.webrisk,
+                            virustotal: !!rules.email.virustotal
+                        };
+                    }
+                    console.log('[WP Span Checker] Email field:', $field.attr('name'), 'required:', isRequired, 'rules:', fieldConfig.rules);
+                    break;
+                case 'url':
+                    // URL fields should allow URLs - apply URL validation rules, NOT block_urls
+                    if (rules.url) {
+                        fieldConfig.rules = {
+                            validate: !!rules.url.validate,
+                            webrisk: !!rules.url.webrisk,
+                            virustotal: !!rules.url.virustotal
+                        };
+                    }
+                    console.log('[WP Span Checker] URL/Website field:', $field.attr('name'), 'required:', isRequired, 'rules:', fieldConfig.rules);
+                    break;
+                case 'textarea':
+                    if (rules.textarea) {
+                        fieldConfig.rules = {
+                            block_links: !!rules.textarea.block_links,
+                            ai_spam: !!rules.textarea.ai_spam
+                        };
+                    }
+                    console.log('[WP Span Checker] Textarea field:', $field.attr('name'), 'required:', isRequired, 'rules:', fieldConfig.rules, 'autoRules.textarea:', rules.textarea);
+                    break;
+                case 'username':
+                    if (rules.username) {
+                        fieldConfig.rules = {
+                            check_exists: !!rules.username.check_exists
+                        };
+                    }
+                    console.log('[WP Span Checker] Username field:', $field.attr('name'), 'required:', isRequired, 'rules:', fieldConfig.rules);
+                    break;
+                case 'password':
+                    if (rules.password) {
+                        fieldConfig.rules = {
+                            strength: !!rules.password.strength
+                        };
+                    }
+                    console.log('[WP Span Checker] Password field:', $field.attr('name'), 'required:', isRequired, 'rules:', fieldConfig.rules);
+                    break;
+                case 'text':
+                    // Only apply block_urls to generic text fields, NOT to URL-type fields
+                    if (rules.text) {
+                        fieldConfig.rules = {
+                            block_urls: !!rules.text.block_urls
+                        };
+                    }
+                    console.log('[WP Span Checker] Text field:', $field.attr('name'), 'required:', isRequired, 'rules:', fieldConfig.rules, 'rules.text:', rules.text);
+                    break;
+            }
+            
+            fields.push(fieldConfig);
+        });
+        
+        console.log('[WP Span Checker] Total fields detected:', fields.length);
+        return fields;
+    }
+
+    /**
+     * Detect common spam patterns in text (client-side).
+     */
+    function wscDetectSpamPatterns(text) {
+        if (!text || typeof text !== 'string') {
+            return { isSpam: false };
+        }
+        
+        const lowerText = text.toLowerCase();
+        
+        // Spam phrases (promotional, scam, SEO spam)
+        const spamPhrases = [
+            // Money/earning scams
+            'earn money', 'make money', 'earn \\$', 'make \\$', '\\$\\d+.*daily', '\\$\\d+.*per day',
+            'work from home', 'online job', 'easy money', 'quick cash', 'get rich',
+            'financial freedom', 'passive income', 'bitcoin profit', 'crypto profit',
+            // Click bait
+            'click here', 'click now', 'act now', 'limited time', 'hurry up',
+            'don\'t miss', 'exclusive offer', 'special offer', 'free gift',
+            // Pills/pharma
+            'viagra', 'cialis', 'pharmacy', 'buy pills', 'weight loss', 'diet pills',
+            // SEO spam
+            'buy backlinks', 'seo services', 'rank #1', 'google ranking',
+            'increase traffic', 'boost your', 'guaranteed results',
+            // Adult/gambling
+            'casino', 'poker online', 'betting', 'adult content', 'xxx',
+            // Loan/credit scams
+            'loan approved', 'bad credit ok', 'no credit check', 'instant loan',
+            // Contact harvesting
+            'contact me at', 'email me at', 'whatsapp me', 'telegram me',
+            // Essay/homework services
+            'essay writing', 'do your homework', 'assignment help', 'thesis writing'
+        ];
+        
+        for (var i = 0; i < spamPhrases.length; i++) {
+            var pattern = new RegExp(spamPhrases[i], 'i');
+            if (pattern.test(lowerText)) {
+                return { isSpam: true, message: t('spamDetected', 'Your message appears to be spam.') };
+            }
+        }
+        
+        // Check for repeated email patterns
+        const emailPattern = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+        const emails = text.match(emailPattern) || [];
+        if (emails.length > 2) {
+            return { isSpam: true, message: t('spamDetected', 'Your message appears to be spam.') };
+        }
+        if (emails.length >= 2) {
+            const uniqueEmails = [...new Set(emails)];
+            if (uniqueEmails.length === 1) {
+                return { isSpam: true, message: t('spamDetected', 'Your message appears to be spam.') };
+            }
+        }
+        
+        // Check for excessive URLs
+        const urlPattern = /https?:\/\/[^\s]+/gi;
+        const urls = text.match(urlPattern) || [];
+        if (urls.length > 3) {
+            return { isSpam: true, message: t('tooManyLinks', 'Too many links in your message.') };
+        }
+        
+        // Check for excessive repetition
+        const words = lowerText.split(/\s+/).filter(function(w) { return w.length > 3; });
+        if (words.length > 5) {
+            const wordCounts = {};
+            words.forEach(function(w) { wordCounts[w] = (wordCounts[w] || 0) + 1; });
+            const maxRepeat = Math.max.apply(null, Object.values(wordCounts));
+            if (maxRepeat > words.length * 0.5) {
+                return { isSpam: true, message: t('spamDetected', 'Your message appears to be spam.') };
+            }
+        }
+        
+        // Check for all caps (shouting)
+        const upperCount = (text.match(/[A-Z]/g) || []).length;
+        const letterCount = (text.match(/[a-zA-Z]/g) || []).length;
+        if (letterCount > 20 && upperCount / letterCount > 0.7) {
+            return { isSpam: true, message: t('spamDetected', 'Your message appears to be spam.') };
+        }
+        
+        return { isSpam: false };
+    }
+
+    /**
+     * Get a readable label for a field (for error messages).
+     */
+    function wscGetFieldLabel($field) {
+        // Try to find associated label
+        const id = $field.attr('id');
+        if (id) {
+            const $label = $('label[for="' + id + '"]');
+            if ($label.length) {
+                return $label.text().replace(/[*:]/g, '').trim();
+            }
+        }
+        
+        // Try placeholder
+        const placeholder = $field.attr('placeholder');
+        if (placeholder) {
+            return placeholder;
+        }
+        
+        // Try name attribute
+        const name = $field.attr('name') || '';
+        if (name) {
+            return name.replace(/[-_\[\]]/g, ' ').replace(/\s+/g, ' ').trim();
+        }
+        
+        return 'This field';
+    }
+
+    /**
+     * Show inline error message below a field.
+     */
+    function wscShowFieldError($field, message) {
+        wscClearFieldError($field);
+        
+        if (!message) return;
+        
+        const $error = $('<span class="wsc-field-error">' + message + '</span>');
+        $field.addClass('wsc-field-invalid');
+        
+        // Try to find the best place to insert error
+        const $parent = $field.parent();
+        
+        // Check if field is wrapped in a common form wrapper
+        if ($parent.is('span, div, label, p')) {
+            $parent.append($error);
+        } else {
+            $field.after($error);
+        }
+    }
+    
+    /**
+     * Clear inline error message from a field.
+     */
+    function wscClearFieldError($field) {
+        $field.removeClass('wsc-field-invalid');
+        
+        const $parent = $field.parent();
+        $parent.find('.wsc-field-error').remove();
+        $field.siblings('.wsc-field-error').remove();
+    }
+    
+    /**
+     * Clear all field errors in a form.
+     */
+    function wscClearAllFieldErrors($form) {
+        $form.find('.wsc-field-invalid').removeClass('wsc-field-invalid');
+        $form.find('.wsc-field-error').remove();
+    }
+
+    function wscValidateAutoField(fieldConfig) {
+        const $field = fieldConfig.$el;
+        const value = String($field.val() || '').trim();
+        const rules = fieldConfig.rules;
+        const isRequired = fieldConfig.required;
+        
+        // Check required fields first
+        if (isRequired && !value) {
+            const fieldName = wscGetFieldLabel($field);
+            return { valid: false, message: t('fieldRequired', 'This field is required.'), $field: $field };
+        }
+        
+        // If empty and not required, skip other validations
+        if (!value) {
+            return { valid: true, message: '', $field: $field };
+        }
+        
+        switch (fieldConfig.type) {
+            case 'email':
+                if (rules.validate && !isValidEmail(value)) {
+                    return { valid: false, message: t('emailInvalidFormat', 'Please enter a valid email address.'), $field: $field };
+                }
+                break;
+            case 'url':
+                if (rules.validate && !isValidUrl(value)) {
+                    return { valid: false, message: t('urlInvalidFormat', 'Please enter a valid URL.'), $field: $field };
+                }
+                break;
+            case 'password':
+                if (rules.strength) {
+                    const hasUpper = /[A-Z]/.test(value);
+                    const hasLower = /[a-z]/.test(value);
+                    const hasNumber = /\d/.test(value);
+                    const hasSymbol = /[^A-Za-z0-9]/.test(value);
+                    const isLong = value.length >= 8;
+                    if (!(hasUpper && hasLower && hasNumber && hasSymbol && isLong)) {
+                        return { valid: false, message: t('passwordWeak', 'Password must be at least 8 characters with uppercase, lowercase, number and symbol.'), $field: $field };
+                    }
+                }
+                break;
+            case 'textarea':
+                if (rules.block_links) {
+                    const urlPattern = /https?:\/\/[^\s<>"']+/i;
+                    if (urlPattern.test(value)) {
+                        return { valid: false, message: t('linksNotAllowed', 'Links are not allowed in this field.'), $field: $field };
+                    }
+                }
+                // Basic client-side spam detection (before AI check)
+                if (rules.ai_spam) {
+                    const spamResult = wscDetectSpamPatterns(value);
+                    if (spamResult.isSpam) {
+                        return { valid: false, message: spamResult.message || t('spamDetected', 'Your message appears to be spam.'), $field: $field };
+                    }
+                }
+                break;
+            case 'text':
+                console.log('[WP Span Checker] Validating text field, block_urls:', rules.block_urls, 'value:', value);
+                if (rules.block_urls) {
+                    // Match URLs: http(s)://, www., or domain.ext patterns
+                    const urlPatterns = [
+                        /https?:\/\/[^\s<>"']+/i,                    // http:// or https://
+                        /www\.[^\s<>"']+/i,                          // www.
+                        /[a-zA-Z0-9][-a-zA-Z0-9]*\.[a-zA-Z]{2,}(?:\/[^\s<>"']*)?/i  // domain.tld
+                    ];
+                    const hasUrl = urlPatterns.some(function(pattern) {
+                        const matches = pattern.test(value);
+                        if (matches) console.log('[WP Span Checker] URL pattern matched:', pattern);
+                        return matches;
+                    });
+                    if (hasUrl) {
+                        console.log('[WP Span Checker] URL detected in text field, blocking');
+                        return { valid: false, message: t('urlsNotAllowed', 'URLs are not allowed in this field.'), $field: $field };
+                    }
+                }
+                break;
+        }
+        
+        return { valid: true, message: '', $field: $field };
+    }
+
+    /**
+     * Single AJAX call to validate ALL fields at once.
+     */
+    function wscValidateAllFieldsServer(fields, recaptchaToken) {
+        return new Promise(function(resolve, reject) {
+            if (!fields || fields.length === 0) {
+                resolve({ status: true });
+                return;
+            }
+            
+            // Prepare fields data (remove jQuery objects)
+            const fieldsData = fields.map(function(f) {
+                return {
+                    type: f.type,
+                    mappingId: f.mappingId,
+                    fieldType: f.fieldType,
+                    fieldName: f.fieldName,
+                    fieldIndex: f.fieldIndex,
+                    value: f.value,
+                    rules: f.rules
+                };
+            });
+            
+            var requestData = {
+                action: 'validateAllFields',
+                nonce: nonce,
+                fields: JSON.stringify(fieldsData)
+            };
+            
+            if (recaptchaToken) {
+                requestData.recaptcha_token = recaptchaToken;
+            }
+            
+            $.ajax({
+                url: ajaxUrl,
+                type: 'POST',
+                data: requestData,
+                dataType: 'json',
+                success: function(response) {
+                    if (response && response.success) {
+                        resolve(response.data || { status: true });
+                    } else {
+                        resolve(response.data || { status: false, message: t('validationFailed', 'Validation failed') });
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('[WP Span Checker] AJAX error:', error);
+                    reject(new Error(t('serverError', 'Server error. Please try again.')));
+                }
+            });
+        });
+    }
+
+    function wscAutoValidateServer(mappingId, fieldConfig, value) {
+        return new Promise(function(resolve, reject) {
+            $.ajax({
+                url: ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'validateAutoField',
+                    nonce: nonce,
+                    mappingId: mappingId,
+                    fieldType: fieldConfig.type,
+                    fieldName: fieldConfig.name,
+                    value: value,
+                    rules: JSON.stringify(fieldConfig.rules)
+                },
+                success: function(response) {
+                    if (response && response.success && response.data) {
+                        resolve(response.data);
+                    } else {
+                        const msg = response && response.data && response.data.message
+                            ? response.data.message
+                            : t('validationFailed', 'Validation failed');
+                        reject(new Error(msg));
+                    }
+                },
+                error: function(xhr) {
+                    reject(new Error(xhr.statusText || 'Request failed'));
+                }
+            });
+        });
+    }
+
+    function wscFindFormForSetting(setting, matchResult) {
+        const formSelector = String(setting.form_id || '').trim();
+        const submitSelector = String(setting.submit_selector || '').trim();
+        
+        if (formSelector) {
+            const $form = resolveForm$(formSelector, setting.form_class);
+            if ($form.length && !wscShouldSkipForm($form)) {
+                console.log('[WP Span Checker] Form found by selector:', formSelector);
+                return $form;
+            }
+            if (matchResult.requiresFormSelector) {
+                console.log('[WP Span Checker] Form not found for required selector:', formSelector);
+                return $();
+            }
+        }
+        
+        if (!matchResult.requiresFormSelector) {
+            if (submitSelector) {
+                const $submitBtn = $(submitSelector).first();
+                if ($submitBtn.length) {
+                    const $form = $submitBtn.closest('form');
+                    if ($form.length && !wscShouldSkipForm($form)) {
+                        console.log('[WP Span Checker] Form found via submit selector');
+                        return $form;
+                    }
+                }
+            }
+            
+            const $forms = wscGetContentForms();
+            if ($forms.length === 1) {
+                console.log('[WP Span Checker] Single content form found on page');
+                return $forms.first();
+            }
+            if ($forms.length > 1) {
+                console.log('[WP Span Checker] Multiple content forms found, returning first one');
+                return $forms.first();
+            }
+        }
+        
+        return $();
+    }
 
     function wscLooksCombinedSelector(fid) {
         const s = String(fid || '').trim();
@@ -513,8 +1142,10 @@ jQuery(function ($) {
             entry = {
                 configs: [],
                 validating: false,
-                originalSubmitBtn: null,
-                validationBtn: null,
+                validationBtnCreated: false,
+                $originalSubmit: null,
+                $validationBtn: null,
+                originalBtnText: '',
             };
             reg.set(formEl, entry);
         }
@@ -530,106 +1161,299 @@ jQuery(function ($) {
     }
 
     /**
-     * Create validation button and hide original submit button.
-     * This is the new approach: validation button triggers validation,
-     * then clicks the original hidden submit button on success.
+     * reCAPTCHA state management.
      */
-    function wscSetupValidationButton($form, $originalSubmit, entry) {
-        if (!$originalSubmit.length) {
-            console.log('[WP Span Checker] No submit button found in form');
+    var recaptchaLoaded = false;
+    var recaptchaCallbacks = [];
+    
+    function wscLoadRecaptchaScript(callback) {
+        if (recaptchaLoaded && typeof grecaptcha !== 'undefined') {
+            if (callback) callback();
             return;
         }
         
-        if (entry.validationBtn) {
-            console.log('[WP Span Checker] Validation button already exists');
+        if (callback) {
+            recaptchaCallbacks.push(callback);
+        }
+        
+        if (document.getElementById('wsc-recaptcha-script')) {
             return;
         }
+        
+        var recaptchaConfig = WPSpanChecker.recaptcha || {};
+        if (!recaptchaConfig.siteKey) return;
+        
+        var script = document.createElement('script');
+        script.id = 'wsc-recaptcha-script';
+        script.src = 'https://www.google.com/recaptcha/api.js?onload=wscRecaptchaReady&render=' + 
+            (recaptchaConfig.version === 'v3' ? recaptchaConfig.siteKey : 'explicit');
+        script.async = true;
+        script.defer = true;
+        document.head.appendChild(script);
+    }
+    
+    window.wscRecaptchaReady = function() {
+        recaptchaLoaded = true;
+        console.log('[WP Span Checker] reCAPTCHA loaded');
+        recaptchaCallbacks.forEach(function(cb) { cb(); });
+        recaptchaCallbacks = [];
+    };
+    
+    function wscRenderRecaptcha($form, entry, callback) {
+        var recaptchaConfig = WPSpanChecker.recaptcha || {};
+        if (!recaptchaConfig.siteKey) {
+            if (callback) callback(null);
+            return;
+        }
+        
+        // Check if already rendered
+        if (entry.recaptchaRendered) {
+            if (callback) callback(entry.recaptchaWidgetId);
+            return;
+        }
+        
+        var $submitBtn = entry.$validationBtn || entry.$originalSubmit;
+        if (!$submitBtn || !$submitBtn.length) {
+            if (callback) callback(null);
+            return;
+        }
+        
+        // Create reCAPTCHA container
+        var containerId = 'wsc-recaptcha-' + Math.random().toString(36).substr(2, 9);
+        var $container = $('<div id="' + containerId + '" class="wsc-recaptcha-container" style="margin: 10px 0;"></div>');
+        $container.insertBefore($submitBtn);
+        
+        if (recaptchaConfig.version === 'v3') {
+            // v3 is invisible, no widget to render
+            entry.recaptchaRendered = true;
+            entry.recaptchaVersion = 'v3';
+            if (callback) callback(null);
+        } else {
+            // v2 checkbox
+            wscLoadRecaptchaScript(function() {
+                try {
+                    var widgetId = grecaptcha.render(containerId, {
+                        sitekey: recaptchaConfig.siteKey,
+                        callback: function(token) {
+                            entry.recaptchaToken = token;
+                            entry.recaptchaVerified = true;
+                            if (entry.$validationBtn) {
+                                entry.$validationBtn.prop('disabled', false);
+                            }
+                            console.log('[WP Span Checker] reCAPTCHA v2 verified');
+                        },
+                        'expired-callback': function() {
+                            entry.recaptchaToken = null;
+                            entry.recaptchaVerified = false;
+                            if (entry.$validationBtn) {
+                                entry.$validationBtn.prop('disabled', true);
+                            }
+                        }
+                    });
+                    entry.recaptchaWidgetId = widgetId;
+                    entry.recaptchaRendered = true;
+                    entry.recaptchaVersion = 'v2';
+                    // Disable submit until reCAPTCHA verified
+                    if (entry.$validationBtn) {
+                        entry.$validationBtn.prop('disabled', true);
+                    }
+                    if (callback) callback(widgetId);
+                } catch (e) {
+                    console.error('[WP Span Checker] reCAPTCHA render error:', e);
+                    if (callback) callback(null);
+                }
+            });
+        }
+    }
+    
+    function wscGetRecaptchaToken(entry, callback) {
+        var recaptchaConfig = WPSpanChecker.recaptcha || {};
+        
+        if (!recaptchaConfig.siteKey || !entry.recaptchaRendered) {
+            callback(null);
+            return;
+        }
+        
+        if (entry.recaptchaVersion === 'v3') {
+            // v3: get token via execute
+            grecaptcha.ready(function() {
+                grecaptcha.execute(recaptchaConfig.siteKey, { action: 'submit' }).then(function(token) {
+                    callback(token);
+                });
+            });
+        } else {
+            // v2: token already available from callback
+            callback(entry.recaptchaToken || null);
+        }
+    }
 
+    /**
+     * Setup validation by creating a custom validation button.
+     * 1. Hide the original submit button
+     * 2. Create a validation button that looks identical
+     * 3. On click: run validation first, then click original submit if passed
+     */
+    function wscSetupFormValidation($form, $originalSubmit, entry, enableRecaptcha) {
         const formEl = $form.get(0);
+        
+        if (entry.validationBtnCreated) {
+            console.log('[WP Span Checker] Validation button already created');
+            return;
+        }
+        
+        if (!$originalSubmit.length) {
+            console.log('[WP Span Checker] No submit button found');
+            return;
+        }
+        
+        entry.validationBtnCreated = true;
+        entry.$originalSubmit = $originalSubmit;
+        
         const originalEl = $originalSubmit.get(0);
-
         const btnText = $originalSubmit.val() || $originalSubmit.text() || t('submit', 'Submit');
-        const btnType = ($originalSubmit.prop('tagName') || 'button').toLowerCase();
-
+        entry.originalBtnText = btnText;
+        
+        // Create validation button
+        const isInput = $originalSubmit.is('input');
         let $validationBtn;
-        if (btnType === 'input') {
+        
+        if (isInput) {
             $validationBtn = $('<input type="button">').val(btnText);
         } else {
             $validationBtn = $('<button type="button">').html($originalSubmit.html() || btnText);
         }
-
-        const originalClasses = $originalSubmit.attr('class') || '';
-        if (originalClasses) {
-            const classesWithoutSubmit = originalClasses.replace(/\bwpcf7-submit\b/g, '').trim();
-            $validationBtn.attr('class', classesWithoutSubmit);
+        
+        // Copy classes (remove wpcf7-submit to avoid CF7 binding)
+        const originalClasses = ($originalSubmit.attr('class') || '')
+            .replace(/\bwpcf7-submit\b/g, '')
+            .replace(/\bsubmit\b/g, '')
+            .trim();
+        $validationBtn.attr('class', originalClasses + ' wsc-validation-btn');
+        
+        // Copy inline styles
+        const inlineStyle = $originalSubmit.attr('style') || '';
+        if (inlineStyle) {
+            $validationBtn.attr('style', inlineStyle);
         }
-        $validationBtn.addClass('wsc-validation-btn');
-
-        const computedStyle = window.getComputedStyle(originalEl);
-        const cssProps = [
-            'background', 'backgroundColor', 'color', 'fontSize', 'fontWeight', 'fontFamily',
-            'padding', 'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft',
-            'margin', 'marginTop', 'marginRight', 'marginBottom', 'marginLeft',
-            'border', 'borderRadius', 'width', 'height', 'minWidth', 'minHeight',
-            'lineHeight', 'textTransform', 'letterSpacing', 'boxShadow', 'cursor',
-            'display', 'textAlign', 'verticalAlign'
-        ];
-        cssProps.forEach(function(prop) {
-            try {
+        
+        // Copy computed styles for better appearance matching
+        try {
+            const computedStyle = window.getComputedStyle(originalEl);
+            const cssProps = [
+                'background', 'backgroundColor', 'backgroundImage', 'color', 
+                'fontSize', 'fontWeight', 'fontFamily', 'padding', 'margin',
+                'border', 'borderRadius', 'width', 'height', 'minWidth', 'minHeight',
+                'lineHeight', 'textTransform', 'letterSpacing', 'boxShadow', 
+                'cursor', 'display', 'textAlign'
+            ];
+            cssProps.forEach(function(prop) {
                 const val = computedStyle.getPropertyValue(prop.replace(/([A-Z])/g, '-$1').toLowerCase());
-                if (val && val !== '') {
+                if (val && val !== '' && val !== 'none') {
                     $validationBtn.css(prop.replace(/([A-Z])/g, '-$1').toLowerCase(), val);
                 }
-            } catch(e) {}
+            });
+        } catch(e) {
+            console.log('[WP Span Checker] Could not copy computed styles');
+        }
+        
+        // Make sure validation button is visible
+        $validationBtn.css({
+            'display': 'inline-block',
+            'visibility': 'visible',
+            'opacity': '1',
+            'position': 'relative',
+            'left': 'auto'
         });
-
-        $originalSubmit.hide();
+        
+        // HIDE the original submit button completely
         $originalSubmit.css({
             'position': 'absolute',
             'left': '-9999px',
+            'top': '-9999px',
             'visibility': 'hidden',
-            'pointer-events': 'none',
             'opacity': '0',
-            'width': '0',
-            'height': '0'
-        });
-
+            'width': '1px',
+            'height': '1px',
+            'pointer-events': 'none'
+        }).attr('tabindex', '-1');
+        
+        // Insert validation button after original
         $validationBtn.insertAfter($originalSubmit);
-
-        entry.originalSubmitBtn = originalEl;
-        entry.validationBtn = $validationBtn.get(0);
-        entry.originalBtnText = btnText;
-
-        console.log('[WP Span Checker] Validation button created for form, original text:', btnText);
-
+        
+        entry.$validationBtn = $validationBtn;
+        entry.enableRecaptcha = enableRecaptcha;
+        
+        console.log('[WP Span Checker] Validation button created:', btnText, 'reCAPTCHA:', enableRecaptcha);
+        
+        // Render reCAPTCHA if enabled
+        if (enableRecaptcha && WPSpanChecker.recaptcha && WPSpanChecker.recaptcha.siteKey) {
+            wscRenderRecaptcha($form, entry, function(widgetId) {
+                console.log('[WP Span Checker] reCAPTCHA rendered, widget:', widgetId);
+            });
+        }
+        
+        // VALIDATION BUTTON CLICK - This is the ONLY entry point for form submission
         $validationBtn.on('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
-
+            
+            console.log('[WP Span Checker] Validation button clicked');
+            
             if (entry.validating) {
-                return;
+                console.log('[WP Span Checker] Already validating, ignoring');
+                return false;
             }
-
-            wscRunValidation(formEl, entry, $validationBtn);
+            
+            // Check reCAPTCHA v2 first (must be verified before proceeding)
+            if (entry.enableRecaptcha && entry.recaptchaVersion === 'v2' && !entry.recaptchaVerified) {
+                wpSpanCheckerToast.fire({
+                    icon: 'warning',
+                    title: t('recaptchaRequired', 'Please complete the reCAPTCHA verification.'),
+                });
+                return false;
+            }
+            
+            // Run validation
+            wscRunValidation(formEl, entry);
+            
+            return false;
+        });
+        
+        // Prevent Enter key from submitting form directly - must go through validation
+        $form.on('keypress.wscValidation', function(e) {
+            if (e.which === 13 && !$(e.target).is('textarea')) {
+                e.preventDefault();
+                console.log('[WP Span Checker] Enter key pressed, triggering validation');
+                $validationBtn.click();
+                return false;
+            }
         });
     }
 
     /**
      * Run validation for all configured fields, then submit if valid.
      */
-    function wscRunValidation(formEl, entry, $validationBtn) {
+    function wscRunValidation(formEl, entry) {
         entry.validating = true;
-        const originalBtnText = entry.originalBtnText || ($validationBtn.is('input') ? $validationBtn.val() : $validationBtn.html());
+        const $validationBtn = entry.$validationBtn;
+        const originalBtnText = entry.originalBtnText || t('submit', 'Submit');
         const validatingText = t('validating', 'Validating...');
 
-        console.log('[WP Span Checker] Starting validation...');
+        console.log('[WP Span Checker] ========== STARTING VALIDATION ==========');
+        console.log('[WP Span Checker] Configs count:', entry.configs.length);
 
-        if ($validationBtn.is('input')) {
-            $validationBtn.val(validatingText);
-        } else {
-            $validationBtn.html(validatingText);
+        // Clear all previous field errors
+        wscClearAllFieldErrors($(formEl));
+
+        // Show validating state on validation button
+        if ($validationBtn && $validationBtn.length) {
+            if ($validationBtn.is('input')) {
+                $validationBtn.val(validatingText);
+            } else {
+                $validationBtn.text(validatingText);
+            }
+            $validationBtn.prop('disabled', true);
         }
-        $validationBtn.prop('disabled', true);
 
         const before = new CustomEvent('wp_span_checker:guard_before_validate', {
             cancelable: true,
@@ -637,125 +1461,314 @@ jQuery(function ($) {
             detail: { form: formEl },
         });
         if (!formEl.dispatchEvent(before)) {
-            wscResetValidationBtn($validationBtn, originalBtnText, entry);
+            wscResetValidationBtn(entry);
             return;
         }
 
         const jobs = [];
+        const autoJobs = [];
+        
         entry.configs.forEach(function (cfg) {
             const mappingId = cfg.mappingId;
-            const formSettingData = cfg.formSettingData || [];
-            formSettingData.forEach(function (fs, idx) {
-                const ft = fs.field_type || fs.field || '';
-                const $el = generateFieldClassId($(formEl), fs.id, fs.class);
-                const val = readFieldValue($el, ft);
-                const required = parseInt(fs.isRequired, 10) || 0;
-                const nonEmpty = String(val).trim() !== '';
-                if (required || (nonEmpty && fieldServerGate(fs))) {
-                    jobs.push({ mappingId: mappingId, idx: idx, val: val, fieldName: fs.id || fs.class || '' });
-                }
-            });
+            
+            console.log('[WP Span Checker] Config - isAuto:', cfg.isAuto, 'autoFields:', cfg.autoFields ? cfg.autoFields.length : 0);
+            
+            if (cfg.isAuto && cfg.autoFields) {
+                cfg.autoFields.forEach(function(fieldConfig) {
+                    const $el = fieldConfig.$el;
+                    const val = String($el.val() || '').trim();
+                    const fieldType = fieldConfig.type;
+                    const rules = fieldConfig.rules || {};
+                    const isRequired = fieldConfig.required;
+                    
+                    console.log('[WP Span Checker] Field:', fieldType, 'name:', fieldConfig.name, 'required:', isRequired, 'value:', val ? '"' + val.substring(0, 30) + '..."' : '(empty)');
+                    console.log('[WP Span Checker] Rules:', JSON.stringify(rules));
+                    
+                    // Client-side validation (includes required check)
+                    const clientResult = wscValidateAutoField(fieldConfig);
+                    console.log('[WP Span Checker] Client validation result:', clientResult);
+                    
+                    if (!clientResult.valid) {
+                        autoJobs.push({
+                            mappingId: mappingId,
+                            fieldConfig: fieldConfig,
+                            val: val,
+                            clientError: clientResult.message
+                        });
+                        return;
+                    }
+                    
+                    // Skip server validation if field is empty (and not required - already checked above)
+                    if (!val) {
+                        console.log('[WP Span Checker] Skipping server validation for empty non-required field');
+                        return;
+                    }
+                    
+                    // Check if server validation is needed
+                    const needsServer = (fieldType === 'email' && (rules.mx || rules.disposable || rules.webrisk || rules.virustotal)) ||
+                                       (fieldType === 'url' && (rules.webrisk || rules.virustotal)) ||
+                                       (fieldType === 'textarea' && rules.ai_spam) ||
+                                       (fieldType === 'username' && rules.check_exists);
+                    
+                    console.log('[WP Span Checker] Server validation check - fieldType:', fieldType, 'rules:', rules, 'needsServer:', needsServer);
+                    if (fieldType === 'textarea') {
+                        console.log('[WP Span Checker] Textarea ai_spam rule:', rules.ai_spam);
+                    }
+                    
+                    if (needsServer) {
+                        autoJobs.push({
+                            mappingId: mappingId,
+                            fieldConfig: fieldConfig,
+                            val: val,
+                            needsServer: true
+                        });
+                    }
+                });
+            } else {
+                const formSettingData = cfg.formSettingData || [];
+                formSettingData.forEach(function (fs, idx) {
+                    const ft = fs.field_type || fs.field || '';
+                    const $el = generateFieldClassId($(formEl), fs.id, fs.class);
+                    const val = readFieldValue($el, ft);
+                    const required = parseInt(fs.isRequired, 10) || 0;
+                    const nonEmpty = String(val).trim() !== '';
+                    if (required || (nonEmpty && fieldServerGate(fs))) {
+                        jobs.push({ mappingId: mappingId, idx: idx, val: val, fieldName: fs.id || fs.class || '' });
+                    }
+                });
+            }
         });
 
-        if (jobs.length === 0) {
-            console.log('[WP Span Checker] No validation jobs, submitting directly');
-            wscSubmitOriginalForm(formEl, entry, $validationBtn, originalBtnText);
+        // Check for client-side errors first - show inline errors
+        const clientErrors = autoJobs.filter(function(j) { return j.clientError; });
+        if (clientErrors.length > 0) {
+            console.log('[WP Span Checker] CLIENT VALIDATION FAILED - errors:', clientErrors.length);
+            
+            // Show inline error for each field
+            clientErrors.forEach(function(err) {
+                if (err.fieldConfig && err.fieldConfig.$el) {
+                    wscShowFieldError(err.fieldConfig.$el, err.clientError);
+                }
+            });
+            
+            // Show summary toast
+            wpSpanCheckerToast.fire({
+                icon: 'error',
+                title: t('validationErrors', 'Please review the highlighted fields and try again.'),
+            });
+            wscResetValidationBtn(entry);
+            return;
+        }
+        
+        const serverAutoJobs = autoJobs.filter(function(j) { return j.needsServer; });
+
+        console.log('[WP Span Checker] Jobs - manual:', jobs.length, ', auto-server:', serverAutoJobs.length);
+
+        // If no server validation needed, proceed to submit
+        if (jobs.length === 0 && serverAutoJobs.length === 0) {
+            console.log('[WP Span Checker] No server validation needed, proceeding to submit');
+            wscProceedWithSubmit(formEl, entry);
             return;
         }
 
-        console.log('[WP Span Checker] Validation jobs:', jobs.length);
-
-        let step = Promise.resolve(true);
-        jobs.forEach(function (job) {
-            step = step.then(function () {
-                return validateGuardFieldServer(job.mappingId, job.idx, job.val).then(function (data) {
-                    if (!data || !data.status) {
-                        throw new Error((data && data.message) || t('validationFailed', 'Validation failed'));
-                    }
-                });
+        // Combine all server validation jobs into a single AJAX call
+        const allServerJobs = [];
+        
+        serverAutoJobs.forEach(function(job) {
+            allServerJobs.push({
+                type: 'auto',
+                mappingId: job.mappingId,
+                fieldType: job.fieldConfig.type,
+                fieldName: job.fieldConfig.name,
+                value: job.val,
+                rules: job.fieldConfig.rules,
+                $field: job.fieldConfig.$el
             });
         });
-
-        step
-            .then(function () {
-                console.log('[WP Span Checker] Validation passed');
-                formEl.dispatchEvent(
-                    new CustomEvent('wp_span_checker:guard_validated', {
-                        bubbles: true,
-                        detail: { form: formEl },
-                    })
-                );
-                wscSubmitOriginalForm(formEl, entry, $validationBtn, originalBtnText);
+        
+        jobs.forEach(function(job) {
+            allServerJobs.push({
+                type: 'manual',
+                mappingId: job.mappingId,
+                fieldIndex: job.idx,
+                fieldName: job.fieldName,
+                value: job.val
+            });
+        });
+        
+        console.log('[WP Span Checker] Sending', allServerJobs.length, 'fields for server validation');
+        
+        // Get reCAPTCHA token if enabled
+        var doValidation = function(recaptchaToken) {
+            wscValidateAllFieldsServer(allServerJobs, recaptchaToken)
+            .then(function(result) {
+                if (result.status) {
+                    console.log('[WP Span Checker] ========== ALL VALIDATIONS PASSED ==========');
+                    formEl.dispatchEvent(
+                        new CustomEvent('wp_span_checker:guard_validated', {
+                            bubbles: true,
+                            detail: { form: formEl },
+                        })
+                    );
+                    wscProceedWithSubmit(formEl, entry);
+                } else {
+                    console.log('[WP Span Checker] ========== VALIDATION FAILED ==========');
+                    
+                    // Check if user is blocked
+                    if (result.blocked) {
+                        console.log('[WP Span Checker] User is BLOCKED');
+                        var blockMessage = result.strike_message || t('userBlocked', 'You have been blocked due to repeated violations. Please contact support.');
+                        
+                        // Disable the validation button
+                        if (entry.$validationBtn) {
+                            entry.$validationBtn.prop('disabled', true).css('opacity', '0.5');
+                        }
+                        
+                        // Show blocking message with Swal
+                        Swal.fire({
+                            icon: 'error',
+                            title: t('blocked', 'Blocked'),
+                            text: blockMessage,
+                            confirmButtonColor: '#d33',
+                        });
+                        
+                        return;
+                    }
+                    
+                    // Show errors for each failed field
+                    if (result.errors && result.errors.length > 0) {
+                        result.errors.forEach(function(err) {
+                            // Find the field element
+                            var $field = null;
+                            if (err.fieldIndex !== undefined) {
+                                // Manual field - find by index
+                                var job = allServerJobs.find(function(j) {
+                                    return j.type === 'manual' && j.fieldIndex === err.fieldIndex;
+                                });
+                                if (job && job.$field) {
+                                    $field = job.$field;
+                                }
+                            } else if (err.fieldName) {
+                                // Auto field - find by name
+                                var job = allServerJobs.find(function(j) {
+                                    return j.fieldName === err.fieldName;
+                                });
+                                if (job && job.$field) {
+                                    $field = job.$field;
+                                }
+                            }
+                            
+                            if ($field) {
+                                wscShowFieldError($field, err.message);
+                            }
+                        });
+                        
+                        // Show first error as toast
+                        wpSpanCheckerToast.fire({
+                            icon: 'error',
+                            title: result.errors[0].message || t('validationErrors', 'Please review the highlighted fields and try again.'),
+                        });
+                    } else {
+                        wpSpanCheckerToast.fire({
+                            icon: 'error',
+                            title: result.message || t('validationErrors', 'Please review the highlighted fields and try again.'),
+                        });
+                    }
+                    
+                    wscResetValidationBtn(entry);
+                }
             })
-            .catch(function (err) {
-                console.log('[WP Span Checker] Validation failed:', err.message);
+            .catch(function(err) {
+                console.log('[WP Span Checker] Server validation error:', err);
                 wpSpanCheckerToast.fire({
                     icon: 'error',
-                    title: err.message || t('validationFailed', 'Validation failed'),
+                    title: t('validationFailed', 'Validation failed. Please try again.'),
                 });
-                wscResetValidationBtn($validationBtn, originalBtnText, entry);
+                wscResetValidationBtn(entry);
             });
+        };
+        
+        // Get reCAPTCHA token if enabled, then run validation
+        if (entry.enableRecaptcha && entry.recaptchaRendered) {
+            wscGetRecaptchaToken(entry, function(token) {
+                console.log('[WP Span Checker] reCAPTCHA token obtained:', token ? 'yes' : 'no');
+                doValidation(token);
+            });
+        } else {
+            doValidation(null);
+        }
     }
 
     /**
-     * Submit the form by clicking the original hidden submit button.
+     * Proceed with form submission after validation passes.
+     * Click the ORIGINAL submit button to trigger CF7/other plugin handlers.
      */
-    function wscSubmitOriginalForm(formEl, entry, $validationBtn, originalBtnText) {
+    function wscProceedWithSubmit(formEl, entry) {
+        const $validationBtn = entry.$validationBtn;
+        const $originalSubmit = entry.$originalSubmit;
+        const originalBtnText = entry.originalBtnText;
         const submittingText = t('submitting', 'Submitting...');
-        if ($validationBtn.is('input')) {
-            $validationBtn.val(submittingText);
-        } else {
-            $validationBtn.html(submittingText);
+        
+        // Update validation button text to show submitting
+        if ($validationBtn && $validationBtn.length) {
+            if ($validationBtn.is('input')) {
+                $validationBtn.val(submittingText);
+            } else {
+                $validationBtn.text(submittingText);
+            }
+            $validationBtn.prop('disabled', true);
         }
 
-        console.log('[WP Span Checker] Submitting form...');
+        console.log('[WP Span Checker] Validation PASSED! Now clicking original submit button...');
 
+        entry.validating = false;
+
+        // Small delay to ensure UI updates
         setTimeout(function() {
-            if (entry.originalSubmitBtn) {
-                const $orig = $(entry.originalSubmitBtn);
-                $orig.css({
-                    'position': '',
-                    'left': '',
-                    'visibility': '',
-                    'pointer-events': '',
-                    'opacity': '',
-                    'width': '',
-                    'height': ''
-                }).show();
-
-                entry.originalSubmitBtn.click();
-
+            if ($originalSubmit && $originalSubmit.length) {
+                // Temporarily make original button clickable
+                $originalSubmit.css({
+                    'pointer-events': 'auto'
+                });
+                
+                // Click the ORIGINAL submit button - this triggers CF7/other plugin handlers
+                console.log('[WP Span Checker] Clicking original submit button');
+                $originalSubmit[0].click();
+                
+                // Hide it again after click
                 setTimeout(function() {
-                    $orig.hide().css({
-                        'position': 'absolute',
-                        'left': '-9999px',
-                        'visibility': 'hidden',
-                        'pointer-events': 'none',
-                        'opacity': '0',
-                        'width': '0',
-                        'height': '0'
+                    $originalSubmit.css({
+                        'pointer-events': 'none'
                     });
                 }, 100);
             } else {
+                // Fallback to native form submit
+                console.log('[WP Span Checker] No original submit, using native form submit');
                 HTMLFormElement.prototype.submit.call(formEl);
             }
 
+            // Reset validation button after delay
             setTimeout(function() {
-                wscResetValidationBtn($validationBtn, originalBtnText, entry);
-            }, 1000);
-        }, 100);
+                wscResetValidationBtn(entry);
+            }, 3000);
+        }, 50);
     }
 
     /**
      * Reset validation button to original state.
      */
-    function wscResetValidationBtn($validationBtn, originalBtnText, entry) {
-        if ($validationBtn.is('input')) {
-            $validationBtn.val(originalBtnText);
-        } else {
-            $validationBtn.html(originalBtnText);
+    function wscResetValidationBtn(entry) {
+        const $validationBtn = entry.$validationBtn;
+        const originalBtnText = entry.originalBtnText;
+        
+        if ($validationBtn && $validationBtn.length) {
+            if ($validationBtn.is('input')) {
+                $validationBtn.val(originalBtnText);
+            } else {
+                $validationBtn.text(originalBtnText);
+            }
+            $validationBtn.prop('disabled', false);
         }
-        $validationBtn.prop('disabled', false);
         entry.validating = false;
     }
 
@@ -763,6 +1776,7 @@ jQuery(function ($) {
         const mappingId = parseInt(setting.id, 10) || 0;
         const fallbackWr = parseInt(setting.is_webrisk, 10) || 0;
         const fallbackVt = parseInt(setting.is_virustotal, 10) || 0;
+        const enableRecaptcha = parseInt(setting.enable_recaptcha, 10) === 1;
         const form_id = setting.form_id ?? '';
         const form_class = setting.form_class ?? '';
         const submit_selector = setting.submit_selector ?? '';
@@ -777,37 +1791,57 @@ jQuery(function ($) {
             formSettingData = [];
         }
 
-        const hasFormSelector = String(form_id || '').trim() !== '' || String(form_class || '').trim() !== '';
-        const hasSubmitSelector = String(submit_selector || '').trim() !== '';
-        
-        let $form;
-        let submitButton;
-        
-        if (hasFormSelector) {
-            $form = resolveForm$(form_id, form_class);
-            if (!$form.length) {
-                console.log('[WP Span Checker] Form not found for selector:', form_id || form_class);
-                return;
-            }
-            console.log('[WP Span Checker] Form found by form selector for mapping ID:', mappingId);
-            submitButton = resolveSubmit$($form, submit_selector);
-        } else if (hasSubmitSelector) {
-            const $submitBtn = $(submit_selector).first();
-            if (!$submitBtn.length) {
-                console.log('[WP Span Checker] Submit button not found for selector:', submit_selector);
-                return;
-            }
-            $form = $submitBtn.closest('form');
-            if (!$form.length) {
-                console.log('[WP Span Checker] No form found containing submit button:', submit_selector);
-                return;
-            }
-            console.log('[WP Span Checker] Form found by submit selector for mapping ID:', mappingId);
-            submitButton = $submitBtn;
-        } else {
-            console.log('[WP Span Checker] No form selector or submit selector configured for mapping ID:', mappingId);
+        const matchResult = wscSettingMatchesCurrentPage(setting);
+        if (!matchResult.matches) {
+            console.log('[WP Span Checker] Skipping mapping ID:', mappingId, '- page does not match targets');
             return;
         }
+        
+        console.log('[WP Span Checker] Processing mapping ID:', mappingId, 'requiresFormSelector:', matchResult.requiresFormSelector);
+
+        let $form = wscFindFormForSetting(setting, matchResult);
+        
+        if (!$form.length) {
+            if (matchResult.requiresFormSelector) {
+                console.log('[WP Span Checker] Form not found - required for entire site mapping ID:', mappingId);
+                return;
+            }
+            
+            const hasFormSelector = String(form_id || '').trim() !== '' || String(form_class || '').trim() !== '';
+            const hasSubmitSelector = String(submit_selector || '').trim() !== '';
+            
+            if (hasFormSelector) {
+                $form = resolveForm$(form_id, form_class);
+                if (!$form.length || wscShouldSkipForm($form)) {
+                    console.log('[WP Span Checker] Form not found or should be skipped for selector:', form_id || form_class);
+                    return;
+                }
+                console.log('[WP Span Checker] Form found by form selector for mapping ID:', mappingId);
+            } else if (hasSubmitSelector) {
+                const $submitBtn = $(submit_selector).first();
+                if (!$submitBtn.length) {
+                    console.log('[WP Span Checker] Submit button not found for selector:', submit_selector);
+                    return;
+                }
+                $form = $submitBtn.closest('form');
+                if (!$form.length || wscShouldSkipForm($form)) {
+                    console.log('[WP Span Checker] No form found or should be skipped for submit button:', submit_selector);
+                    return;
+                }
+                console.log('[WP Span Checker] Form found by submit selector for mapping ID:', mappingId);
+            } else {
+                const $forms = wscGetContentForms();
+                if ($forms.length >= 1) {
+                    $form = $forms.first();
+                    console.log('[WP Span Checker] Content form found on page for mapping ID:', mappingId, '(forms on page:', $forms.length, ')');
+                } else {
+                    console.log('[WP Span Checker] No content forms found on page for mapping ID:', mappingId);
+                    return;
+                }
+            }
+        }
+        
+        let submitButton = resolveSubmit$($form, submit_selector);
 
         const formEl = $form.get(0);
         if (!formEl || formEl.tagName !== 'FORM') {
@@ -815,15 +1849,150 @@ jQuery(function ($) {
             return;
         }
 
+        const isAutoValidation = parseInt(setting.auto_validation, 10) === 1 || setting.auto_validation === true || setting.auto_validation === '1';
+        let autoRules = {};
+        if (isAutoValidation) {
+            try {
+                autoRules = typeof setting.auto_rules === 'string' ? JSON.parse(setting.auto_rules) : setting.auto_rules;
+            } catch (e) {
+                autoRules = {};
+            }
+            autoRules = autoRules || {};
+        }
+
+        if (isAutoValidation) {
+            const autoFields = wscAutoDetectFormFields($form, autoRules);
+            console.log('[WP Span Checker] Auto-detected fields:', autoFields.length, 'for mapping ID:', mappingId);
+            console.log('[WP Span Checker] Auto rules:', autoRules);
+            
+            wscRegisterFormGuardConfig(formEl, {
+                mappingId: mappingId,
+                isAuto: true,
+                autoRules: autoRules,
+                autoFields: autoFields,
+                formSettingData: [],
+            });
+            
+            const entry = wscGetFormGuardEntry(formEl);
+            console.log('[WP Span Checker] Setting up form validation interceptor for auto-validation, reCAPTCHA:', enableRecaptcha);
+            wscSetupFormValidation($form, submitButton, entry, enableRecaptcha);
+            
+            // Add real-time validation feedback on field change - show inline errors
+            autoFields.forEach(function(fieldConfig) {
+                const $field = fieldConfig.$el;
+                const fieldType = fieldConfig.type;
+                const rules = fieldConfig.rules || {};
+                const isRequired = fieldConfig.required;
+                
+                // Clear error on focus
+                $field.on('focus.wscAuto', function() {
+                    wscClearFieldError($(this));
+                });
+                
+                // Required field validation on blur
+                if (isRequired) {
+                    $field.on('blur.wscRequired', function() {
+                        const val = String($(this).val() || '').trim();
+                        if (!val) {
+                            wscShowFieldError($(this), t('fieldRequired', 'This field is required.'));
+                        }
+                    });
+                }
+                
+                if (fieldType === 'email' && rules.validate) {
+                    $field.on('blur.wscAuto change.wscAuto', function() {
+                        const val = String($(this).val() || '').trim();
+                        if (!val) {
+                            wscClearFieldError($(this));
+                            return;
+                        }
+                        const result = wscValidateAutoField(fieldConfig);
+                        if (!result.valid) {
+                            wscShowFieldError($(this), result.message);
+                        } else {
+                            wscClearFieldError($(this));
+                        }
+                    });
+                }
+                
+                if (fieldType === 'url' && rules.validate) {
+                    $field.on('blur.wscAuto change.wscAuto', function() {
+                        const val = String($(this).val() || '').trim();
+                        if (!val) {
+                            wscClearFieldError($(this));
+                            return;
+                        }
+                        const result = wscValidateAutoField(fieldConfig);
+                        if (!result.valid) {
+                            wscShowFieldError($(this), result.message);
+                        } else {
+                            wscClearFieldError($(this));
+                        }
+                    });
+                }
+                
+                if (fieldType === 'textarea' && rules.block_links) {
+                    $field.on('blur.wscAuto change.wscAuto', function() {
+                        const val = String($(this).val() || '').trim();
+                        if (!val) {
+                            wscClearFieldError($(this));
+                            return;
+                        }
+                        const result = wscValidateAutoField(fieldConfig);
+                        if (!result.valid) {
+                            wscShowFieldError($(this), result.message);
+                        } else {
+                            wscClearFieldError($(this));
+                        }
+                    });
+                }
+                
+                if (fieldType === 'text' && rules.block_urls) {
+                    $field.on('blur.wscAuto change.wscAuto', function() {
+                        const val = String($(this).val() || '').trim();
+                        if (!val) {
+                            wscClearFieldError($(this));
+                            return;
+                        }
+                        const result = wscValidateAutoField(fieldConfig);
+                        if (!result.valid) {
+                            wscShowFieldError($(this), result.message);
+                        } else {
+                            wscClearFieldError($(this));
+                        }
+                    });
+                }
+                
+                if (fieldType === 'password' && rules.strength) {
+                    $field.on('blur.wscAuto change.wscAuto', function() {
+                        const val = String($(this).val() || '').trim();
+                        if (!val) {
+                            wscClearFieldError($(this));
+                            return;
+                        }
+                        const result = wscValidateAutoField(fieldConfig);
+                        if (!result.valid) {
+                            wscShowFieldError($(this), result.message);
+                        } else {
+                            wscClearFieldError($(this));
+                        }
+                    });
+                }
+            });
+            
+            return;
+        }
+
         wscRegisterFormGuardConfig(formEl, {
             mappingId: mappingId,
+            isAuto: false,
             formSettingData: formSettingData,
         });
 
         const entry = wscGetFormGuardEntry(formEl);
 
-        console.log('[WP Span Checker] Setting up validation button for form');
-        wscSetupValidationButton($form, submitButton, entry);
+        console.log('[WP Span Checker] Setting up form validation interceptor for manual validation, reCAPTCHA:', enableRecaptcha);
+        wscSetupFormValidation($form, submitButton, entry, enableRecaptcha);
 
         formSettingData.forEach(function (formSetting, fieldIndex) {
             const eventType = formSetting.event;

@@ -79,6 +79,14 @@ class Admin_Menu {
 		);
 		add_submenu_page(
 			'wp-span-checker',
+			__( 'Login Guard', 'wp-span-checker' ),
+			__( 'Login Guard', 'wp-span-checker' ),
+			'manage_options',
+			'wp-span-checker-login-guard',
+			array( $this, 'login_guard_page' )
+		);
+		add_submenu_page(
+			'wp-span-checker',
 			__( 'Tools & log', 'wp-span-checker' ),
 			__( 'Tools & log', 'wp-span-checker' ),
 			'manage_options',
@@ -119,19 +127,59 @@ class Admin_Menu {
 		);
 		add_submenu_page(
 			'wp-span-checker',
-			__( 'Contact & Subscribe Guard', 'wp-span-checker' ),
-			__( 'Contact & Subscribe Guard', 'wp-span-checker' ),
+			__( 'Contact Guard', 'wp-span-checker' ),
+			__( 'Contact Guard', 'wp-span-checker' ),
 			'manage_options',
-			'wp-span-checker-contact-subscribe-guard',
-			array( $this, 'contact_subscribe_guard_page' )
+			'wp-span-checker-contact-guard',
+			array( $this, 'contact_guard_page' )
 		);
 		add_submenu_page(
 			'wp-span-checker',
-			__( 'Blocked commenters', 'wp-span-checker' ),
-			__( 'Blocked commenters', 'wp-span-checker' ),
+			__( 'Subscribe Guard', 'wp-span-checker' ),
+			__( 'Subscribe Guard', 'wp-span-checker' ),
+			'manage_options',
+			'wp-span-checker-subscribe-guard',
+			array( $this, 'subscribe_guard_page' )
+		);
+		add_submenu_page(
+			'wp-span-checker',
+			__( 'Blocked Users', 'wp-span-checker' ),
+			__( 'Blocked Users', 'wp-span-checker' ),
 			'manage_options',
 			'wp-span-checker-comment-blocks',
 			array( $this, 'comment_blocks_page' )
+		);
+		add_submenu_page(
+			'wp-span-checker',
+			__( 'Block User Settings', 'wp-span-checker' ),
+			__( 'Block User Settings', 'wp-span-checker' ),
+			'manage_options',
+			'wsc-block-user-settings',
+			array( $this, 'block_user_settings_page' )
+		);
+		add_submenu_page(
+			'wp-span-checker',
+			__( 'Auth Form Templates', 'wp-span-checker' ),
+			__( 'Auth Form Templates', 'wp-span-checker' ),
+			'manage_options',
+			'wsc-auth-forms',
+			array( $this, 'auth_forms_page' )
+		);
+		add_submenu_page(
+			'wp-span-checker',
+			__( 'SMTP Settings', 'wp-span-checker' ),
+			__( 'SMTP Settings', 'wp-span-checker' ),
+			'manage_options',
+			'wsc-smtp-settings',
+			array( $this, 'smtp_settings_redirect' )
+		);
+		add_submenu_page(
+			'wp-span-checker',
+			__( 'Email Templates', 'wp-span-checker' ),
+			__( 'Email Templates', 'wp-span-checker' ),
+			'manage_options',
+			'wsc-email-templates',
+			array( $this, 'email_templates_page' )
 		);
 	}
 
@@ -171,6 +219,13 @@ class Admin_Menu {
 	}
 
 	/**
+	 * Login Guard - reCAPTCHA protection for login forms.
+	 */
+	public function login_guard_page() {
+		require WP_SPAN_CHECKER_DIR . 'templates/login-guard.php';
+	}
+
+	/**
 	 * Manual API tests and activity log console.
 	 */
 	public function tools_page() {
@@ -206,10 +261,17 @@ class Admin_Menu {
 	}
 
 	/**
-	 * Contact and subscribe guard settings.
+	 * Contact guard settings.
 	 */
-	public function contact_subscribe_guard_page() {
-		require WP_SPAN_CHECKER_DIR . 'templates/contact-subscribe-guard.php';
+	public function contact_guard_page() {
+		require WP_SPAN_CHECKER_DIR . 'templates/contact-guard.php';
+	}
+
+	/**
+	 * Subscribe guard settings.
+	 */
+	public function subscribe_guard_page() {
+		require WP_SPAN_CHECKER_DIR . 'templates/subscribe-guard.php';
 	}
 
 	/**
@@ -217,5 +279,34 @@ class Admin_Menu {
 	 */
 	public function comment_blocks_page() {
 		require WP_SPAN_CHECKER_DIR . 'templates/comment-blocks.php';
+	}
+
+	/**
+	 * Block User settings.
+	 */
+	public function block_user_settings_page() {
+		require WP_SPAN_CHECKER_DIR . 'templates/block-user-settings.php';
+	}
+
+	/**
+	 * Auth Form Templates page.
+	 */
+	public function auth_forms_page() {
+		require WP_SPAN_CHECKER_DIR . 'templates/auth-forms.php';
+	}
+
+	/**
+	 * SMTP Settings - redirect to Auth Forms SMTP tab.
+	 */
+	public function smtp_settings_redirect() {
+		wp_safe_redirect( admin_url( 'admin.php?page=wsc-auth-forms#panel-smtp' ) );
+		exit;
+	}
+
+	/**
+	 * Email Templates page.
+	 */
+	public function email_templates_page() {
+		require WP_SPAN_CHECKER_DIR . 'templates/email-templates.php';
 	}
 }

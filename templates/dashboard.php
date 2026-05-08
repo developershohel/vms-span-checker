@@ -162,19 +162,16 @@ $quick_links = array(
 
 	<div class="wsc-dash__grid">
 		<div class="wsc-dash__card">
-			<span class="wsc-dash__card-glow wsc-dash__card-glow--cyan"></span>
 			<p class="wsc-dash__card-label"><?php esc_html_e( 'Total checks logged', 'wp-span-checker' ); ?></p>
 			<p class="wsc-dash__card-value"><?php echo esc_html( (string) (int) $summary['total_logs'] ); ?></p>
 			<p class="wsc-dash__card-note"><?php esc_html_e( 'All validation events recorded by WP Span Checker.', 'wp-span-checker' ); ?></p>
 		</div>
 		<div class="wsc-dash__card">
-			<span class="wsc-dash__card-glow wsc-dash__card-glow--emerald"></span>
 			<p class="wsc-dash__card-label"><?php esc_html_e( 'Passed', 'wp-span-checker' ); ?></p>
 			<p class="wsc-dash__card-value"><?php echo esc_html( (string) (int) $summary['success_logs'] ); ?></p>
 			<p class="wsc-dash__card-note"><?php esc_html_e( 'Domains that cleared your rules and optional APIs.', 'wp-span-checker' ); ?></p>
 		</div>
 		<div class="wsc-dash__card">
-			<span class="wsc-dash__card-glow wsc-dash__card-glow--rose"></span>
 			<p class="wsc-dash__card-label"><?php esc_html_e( 'Blocked / failed', 'wp-span-checker' ); ?></p>
 			<p class="wsc-dash__card-value"><?php echo esc_html( (string) (int) $summary['failed_validations'] ); ?></p>
 			<p class="wsc-dash__card-note"><?php esc_html_e( 'Disposable list, HTTPS, or reputation blocks.', 'wp-span-checker' ); ?></p>
@@ -188,7 +185,6 @@ $quick_links = array(
 			<p class="wsc-dash__card-value"><?php echo esc_html( (string) (int) $summary['disposable_count'] ); ?></p>
 		</div>
 		<div class="wsc-dash__card">
-			<span class="wsc-dash__card-glow wsc-dash__card-glow--amber"></span>
 			<p class="wsc-dash__card-label"><?php esc_html_e( 'Form mappings', 'wp-span-checker' ); ?></p>
 			<p class="wsc-dash__card-value"><?php echo esc_html( (string) (int) $summary['form_mappings'] ); ?></p>
 			<p class="wsc-dash__card-note"><?php esc_html_e( 'Active form ↔ validation profiles.', 'wp-span-checker' ); ?></p>

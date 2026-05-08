@@ -79,11 +79,15 @@ function wp_span_checker_bootstrap() {
 	require_once WP_SPAN_CHECKER_DIR . 'includes/class-ajax.php';
 	require_once WP_SPAN_CHECKER_DIR . 'includes/class-admin-menu.php';
 	require_once WP_SPAN_CHECKER_DIR . 'includes/class-enqueue-scripts.php';
+	require_once WP_SPAN_CHECKER_DIR . 'includes/class-auth-forms.php';
+	require_once WP_SPAN_CHECKER_DIR . 'includes/class-email-templates.php';
 
 	new WP_Span_Checker\Admin_Menu();
 	new WP_Span_Checker\Ajax();
 	new WP_Span_Checker\Enqueue_Scripts();
 	new WP_Span_Checker\AI_Span_Summary();
+	new WP_Span_Checker\Auth_Forms();
+	new WP_Span_Checker\Email_Templates();
 	new WP_Span_Checker\AI_Span_Comments();
 	new WP_Span_Checker\Registration_Guard();
 	new WP_Span_Checker\Plugin_Activity_Log();
@@ -92,3 +96,46 @@ function wp_span_checker_bootstrap() {
 }
 
 add_action( 'plugins_loaded', 'wp_span_checker_bootstrap', 20 );
+
+/**
+ * Block login for users who have exceeded strike limit.
+ *
+ * @param WP_User|WP_Error|null $user     User object or error.
+ * @param string                $username Username.
+ * @param string                $password Password.
+ * @return WP_User|WP_Error
+ */
+function wp_span_checker_check_login_blocked( $user, $username, $password ) {
+	if ( is_wp_error( $user ) ) {
+		return $user;
+	}
+
+	// If no user found, return as is
+	if ( ! $user instanceof WP_User ) {
+		return $user;
+	}
+
+	// Skip for admins if exempt
+	$cfg = get_option( 'wsc-ai-span-config', array() );
+	if ( ! empty( $cfg['block_user_exempt_admins'] ) && user_can( $user, 'manage_options' ) ) {
+		return $user;
+	}
+
+	// Check if login is blocked
+	if ( function_exists( 'wp_span_checker_is_login_blocked' ) && wp_span_checker_is_login_blocked( $user->ID ) ) {
+		$expiry_days = isset( $cfg['block_user_strike_expiry_days'] ) ? (int) $cfg['block_user_strike_expiry_days'] : 30;
+		if ( $expiry_days > 0 ) {
+			$message = sprintf(
+				/* translators: %d: number of days */
+				__( 'Your account has been temporarily blocked due to suspicious activity. Please try again after %d days or contact support.', 'wp-span-checker' ),
+				$expiry_days
+			);
+		} else {
+			$message = __( 'Your account has been blocked due to suspicious activity. Please contact support.', 'wp-span-checker' );
+		}
+		return new WP_Error( 'wsc_login_blocked', $message );
+	}
+
+	return $user;
+}
+add_filter( 'authenticate', 'wp_span_checker_check_login_blocked', 100, 3 );
