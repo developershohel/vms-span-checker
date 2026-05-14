@@ -18,6 +18,9 @@
     var recaptchaSiteKey = config.recaptchaSiteKey || '';
     var recaptchaVersion = config.recaptchaVersion || 'v2';
 
+    /** Only one contact form per page gets validation + reCAPTCHA (avoids duplicates when multiple forms match). */
+    var contactGuardAttached = false;
+
     function t(key, fallback) {
         return i18n[key] || fallback || key;
     }
@@ -41,36 +44,59 @@
         }
     }
 
-    function detectContactForms() {
-        var forms = [];
+    /** If the selector matches a wrapper, use the first nested form. */
+    function resolveFormElement(el) {
+        var $el = $(el);
+        if ($el.is('form')) {
+            return el;
+        }
+        var $inner = $el.find('form').first();
+        return $inner.length ? $inner[0] : null;
+    }
 
-        if (formSelector && formSelector.trim() !== '') {
-            $(formSelector).each(function() {
-                forms.push(this);
-            });
+    function detectContactForms() {
+        if (contactGuardAttached) {
+            return [];
         }
 
-        $('form').each(function() {
-            var $form = $(this);
-            
-            if (forms.indexOf(this) !== -1) {
-                return;
+        if (formSelector && formSelector.trim() !== '') {
+            var matches = $(formSelector);
+            for (var i = 0; i < matches.length; i++) {
+                var formEl = resolveFormElement(matches[i]);
+                if (!formEl) {
+                    continue;
+                }
+                var $form = $(formEl);
+                if ($form.data('wsc-contact-guard')) {
+                    continue;
+                }
+                if (formEl.id === 'adminbarsearch' || $form.closest('#wpadminbar').length > 0) {
+                    continue;
+                }
+                if (findEmailField($form).length === 0) {
+                    continue;
+                }
+                return [formEl];
             }
+            return [];
+        }
 
-            if ($form.data('wsc-contact-guard')) {
-                return;
+        var $all = $('form');
+        for (var j = 0; j < $all.length; j++) {
+            var f = $all[j];
+            var $f = $(f);
+            if ($f.data('wsc-contact-guard')) {
+                continue;
             }
-
-            if ($form.attr('id') === 'adminbarsearch' || $form.closest('#wpadminbar').length > 0) {
-                return;
+            if (f.id === 'adminbarsearch' || $f.closest('#wpadminbar').length > 0) {
+                continue;
             }
-
-            if (isContactForm($form)) {
-                forms.push(this);
+            if (isContactForm($f) && findEmailField($f).length > 0) {
+                return [f];
             }
-        });
+        }
 
-        return forms;
+        return [];
     }
 
     function isContactForm($form) {
@@ -235,14 +261,14 @@
         });
     }
 
-    function renderRecaptcha($form, $validationBtn) {
+    function renderRecaptcha($actionsWrap, $validationBtn) {
         if (!recaptchaEnabled || !recaptchaSiteKey) {
             return;
         }
 
         if (recaptchaVersion === 'v2') {
             var recaptchaContainer = $('<div class="wsc-recaptcha-container"></div>');
-            $validationBtn.before(recaptchaContainer);
+            $actionsWrap.prepend(recaptchaContainer);
             
             $validationBtn.prop('disabled', true).css('opacity', '0.6');
             
@@ -284,6 +310,7 @@
         }
 
         $form.data('wsc-contact-guard', true);
+        contactGuardAttached = true;
         console.log('[WP Span Checker] Contact Guard attached to form:', form);
 
         var $originalSubmit = $form.find('input[type="submit"], button[type="submit"]').first();
@@ -291,15 +318,18 @@
             $originalSubmit = $form.find('button:not([type])').first();
         }
 
+        var $actionsWrap = $('<div class="wsc-guard-actions"></div>');
+        $originalSubmit.after($actionsWrap);
+
         var submitText = $originalSubmit.val() || $originalSubmit.text() || t('submit', 'Submit');
         var $validationBtn = $('<input type="button" class="wsc-validation-btn wsc-contact-validation-btn">');
         $validationBtn.val(submitText);
         
         copyButtonStyles($originalSubmit, $validationBtn);
-        $originalSubmit.after($validationBtn);
         hideOriginalSubmit($originalSubmit);
 
-        renderRecaptcha($form, $validationBtn);
+        renderRecaptcha($actionsWrap, $validationBtn);
+        $actionsWrap.append($validationBtn);
 
         var isValidating = false;
 
@@ -461,9 +491,15 @@
 
         if (typeof MutationObserver !== 'undefined') {
             var observer = new MutationObserver(function(mutations) {
+                if (contactGuardAttached) {
+                    return;
+                }
                 mutations.forEach(function(mutation) {
                     if (mutation.addedNodes.length > 0) {
                         setTimeout(function() {
+                            if (contactGuardAttached) {
+                                return;
+                            }
                             var newForms = detectContactForms();
                             newForms.forEach(function(form) {
                                 if (!$(form).data('wsc-contact-guard')) {

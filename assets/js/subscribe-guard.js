@@ -18,6 +18,9 @@
     var recaptchaSiteKey = config.recaptchaSiteKey || '';
     var recaptchaVersion = config.recaptchaVersion || 'v2';
 
+    /** Only one subscribe/newsletter form per page (selector often matches multiple blocks). */
+    var subscribeGuardAttached = false;
+
     function t(key, fallback) {
         return i18n[key] || fallback || key;
     }
@@ -41,27 +44,46 @@
         }
     }
 
+    function resolveFormElement(el) {
+        var $el = $(el);
+        if ($el.is('form')) {
+            return el;
+        }
+        var $inner = $el.find('form').first();
+        return $inner.length ? $inner[0] : null;
+    }
+
     function detectSubscribeForms() {
-        var forms = [];
+        if (subscribeGuardAttached) {
+            return [];
+        }
 
         // Form selector is required - only use provided selector
         if (!formSelector || formSelector.trim() === '') {
             console.log('[WP Span Checker] Subscribe Guard: No form selector configured. Form selector is required.');
-            return forms;
+            return [];
         }
 
-        $(formSelector).each(function() {
-            var $form = $(this);
-            
-            // Skip admin bar forms
-            if ($form.attr('id') === 'adminbarsearch' || $form.closest('#wpadminbar').length > 0) {
-                return;
+        var matches = $(formSelector);
+        for (var i = 0; i < matches.length; i++) {
+            var formEl = resolveFormElement(matches[i]);
+            if (!formEl) {
+                continue;
             }
+            var $form = $(formEl);
+            if ($form.data('wsc-subscribe-guard')) {
+                continue;
+            }
+            if (formEl.id === 'adminbarsearch' || $form.closest('#wpadminbar').length > 0) {
+                continue;
+            }
+            if (findEmailField($form).length === 0) {
+                continue;
+            }
+            return [formEl];
+        }
 
-            forms.push(this);
-        });
-
-        return forms;
+        return [];
     }
 
     function findEmailField($form) {
@@ -194,14 +216,14 @@
         });
     }
 
-    function renderRecaptcha($form, $validationBtn) {
+    function renderRecaptcha($actionsWrap, $validationBtn) {
         if (!recaptchaEnabled || !recaptchaSiteKey) {
             return;
         }
 
         if (recaptchaVersion === 'v2') {
             var recaptchaContainer = $('<div class="wsc-recaptcha-container"></div>');
-            $validationBtn.before(recaptchaContainer);
+            $actionsWrap.prepend(recaptchaContainer);
             
             $validationBtn.prop('disabled', true).css('opacity', '0.6');
             
@@ -241,6 +263,7 @@
         }
 
         $form.data('wsc-subscribe-guard', true);
+        subscribeGuardAttached = true;
         console.log('[WP Span Checker] Subscribe Guard attached to form:', form);
 
         var $originalSubmit = $form.find('input[type="submit"], button[type="submit"]').first();
@@ -248,15 +271,18 @@
             $originalSubmit = $form.find('button:not([type])').first();
         }
 
+        var $actionsWrap = $('<div class="wsc-guard-actions"></div>');
+        $originalSubmit.after($actionsWrap);
+
         var submitText = $originalSubmit.val() || $originalSubmit.text() || t('submit', 'Subscribe');
         var $validationBtn = $('<input type="button" class="wsc-validation-btn wsc-subscribe-validation-btn">');
         $validationBtn.val(submitText);
         
         copyButtonStyles($originalSubmit, $validationBtn);
-        $originalSubmit.after($validationBtn);
         hideOriginalSubmit($originalSubmit);
 
-        renderRecaptcha($form, $validationBtn);
+        renderRecaptcha($actionsWrap, $validationBtn);
+        $actionsWrap.append($validationBtn);
 
         var isValidating = false;
 
@@ -390,9 +416,15 @@
 
         if (typeof MutationObserver !== 'undefined') {
             var observer = new MutationObserver(function(mutations) {
+                if (subscribeGuardAttached) {
+                    return;
+                }
                 mutations.forEach(function(mutation) {
                     if (mutation.addedNodes.length > 0) {
                         setTimeout(function() {
+                            if (subscribeGuardAttached) {
+                                return;
+                            }
                             var newForms = detectSubscribeForms();
                             newForms.forEach(function(form) {
                                 if (!$(form).data('wsc-subscribe-guard')) {

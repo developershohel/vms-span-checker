@@ -105,6 +105,26 @@ class AI_Span_Config {
 			'comment_block_trackbacks'      => true,
 			'comment_disallow_guest_website' => false,
 			'comment_block_http_author_url' => false,
+			// WooCommerce Product Review Guard (when enabled, WC reviews skip Comment Guard pipeline).
+			'product_review_guard_enabled'   => false,
+			'review_mirror_comment_rules'    => true,
+			'review_antispam_enabled'        => true,
+			'review_strike_on_heuristic'     => true,
+			'review_min_length'              => 4,
+			'review_max_length'              => 8000,
+			'review_max_links'               => 2,
+			'review_allow_links'             => false,
+			'review_block_duplicate'         => true,
+			'review_rate_limit_max'          => 8,
+			'review_rate_limit_window'       => 30,
+			'review_rate_limit_scope'        => 'ip_post',
+			'review_ai_semantic_check'       => true,
+			'review_ai_auto_product_summary' => true,
+			'review_system_prompt'           => '',
+			'review_require_rating'          => true,
+			'review_require_verified_purchase' => false,
+			'review_one_per_customer'        => true,
+			'review_block_guest'             => false,
 		);
 	}
 
@@ -114,6 +134,26 @@ class AI_Span_Config {
 	public static function default_system_prompt(): string {
 		return __(
 			'You are a strict comment moderator. Compare the POST_SUMMARY with the COMMENT_TEXT. Decide if the comment is good-faith and on-topic, or spam: promotional/affiliate, SEO or backlink pitches, pharma/gambling/adult promos, unrelated topics, gibberish, foreign-language off-topic ads, contact harvesting (“email me at…”), crypto/loan scams, essay-writing services, or mass emoji/noise. If PRODUCT_REVIEW_MODE is yes, genuine short product reviews are allowed. Respond with ONLY valid JSON (no markdown, no code fences): {"status":"ok"|"spam","message":"If spam, name the spam pattern in English; if ok use a short neutral phrase."}',
+			'wp-span-checker'
+		);
+	}
+
+	/**
+	 * AI prompt when Product Review Guard uses semantic checks (override empty review_system_prompt).
+	 */
+	public static function default_review_system_prompt(): string {
+		return __(
+			'You are an expert WooCommerce review moderator. Each request includes PRODUCT_SUMMARY (an AI-generated factual overview of the exact product being reviewed—use it as ground truth for what the item is), PRODUCT_CONTEXT (name, SKU, categories), STAR_RATING_SUBMITTED, and REVIEW_TEXT.
+
+Your task: Decide whether REVIEW_TEXT genuinely discusses THIS product—quality, materials, fit/sizing, performance, packaging, shipping speed, seller support, defects, honest comparisons to expectations—or whether it is spam or abuse.
+
+ACCEPT: Thoughtful, brief, or emotional opinions (positive or negative) that clearly relate to PRODUCT_SUMMARY; reasonable complaints; mixed ratings; non-native English if still product-specific.
+
+REJECT as spam: Promotional or affiliate pitches; URLs/link farming or SEO keyword stuffing; obvious copy-paste templates not tied to this product; reviews clearly about a different item; competitor ads; phishing or contact harvesting (“DM me”, “WhatsApp”, bulk emails); scams (crypto, loans, jobs); pharma/gambling/adult promotions; unrelated languages or topics; meaningless gibberish; emoji/noise floods; fake testimonial patterns (“life-changing miracle”) with zero product-specific detail.
+
+Always compare REVIEW_TEXT against PRODUCT_SUMMARY—reject generic praise or rage that could apply to any product.
+
+Respond ONLY with valid JSON (no markdown, no code fences): {"status":"ok"|"spam","message":"If spam, name the pattern briefly in English; if ok use a short neutral phrase."}',
 			'wp-span-checker'
 		);
 	}
@@ -224,7 +264,7 @@ class AI_Span_Config {
 		$c['comment_rate_limit_max']      = max( 0, min( 500, absint( $c['comment_rate_limit_max'] ?? 10 ) ) );
 		$c['comment_rate_limit_window']   = max( 1, min( 1440, absint( $c['comment_rate_limit_window'] ?? 15 ) ) );
 		$scope                            = (string) ( $c['comment_rate_limit_scope'] ?? 'ip' );
-		$c['comment_rate_limit_scope']    = in_array( $scope, array( 'ip', 'ip_post' ), true ) ? $scope : 'ip';
+		$c['comment_rate_limit_scope']    = in_array( $scope, array( 'ip', 'ip_post', 'ip_product' ), true ) ? $scope : 'ip';
 		$c['comment_block_bbcode']             = ! empty( $c['comment_block_bbcode'] );
 		$c['comment_block_dangerous_markup']   = ! empty( $c['comment_block_dangerous_markup'] );
 		$c['comment_block_punycode_abuse']     = ! empty( $c['comment_block_punycode_abuse'] );
@@ -242,6 +282,27 @@ class AI_Span_Config {
 		$c['comment_block_trackbacks']    = ! empty( $c['comment_block_trackbacks'] );
 		$c['comment_disallow_guest_website'] = ! empty( $c['comment_disallow_guest_website'] );
 		$c['comment_block_http_author_url']  = ! empty( $c['comment_block_http_author_url'] );
+
+		$c['product_review_guard_enabled'] = ! empty( $c['product_review_guard_enabled'] );
+		$c['review_mirror_comment_rules']   = ! empty( $c['review_mirror_comment_rules'] );
+		$c['review_antispam_enabled']       = ! empty( $c['review_antispam_enabled'] );
+		$c['review_strike_on_heuristic']    = ! empty( $c['review_strike_on_heuristic'] );
+		$c['review_min_length']             = max( 0, min( 500, absint( $c['review_min_length'] ?? 4 ) ) );
+		$c['review_max_length']             = max( 0, min( 65535, absint( $c['review_max_length'] ?? 8000 ) ) );
+		$c['review_max_links']              = max( 0, min( 100, absint( $c['review_max_links'] ?? 2 ) ) );
+		$c['review_allow_links']            = ! empty( $c['review_allow_links'] );
+		$c['review_block_duplicate']        = ! empty( $c['review_block_duplicate'] );
+		$c['review_rate_limit_max']         = max( 0, min( 500, absint( $c['review_rate_limit_max'] ?? 8 ) ) );
+		$c['review_rate_limit_window']      = max( 1, min( 1440, absint( $c['review_rate_limit_window'] ?? 30 ) ) );
+		$review_rl_scope                   = (string) ( $c['review_rate_limit_scope'] ?? 'ip_post' );
+		$c['review_rate_limit_scope']       = in_array( $review_rl_scope, array( 'ip', 'ip_post', 'ip_product' ), true ) ? $review_rl_scope : 'ip_post';
+		$c['review_ai_semantic_check']       = ! empty( $c['review_ai_semantic_check'] );
+		$c['review_ai_auto_product_summary'] = ! empty( $c['review_ai_auto_product_summary'] );
+		$c['review_system_prompt']          = wp_kses_post( (string) ( $c['review_system_prompt'] ?? '' ) );
+		$c['review_require_rating']         = ! empty( $c['review_require_rating'] );
+		$c['review_require_verified_purchase'] = ! empty( $c['review_require_verified_purchase'] );
+		$c['review_one_per_customer']       = ! empty( $c['review_one_per_customer'] );
+		$c['review_block_guest']            = ! empty( $c['review_block_guest'] );
 
 		$pts = isset( $c['summary_post_types'] ) ? $c['summary_post_types'] : array();
 		if ( ! is_array( $pts ) ) {

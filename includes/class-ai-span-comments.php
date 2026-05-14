@@ -194,42 +194,9 @@ class AI_Span_Comments {
 	public function preprocess_comment( $commentdata ) {
 		$check = $this->evaluate_comment_submission( $commentdata );
 		if ( is_wp_error( $check ) ) {
-			$this->redirect_comment_error( $commentdata, $check );
+			Comment_Enforcement::redirect_with_notice( $commentdata, $check, '#respond' );
 		}
 		return $commentdata;
-	}
-
-	/**
-	 * Send user back to the post with a one-time token instead of wp_die on wp-comments-post.php.
-	 *
-	 * @param array<string, mixed> $commentdata .
-	 * @param WP_Error             $error       .
-	 */
-	private function redirect_comment_error( array $commentdata, WP_Error $error ): void {
-		$post_id = isset( $commentdata['comment_post_ID'] ) ? (int) $commentdata['comment_post_ID'] : 0;
-		$url     = ( $post_id > 0 ) ? get_permalink( $post_id ) : home_url( '/' );
-		if ( ! is_string( $url ) || '' === $url ) {
-			$url = home_url( '/' );
-		}
-
-		$token = function_exists( 'wp_generate_password' )
-			? wp_generate_password( 16, false, false )
-			: bin2hex( random_bytes( 8 ) );
-		set_transient(
-			'wsc_cerr_' . $token,
-			array(
-				'title'   => __( 'Comment blocked', 'wp-span-checker' ),
-				'message' => $error->get_error_message(),
-			),
-			5 * MINUTE_IN_SECONDS
-		);
-
-		$target = add_query_arg( 'wsc_comment_err', $token, $url );
-		// Fragment after query string (permalink structure-safe).
-		$target .= '#respond';
-
-		wp_safe_redirect( $target );
-		exit;
 	}
 
 	/**
@@ -265,8 +232,12 @@ class AI_Span_Comments {
 			return true;
 		}
 
-		$actor = $this->get_actor( $commentdata );
-		$row   = $this->get_enforcement_row( $actor['key'] );
+		if ( Product_Review_Guard::should_delegate_review_to_product_guard( $commentdata ) ) {
+			return true;
+		}
+
+		$actor = Comment_Enforcement::get_actor( $commentdata );
+		$row   = Comment_Enforcement::get_row( $actor['key'] );
 
 		if ( $row && ! empty( $row['site_banned'] ) ) {
 			return new WP_Error(
@@ -279,7 +250,7 @@ class AI_Span_Comments {
 			$spam_check = Comment_Spam_Rules::evaluate( $commentdata, $c );
 			if ( is_wp_error( $spam_check ) ) {
 				if ( ! empty( $c['comment_strike_on_heuristic'] ) ) {
-					$this->register_strike( $actor, $spam_check->get_error_message(), $c );
+					Comment_Enforcement::register_strike( $actor, $spam_check->get_error_message(), $c );
 				}
 				return $spam_check;
 			}
@@ -305,7 +276,7 @@ class AI_Span_Comments {
 				if ( ! is_wp_error( $raw ) ) {
 					$verdict = AI_Span_Completion::parse_json_verdict( (string) $raw );
 					if ( ! is_wp_error( $verdict ) && 'spam' === $verdict['status'] ) {
-						$this->register_strike( $actor, $verdict['message'], $c );
+						Comment_Enforcement::register_strike( $actor, $verdict['message'], $c );
 						return new WP_Error(
 							'wsc_spam',
 							sprintf(
@@ -319,7 +290,7 @@ class AI_Span_Comments {
 			}
 		}
 
-		$row = $this->get_enforcement_row( $actor['key'] );
+		$row = Comment_Enforcement::get_row( $actor['key'] );
 		if ( $row && ! empty( $row['blocked'] ) && empty( $row['site_banned'] ) ) {
 			return new WP_Error(
 				'wsc_blocked',
@@ -328,115 +299,6 @@ class AI_Span_Comments {
 		}
 
 		return true;
-	}
-
-	/**
-	 * @param array<string, mixed> $commentdata .
-	 * @return array{key:string,label:string}
-	 */
-	private function get_actor( array $commentdata ): array {
-		$uid = isset( $commentdata['user_id'] ) ? (int) $commentdata['user_id'] : 0;
-		if ( $uid > 0 ) {
-			return array(
-				'key'   => 'u:' . $uid,
-				'label' => 'user:' . $uid,
-			);
-		}
-
-		$email = isset( $commentdata['comment_author_email'] ) ? strtolower( trim( (string) $commentdata['comment_author_email'] ) ) : '';
-		$ip    = $this->get_ip();
-
-		$key = substr( hash( 'sha256', $ip . '|' . $email ), 0, 64 );
-
-		return array(
-			'key'   => 'g:' . $key,
-			'label' => $email !== '' ? $email : $ip,
-		);
-	}
-
-	private function get_ip(): string {
-		if ( function_exists( 'wp_span_checker_get_user_ip' ) ) {
-			return wp_span_checker_get_user_ip();
-		}
-		return isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( (string) $_SERVER['REMOTE_ADDR'] ) ) : '';
-	}
-
-	/**
-	 * @return array<string, mixed>|null
-	 */
-	private function get_enforcement_row( string $actor_key ): ?array {
-		global $wpdb;
-		$table = $wpdb->prefix . 'span_checker_comment_enforcement';
-		$row   = $wpdb->get_row(
-			$wpdb->prepare( "SELECT * FROM {$table} WHERE actor_key = %s", $actor_key ),
-			ARRAY_A
-		);
-		return is_array( $row ) ? $row : null;
-	}
-
-	/**
-	 * @param array{key:string,label:string} $actor .
-	 * @param array<string, mixed>          $c     Config.
-	 */
-	private function register_strike( array $actor, string $reason, array $c ): void {
-		global $wpdb;
-		$table        = $wpdb->prefix . 'span_checker_comment_enforcement';
-		$max_comment  = (int) ( $c['comment_max_strikes'] ?? 5 );
-		$ban_enabled  = ! empty( $c['comment_site_ban_enabled'] );
-		$ban_at       = (int) ( $c['comment_site_ban_strikes'] ?? 10 );
-		$now          = current_time( 'mysql' );
-		$reason       = function_exists( 'mb_substr' ) ? mb_substr( $reason, 0, 500 ) : substr( $reason, 0, 500 );
-		$ip           = $this->get_ip();
-		$existing     = $this->get_enforcement_row( $actor['key'] );
-
-		if ( $existing ) {
-			$strikes      = (int) $existing['strikes'] + 1;
-			$was_blocked  = (int) $existing['blocked'];
-			$site_banned  = (int) ( $existing['site_banned'] ?? 0 );
-			$blocked      = ( $strikes >= $max_comment ) ? 1 : $was_blocked;
-			if ( $ban_enabled && $strikes >= $ban_at ) {
-				$site_banned = 1;
-			}
-			$blocked_at     = (string) ( $existing['blocked_at'] ?? '' );
-			if ( $blocked && ! $was_blocked ) {
-				$blocked_at = $now;
-			}
-			$wpdb->update(
-				$table,
-				array(
-					'strikes'        => $strikes,
-					'blocked'        => $blocked,
-					'site_banned'    => $site_banned,
-					'last_ip'        => $ip,
-					'blocked_at'     => $blocked_at,
-					'last_strike_at' => $now,
-					'last_reason'    => $reason,
-					'actor_label'    => $actor['label'],
-				),
-				array( 'actor_key' => $actor['key'] ),
-				array( '%d', '%d', '%d', '%s', '%s', '%s', '%s', '%s' ),
-				array( '%s' )
-			);
-			return;
-		}
-
-		$strikes     = 1;
-		$blocked     = ( $strikes >= $max_comment ) ? 1 : 0;
-		$site_banned = ( $ban_enabled && $strikes >= $ban_at ) ? 1 : 0;
-		$row         = array(
-			'actor_key'      => $actor['key'],
-			'actor_label'    => $actor['label'],
-			'strikes'        => $strikes,
-			'blocked'        => $blocked,
-			'site_banned'    => $site_banned,
-			'last_ip'        => $ip,
-			'last_strike_at' => $now,
-			'last_reason'    => $reason,
-		);
-		if ( $blocked ) {
-			$row['blocked_at'] = $now;
-		}
-		$wpdb->insert( $table, $row );
 	}
 
 	/**
@@ -510,7 +372,7 @@ class AI_Span_Comments {
 		if ( ! ( $user instanceof \WP_User ) ) {
 			return $user;
 		}
-		$row = $this->get_enforcement_row( 'u:' . (int) $user->ID );
+		$row = Comment_Enforcement::get_row( 'u:' . (int) $user->ID );
 		if ( $row && ! empty( $row['site_banned'] ) ) {
 			return new WP_Error(
 				'wsc_site_banned_login',
@@ -605,10 +467,10 @@ class AI_Span_Comments {
 			return false;
 		}
 		if ( is_user_logged_in() ) {
-			$row = $this->get_enforcement_row( 'u:' . get_current_user_id() );
+			$row = Comment_Enforcement::get_row( 'u:' . get_current_user_id() );
 			return (bool) ( $row && ! empty( $row['blocked'] ) && empty( $row['site_banned'] ) );
 		}
-		$ip = $this->get_ip();
+		$ip = Comment_Enforcement::get_ip();
 		if ( '' === $ip ) {
 			return false;
 		}
@@ -626,10 +488,10 @@ class AI_Span_Comments {
 	 */
 	private function get_viewer_site_ban_row(): ?array {
 		if ( is_user_logged_in() ) {
-			$row = $this->get_enforcement_row( 'u:' . get_current_user_id() );
+			$row = Comment_Enforcement::get_row( 'u:' . get_current_user_id() );
 			return ( $row && ! empty( $row['site_banned'] ) ) ? $row : null;
 		}
-		$ip = $this->get_ip();
+		$ip = Comment_Enforcement::get_ip();
 		if ( '' === $ip ) {
 			return null;
 		}

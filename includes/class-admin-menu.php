@@ -119,11 +119,27 @@ class Admin_Menu {
 		);
 		add_submenu_page(
 			'wp-span-checker',
+			__( 'AI Product Summaries', 'wp-span-checker' ),
+			__( 'AI Product Summaries', 'wp-span-checker' ),
+			'manage_options',
+			'wp-span-checker-ai-product-summaries',
+			array( $this, 'ai_product_summaries_page' )
+		);
+		add_submenu_page(
+			'wp-span-checker',
 			__( 'Comment Guard', 'wp-span-checker' ),
 			__( 'Comment Guard', 'wp-span-checker' ),
 			'manage_options',
 			'wp-span-checker-comment-settings',
 			array( $this, 'comment_settings_page' )
+		);
+		add_submenu_page(
+			'wp-span-checker',
+			__( 'Product Review Guard', 'wp-span-checker' ),
+			__( 'Product Review Guard', 'wp-span-checker' ),
+			'manage_options',
+			'wp-span-checker-product-review-guard',
+			array( $this, 'product_review_guard_page' )
 		);
 		add_submenu_page(
 			'wp-span-checker',
@@ -254,10 +270,24 @@ class Admin_Menu {
 	}
 
 	/**
+	 * WooCommerce product AI summaries.
+	 */
+	public function ai_product_summaries_page() {
+		require WP_SPAN_CHECKER_DIR . 'templates/ai-product-summaries.php';
+	}
+
+	/**
 	 * Comment rules, strikes, AI prompt.
 	 */
 	public function comment_settings_page() {
 		require WP_SPAN_CHECKER_DIR . 'templates/comment-settings.php';
+	}
+
+	/**
+	 * WooCommerce product review guard settings.
+	 */
+	public function product_review_guard_page() {
+		require WP_SPAN_CHECKER_DIR . 'templates/product-review-guard.php';
 	}
 
 	/**

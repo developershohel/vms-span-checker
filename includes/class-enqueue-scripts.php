@@ -285,7 +285,10 @@ class Enqueue_Scripts {
 			|| false !== strpos( $hook_suffix, 'form-settings' )
 		);
 
-		$needs_ai_summary = ( false !== strpos( $hook_suffix, 'wp-span-checker-ai-summaries' ) );
+		$needs_ai_summary = (
+			false !== strpos( $hook_suffix, 'wp-span-checker-ai-summaries' )
+			|| false !== strpos( $hook_suffix, 'wp-span-checker-ai-product-summaries' )
+		);
 
 		if ( $needs_ai_summary ) {
 			wp_enqueue_script(

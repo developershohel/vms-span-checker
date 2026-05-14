@@ -1,6 +1,6 @@
 <?php
 /**
- * Post summary status and manual generation.
+ * WooCommerce product AI summaries — same storage as post summaries, product post type only.
  *
  * @package WP_Span_Checker
  */
@@ -11,36 +11,30 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-$cfg   = AI_Span_Config::get();
-$types = $cfg['summary_post_types'] ?? array( 'post' );
-if ( ! is_array( $types ) || empty( $types ) ) {
-	$types = array( 'post' );
-}
+$cfg = AI_Span_Config::get();
+
+$wc_on = class_exists( '\WooCommerce', false ) || function_exists( 'WC' );
 
 global $wpdb;
 $post_table = $wpdb->posts;
 $sum_table  = $wpdb->prefix . 'span_checker_ai_post_summary';
 
-$placeholders = implode( ',', array_fill( 0, count( $types ), '%s' ) );
-$statuses     = array( 'publish', 'future' );
-$ph_stat      = implode( ',', array_fill( 0, count( $statuses ), '%s' ) );
+$statuses = array( 'publish', 'future' );
+$ph_stat  = implode( ',', array_fill( 0, count( $statuses ), '%s' ) );
 
 $sql = "
 	SELECT p.ID, p.post_title, p.post_status, p.post_modified,
 		s.status AS sum_status, s.summary, s.last_error, s.updated_at AS sum_updated
 	FROM {$post_table} p
 	LEFT JOIN {$sum_table} s ON s.post_id = p.ID
-	WHERE p.post_type IN ({$placeholders})
+	WHERE p.post_type = 'product'
 	AND p.post_status IN ({$ph_stat})
 	ORDER BY p.post_modified DESC
 	LIMIT 150
 ";
 
-// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Dynamic IN placeholders built from sanitized lists.
-$posts = $wpdb->get_results(
-	$wpdb->prepare( $sql, array_merge( $types, $statuses ) ),
-	ARRAY_A
-);
+// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Static IN placeholders.
+$posts = $wpdb->get_results( $wpdb->prepare( $sql, $statuses ), ARRAY_A );
 if ( ! is_array( $posts ) ) {
 	$posts = array();
 }
@@ -49,20 +43,28 @@ if ( ! is_array( $posts ) ) {
 <div class="wrap wsc-admin">
 	<?php
 	wp_span_checker_admin_page_header(
-		__( 'AI Post Summaries', 'wp-span-checker' ),
-		__( 'Recent content of the types configured under AI Span Settings. WooCommerce products have a dedicated screen with catalog-aware summaries.', 'wp-span-checker' )
+		__( 'AI Product Summaries', 'wp-span-checker' ),
+		__( 'Recent WooCommerce products with AI-generated summaries for Product Review Guard and moderation context. Uses the same provider and credentials as AI Span Settings.', 'wp-span-checker' )
 	);
 	?>
+
+	<?php if ( ! $wc_on ) : ?>
+		<div class="notice notice-warning"><p><?php esc_html_e( 'WooCommerce is not active. This list only applies when the WooCommerce plugin is running.', 'wp-span-checker' ); ?></p></div>
+	<?php endif; ?>
 
 	<?php if ( empty( $cfg['ai_enabled'] ) ) : ?>
 		<div class="notice notice-warning"><p><?php esc_html_e( 'AI Span Checker is disabled. Enable it under AI Span Settings to run generation.', 'wp-span-checker' ); ?></p></div>
 	<?php endif; ?>
 
+	<p class="description">
+		<?php esc_html_e( 'Summaries are built from product name, short & long descriptions, categories, tags, visible attributes, and SKU. Enable “product” under AI Span Settings → Summaries to auto-refresh when products are saved.', 'wp-span-checker' ); ?>
+	</p>
+
 	<div class="wsc-card wsc-admin__table-wrap">
 		<table class="widefat striped">
 			<thead>
 				<tr>
-					<th><?php esc_html_e( 'Post', 'wp-span-checker' ); ?></th>
+					<th><?php esc_html_e( 'Product', 'wp-span-checker' ); ?></th>
 					<th><?php esc_html_e( 'Status', 'wp-span-checker' ); ?></th>
 					<th><?php esc_html_e( 'Summary state', 'wp-span-checker' ); ?></th>
 					<th><?php esc_html_e( 'Updated', 'wp-span-checker' ); ?></th>
@@ -72,13 +74,13 @@ if ( ! is_array( $posts ) ) {
 			</thead>
 			<tbody>
 				<?php if ( empty( $posts ) ) : ?>
-					<tr><td colspan="6"><?php esc_html_e( 'No matching posts found.', 'wp-span-checker' ); ?></td></tr>
+					<tr><td colspan="6"><?php esc_html_e( 'No published products found.', 'wp-span-checker' ); ?></td></tr>
 				<?php else : ?>
 					<?php foreach ( $posts as $row ) : ?>
 						<?php
-						$pid    = (int) $row['ID'];
-						$st     = $row['sum_status'] ?? '';
-						$st_disp = $st !== '' ? $st : __( 'none', 'wp-span-checker' );
+						$pid     = (int) $row['ID'];
+						$st      = $row['sum_status'] ?? '';
+						$st_disp = '' !== $st ? $st : __( 'none', 'wp-span-checker' );
 						$preview = isset( $row['summary'] ) ? wp_html_excerpt( (string) $row['summary'], 120, '…' ) : '';
 						?>
 						<tr>
@@ -89,7 +91,7 @@ if ( ! is_array( $posts ) ) {
 							<td><?php echo esc_html( $st_disp ); ?></td>
 							<td><?php echo esc_html( (string) ( $row['sum_updated'] ?? '' ) ); ?></td>
 							<td>
-								<?php if ( ! empty( $row['last_error'] ) && ( $st === 'failed' || $st === '' ) ) : ?>
+								<?php if ( ! empty( $row['last_error'] ) && ( 'failed' === $st || '' === $st ) ) : ?>
 									<span class="description"><?php echo esc_html( wp_html_excerpt( (string) $row['last_error'], 80, '…' ) ); ?></span>
 								<?php else : ?>
 									<?php echo esc_html( $preview ); ?>

@@ -183,155 +183,157 @@
             return;
         }
 
-        $form.each(function() {
-            var $thisForm = $(this);
-            
-            if ($thisForm.data('wsc-registration-guard')) {
-                return;
+        var $thisForm = $form.first();
+
+        if ($thisForm.data('wsc-registration-guard')) {
+            return;
+        }
+
+        var $emailField = $thisForm.find('input[type="email"], input[name="user_email"], input[name="email"], input[id="user_email"]').first();
+
+        if (!$emailField.length) {
+            return;
+        }
+
+        $thisForm.data('wsc-registration-guard', true);
+        console.log('[WP Span Checker] Registration Guard attached to form:', $thisForm[0]);
+
+        if (!frontendEnabled) {
+            if (recaptchaEnabled && recaptchaSiteKey) {
+                setupRecaptchaOnly($thisForm);
             }
-            
-            $thisForm.data('wsc-registration-guard', true);
-            console.log('[WP Span Checker] Registration Guard attached to form:', this);
+            return;
+        }
 
-            var $emailField = $thisForm.find('input[type="email"], input[name="user_email"], input[name="email"], input[id="user_email"]').first();
-            
-            if (!$emailField.length) {
-                return;
-            }
+        var $originalSubmit = $thisForm.find('#wp-submit, input[type="submit"], button[type="submit"]').first();
 
-            if (!frontendEnabled) {
-                if (recaptchaEnabled && recaptchaSiteKey) {
-                    setupRecaptchaOnly($thisForm);
-                }
-                return;
-            }
+        if (!$originalSubmit.length) {
+            $originalSubmit = $thisForm.find('button:not([type])').first();
+        }
 
-            var $originalSubmit = $thisForm.find('#wp-submit, input[type="submit"], button[type="submit"]').first();
-            
-            if (!$originalSubmit.length) {
-                $originalSubmit = $thisForm.find('button:not([type])').first();
-            }
+        var $actionsWrap = $('<div class="wsc-guard-actions"></div>');
+        $originalSubmit.after($actionsWrap);
 
-            var submitText = $originalSubmit.val() || $originalSubmit.text() || t('register', 'Register');
-            var $validationBtn = $('<input type="button" class="wsc-validation-btn wsc-reg-validation-btn">');
-            $validationBtn.val(submitText);
-            
-            copyButtonStyles($originalSubmit, $validationBtn);
-            $originalSubmit.after($validationBtn);
-            hideOriginalSubmit($originalSubmit);
+        var submitText = $originalSubmit.val() || $originalSubmit.text() || t('register', 'Register');
+        var $validationBtn = $('<input type="button" class="wsc-validation-btn wsc-reg-validation-btn">');
+        $validationBtn.val(submitText);
 
-            if (recaptchaEnabled && recaptchaSiteKey && recaptchaVersion === 'v2') {
-                var recaptchaContainer = $('<div class="wsc-recaptcha-container" style="margin-bottom:16px;"></div>');
-                $validationBtn.before(recaptchaContainer);
-                
-                $validationBtn.prop('disabled', true).css('opacity', '0.6');
-                
-                var checkRecaptcha = function() {
-                    if (typeof grecaptcha !== 'undefined' && grecaptcha.render) {
-                        try {
-                            grecaptcha.render(recaptchaContainer[0], {
-                                sitekey: recaptchaSiteKey,
-                                callback: function() {
-                                    $validationBtn.prop('disabled', false).css('opacity', '1');
-                                },
-                                'expired-callback': function() {
-                                    $validationBtn.prop('disabled', true).css('opacity', '0.6');
-                                }
-                            });
-                        } catch (e) {
-                            console.log('[Registration Guard] reCAPTCHA already rendered:', e);
-                        }
-                    } else {
-                        setTimeout(checkRecaptcha, 100);
-                    }
-                };
-                checkRecaptcha();
-            }
+        copyButtonStyles($originalSubmit, $validationBtn);
+        hideOriginalSubmit($originalSubmit);
 
-            var isValidating = false;
+        if (recaptchaEnabled && recaptchaSiteKey && recaptchaVersion === 'v2') {
+            var recaptchaContainer = $('<div class="wsc-recaptcha-container"></div>');
+            $actionsWrap.prepend(recaptchaContainer);
 
-            $validationBtn.on('click', function(e) {
-                e.preventDefault();
-                
-                if (isValidating) {
-                    return;
-                }
+            $validationBtn.prop('disabled', true).css('opacity', '0.6');
 
-                clearAllErrors($thisForm);
-
-                var email = $emailField.val().trim();
-
-                if (!email) {
-                    showFieldError($emailField, t('emailRequired', 'Email address is required.'));
-                    return;
-                }
-
-                var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                if (!emailRegex.test(email)) {
-                    showFieldError($emailField, t('emailInvalid', 'Please enter a valid email address.'));
-                    return;
-                }
-
-                isValidating = true;
-                $validationBtn.val(t('validating', 'Validating...')).prop('disabled', true);
-
-                getRecaptchaToken()
-                    .then(function(recaptchaToken) {
-                        return validateRegistration(email, recaptchaToken);
-                    })
-                    .then(function(result) {
-                        isValidating = false;
-                        $validationBtn.val(submitText).prop('disabled', false);
-
-                        if (result.status) {
-                            console.log('[WP Span Checker] Registration Guard: Validation passed');
-                            
-                            $thisForm.append('<input type="hidden" name="wsc_validation_token" value="' + (result.token || '') + '">');
-                            
-                            $originalSubmit.css({
-                                'display': '',
-                                'position': '',
-                                'left': '',
-                                'visibility': '',
-                                'pointer-events': '',
-                                'opacity': '',
-                                'width': '',
-                                'height': ''
-                            });
-                            
-                            $originalSubmit[0].click();
-                            
-                            setTimeout(function() {
-                                hideOriginalSubmit($originalSubmit);
-                            }, 100);
-                        } else {
-                            showFieldError($emailField, result.message || t('emailInvalid', 'This email address is not accepted.'));
-                            showToast('error', result.message || t('emailInvalid', 'This email address is not accepted.'));
-
-                            if (recaptchaEnabled && recaptchaVersion === 'v2' && typeof grecaptcha !== 'undefined') {
-                                grecaptcha.reset();
+            var checkRecaptcha = function() {
+                if (typeof grecaptcha !== 'undefined' && grecaptcha.render) {
+                    try {
+                        grecaptcha.render(recaptchaContainer[0], {
+                            sitekey: recaptchaSiteKey,
+                            callback: function() {
+                                $validationBtn.prop('disabled', false).css('opacity', '1');
+                            },
+                            'expired-callback': function() {
                                 $validationBtn.prop('disabled', true).css('opacity', '0.6');
                             }
-                        }
-                    })
-                    .catch(function(err) {
-                        isValidating = false;
-                        $validationBtn.val(submitText).prop('disabled', recaptchaEnabled && recaptchaVersion === 'v2');
-                        console.error('[WP Span Checker] Registration Guard error:', err);
-                        showToast('error', err.message || t('serverError', 'Validation error. Please try again.'));
-                    });
-            });
-
-            $thisForm.on('submit', function(e) {
-                if ($thisForm.find('input[name="wsc_validation_token"]').length) {
-                    return true;
+                        });
+                    } catch (e) {
+                        console.log('[Registration Guard] reCAPTCHA already rendered:', e);
+                    }
+                } else {
+                    setTimeout(checkRecaptcha, 100);
                 }
-                
-                e.preventDefault();
-                e.stopImmediatePropagation();
-                $validationBtn.trigger('click');
-                return false;
-            });
+            };
+            checkRecaptcha();
+        }
+
+        $actionsWrap.append($validationBtn);
+
+        var isValidating = false;
+
+        $validationBtn.on('click', function(e) {
+            e.preventDefault();
+
+            if (isValidating) {
+                return;
+            }
+
+            clearAllErrors($thisForm);
+
+            var email = $emailField.val().trim();
+
+            if (!email) {
+                showFieldError($emailField, t('emailRequired', 'Email address is required.'));
+                return;
+            }
+
+            var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                showFieldError($emailField, t('emailInvalid', 'Please enter a valid email address.'));
+                return;
+            }
+
+            isValidating = true;
+            $validationBtn.val(t('validating', 'Validating...')).prop('disabled', true);
+
+            getRecaptchaToken()
+                .then(function(recaptchaToken) {
+                    return validateRegistration(email, recaptchaToken);
+                })
+                .then(function(result) {
+                    isValidating = false;
+                    $validationBtn.val(submitText).prop('disabled', false);
+
+                    if (result.status) {
+                        console.log('[WP Span Checker] Registration Guard: Validation passed');
+
+                        $thisForm.append('<input type="hidden" name="wsc_validation_token" value="' + (result.token || '') + '">');
+
+                        $originalSubmit.css({
+                            'display': '',
+                            'position': '',
+                            'left': '',
+                            'visibility': '',
+                            'pointer-events': '',
+                            'opacity': '',
+                            'width': '',
+                            'height': ''
+                        });
+
+                        $originalSubmit[0].click();
+
+                        setTimeout(function() {
+                            hideOriginalSubmit($originalSubmit);
+                        }, 100);
+                    } else {
+                        showFieldError($emailField, result.message || t('emailInvalid', 'This email address is not accepted.'));
+                        showToast('error', result.message || t('emailInvalid', 'This email address is not accepted.'));
+
+                        if (recaptchaEnabled && recaptchaVersion === 'v2' && typeof grecaptcha !== 'undefined') {
+                            grecaptcha.reset();
+                            $validationBtn.prop('disabled', true).css('opacity', '0.6');
+                        }
+                    }
+                })
+                .catch(function(err) {
+                    isValidating = false;
+                    $validationBtn.val(submitText).prop('disabled', recaptchaEnabled && recaptchaVersion === 'v2');
+                    console.error('[WP Span Checker] Registration Guard error:', err);
+                    showToast('error', err.message || t('serverError', 'Validation error. Please try again.'));
+                });
+        });
+
+        $thisForm.on('submit', function(e) {
+            if ($thisForm.find('input[name="wsc_validation_token"]').length) {
+                return true;
+            }
+
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            $validationBtn.trigger('click');
+            return false;
         });
     }
 
@@ -343,9 +345,13 @@
         }
 
         if (recaptchaVersion === 'v2') {
-            var recaptchaContainer = $('<div class="wsc-recaptcha-container" style="margin-bottom:16px;"></div>');
-            $submitBtn.closest('p, .submit').before(recaptchaContainer);
-            
+            var $submitParent = $submitBtn.closest('p, .submit').first();
+            var $actionsWrap = $('<div class="wsc-guard-actions"></div>');
+            $submitParent.before($actionsWrap);
+            var recaptchaContainer = $('<div class="wsc-recaptcha-container"></div>');
+            $actionsWrap.append(recaptchaContainer);
+            $actionsWrap.append($submitParent.detach());
+
             $submitBtn.prop('disabled', true).css('opacity', '0.6');
             
             var checkRecaptcha = function() {

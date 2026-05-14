@@ -216,7 +216,10 @@ $current_provider = in_array( (string) ( $cfg['provider'] ?? '' ), $allowed_prov
 			</div>
 
 			<h2 class="title"><?php esc_html_e( 'Summaries', 'wp-span-checker' ); ?></h2>
-			<p class="description"><?php esc_html_e( 'When an item of a selected type is published or scheduled, the plugin requests a short summary using the active provider above. All suitable types are listed—posts, pages, WooCommerce products (if installed), and other public or admin-editable content types.', 'wp-span-checker' ); ?></p>
+			<p class="description">
+				<?php esc_html_e( 'When an item of a selected type is published or scheduled, the plugin requests a summary using the active provider above. Include “product” for WooCommerce—those summaries use catalog fields (descriptions, categories, attributes) and appear under', 'wp-span-checker' ); ?>
+				<a href="<?php echo esc_url( admin_url( 'admin.php?page=wp-span-checker-ai-product-summaries' ) ); ?>"><?php esc_html_e( 'AI Product Summaries', 'wp-span-checker' ); ?></a>.
+			</p>
 			<div class="wsc-post-type-grid" role="group" aria-label="<?php esc_attr_e( 'Post types for summaries', 'wp-span-checker' ); ?>">
 				<?php
 				$selected = $cfg['summary_post_types'] ?? array( 'post' );

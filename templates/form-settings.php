@@ -342,7 +342,7 @@ $wsc_presets = wp_span_checker_page_target_presets();
 										sprintf(
 											/* translators: %s: URL to API settings */
 											__( 'Please <a href="%s">configure reCAPTCHA API keys</a> first.', 'wp-span-checker' ),
-											esc_url( admin_url( 'admin.php?page=wp-span-checker-api-settings' ) )
+											esc_url( admin_url( 'admin.php?page=wp-span-checker-api' ) )
 										),
 										array( 'a' => array( 'href' => true ) )
 									);

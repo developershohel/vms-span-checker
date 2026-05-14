@@ -231,7 +231,7 @@ $can_register = get_option( 'users_can_register' );
 					);
 					?>
 					<?php if ( ! $has_recaptcha_key ) : ?>
-						<p class="description" style="color: #d63638;"><span class="dashicons dashicons-warning"></span> <?php esc_html_e( 'reCAPTCHA keys not configured.', 'wp-span-checker' ); ?> <a href="<?php echo esc_url( admin_url( 'admin.php?page=wp-span-checker-api-settings' ) ); ?>"><?php esc_html_e( 'Configure API Settings', 'wp-span-checker' ); ?></a></p>
+						<p class="description" style="color: #d63638;"><span class="dashicons dashicons-warning"></span> <?php esc_html_e( 'reCAPTCHA keys not configured.', 'wp-span-checker' ); ?> <a href="<?php echo esc_url( admin_url( 'admin.php?page=wp-span-checker-api' ) ); ?>"><?php esc_html_e( 'Configure API Settings', 'wp-span-checker' ); ?></a></p>
 					<?php else : ?>
 						<p class="description" style="color: #2e7d32;"><span class="dashicons dashicons-yes-alt"></span> <?php esc_html_e( 'reCAPTCHA configured', 'wp-span-checker' ); ?> (<?php echo esc_html( ucfirst( $recaptcha_cfg['version'] ?? 'v2' ) ); ?>)</p>
 					<?php endif; ?>

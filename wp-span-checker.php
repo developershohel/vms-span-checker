@@ -74,6 +74,8 @@ function wp_span_checker_bootstrap() {
 	require_once WP_SPAN_CHECKER_DIR . 'includes/spam/class-default-spam-check-components.php';
 	require_once WP_SPAN_CHECKER_DIR . 'includes/spam/class-comment-spam-controller.php';
 	require_once WP_SPAN_CHECKER_DIR . 'includes/class-comment-spam-rules.php';
+	require_once WP_SPAN_CHECKER_DIR . 'includes/class-comment-enforcement.php';
+	require_once WP_SPAN_CHECKER_DIR . 'includes/class-product-review-guard.php';
 	require_once WP_SPAN_CHECKER_DIR . 'includes/class-ai-span-comments.php';
 	require_once WP_SPAN_CHECKER_DIR . 'includes/class-form-guard-conditional.php';
 	require_once WP_SPAN_CHECKER_DIR . 'includes/class-ajax.php';
@@ -88,6 +90,7 @@ function wp_span_checker_bootstrap() {
 	new WP_Span_Checker\AI_Span_Summary();
 	new WP_Span_Checker\Auth_Forms();
 	new WP_Span_Checker\Email_Templates();
+	new WP_Span_Checker\Product_Review_Guard();
 	new WP_Span_Checker\AI_Span_Comments();
 	new WP_Span_Checker\Registration_Guard();
 	new WP_Span_Checker\Plugin_Activity_Log();

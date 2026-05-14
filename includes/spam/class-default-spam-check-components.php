@@ -54,7 +54,7 @@ final class Rate_Limit_Spam_Component implements Spam_Check_Component {
 		$window = max( 1, (int) ( $config['comment_rate_limit_window'] ?? 15 ) );
 		$scope  = (string) ( $config['comment_rate_limit_scope'] ?? 'ip' );
 		$key    = 'wsc_crl_' . md5( $ip );
-		if ( 'ip_post' === $scope ) {
+		if ( 'ip_post' === $scope || 'ip_product' === $scope ) {
 			$key = 'wsc_crl_' . md5( $ip . '|' . $post_id );
 		}
 		$n = (int) get_transient( $key );

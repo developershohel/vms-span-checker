@@ -2974,6 +2974,22 @@ body.wsc-plugin-admin .wsc-switch-control .wsc-switch-option.wsc-check {
   outline: none !important;
 }
 
+/* Contact / Subscribe / Registration guard: stack reCAPTCHA above the validation control */
+.wsc-guard-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  margin: 12px 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.wsc-guard-actions .wsc-recaptcha-container {
+  width: 100%;
+  max-width: 100%;
+}
+
 /* Validation button styles */
 .wsc-validation-btn {
   cursor: pointer;

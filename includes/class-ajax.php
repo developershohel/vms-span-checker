@@ -75,7 +75,7 @@ class Ajax {
 		}
 
 		$runner = new AI_Span_Summary();
-		$ok     = $runner->generate_for_post( $post_id );
+		$ok     = $runner->generate_for_post( $post_id, array( 'force' => true ) );
 		if ( ! $ok ) {
 			wp_send_json_error( array( 'message' => __( 'Summary generation failed. Check AI settings and the post status.', 'wp-span-checker' ) ) );
 		}
