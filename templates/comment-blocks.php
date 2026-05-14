@@ -120,6 +120,10 @@ if ( ! is_array( $rows ) ) {
 						<?php
 						$user_label = (string) ( $row['actor_label'] ?? '' );
 						$user_id    = ! empty( $row['user_id'] ) ? (int) $row['user_id'] : 0;
+						$last_ip    = (string) ( $row['last_ip'] ?? '' );
+						$actor_key  = (string) ( $row['actor_key'] ?? '' );
+						$is_guest   = ( strpos( $actor_key, 'ip_' ) === 0 || strpos( $actor_key, 'guest_' ) === 0 );
+						
 						if ( $user_id > 0 ) {
 							$user_obj = get_userdata( $user_id );
 							if ( $user_obj ) {
@@ -129,11 +133,18 @@ if ( ! is_array( $rows ) ) {
 
 						$source = (string) ( $row['strike_source'] ?? 'comment' );
 						$source_labels = array(
-							'comment'    => __( 'Comment', 'wp-span-checker' ),
-							'form_guard' => __( 'Form Guard', 'wp-span-checker' ),
-							'login'      => __( 'Login', 'wp-span-checker' ),
+							'comment'         => __( 'Comment', 'wp-span-checker' ),
+							'product_review'  => __( 'Product Review', 'wp-span-checker' ),
+							'form_guard'      => __( 'Form Guard', 'wp-span-checker' ),
+							'contact_guard'   => __( 'Contact Guard', 'wp-span-checker' ),
+							'subscribe_guard' => __( 'Subscribe Guard', 'wp-span-checker' ),
+							'subscribe'       => __( 'Subscribe', 'wp-span-checker' ),
+							'login'           => __( 'Login', 'wp-span-checker' ),
+							'login_guard'     => __( 'Login Guard', 'wp-span-checker' ),
+							'registration'    => __( 'Registration', 'wp-span-checker' ),
+							'auth_forms'      => __( 'Auth Forms', 'wp-span-checker' ),
 						);
-						$source_label = isset( $source_labels[ $source ] ) ? $source_labels[ $source ] : ucfirst( $source );
+						$source_label = isset( $source_labels[ $source ] ) ? $source_labels[ $source ] : ucfirst( str_replace( '_', ' ', $source ) );
 
 						$expires = '';
 						if ( ! empty( $row['strikes_expire_at'] ) ) {
@@ -149,9 +160,22 @@ if ( ! is_array( $rows ) ) {
 						?>
 						<tr>
 							<td>
-								<?php echo esc_html( $user_label ); ?>
 								<?php if ( $user_id > 0 ) : ?>
+									<strong><?php echo esc_html( $user_label ); ?></strong>
 									<br><small class="description"><?php echo esc_html( sprintf( __( 'User ID: %d', 'wp-span-checker' ), $user_id ) ); ?></small>
+								<?php elseif ( $is_guest ) : ?>
+									<?php if ( ! empty( $user_label ) ) : ?>
+										<span><?php echo esc_html( $user_label ); ?></span>
+									<?php else : ?>
+										<span><?php esc_html_e( 'Guest', 'wp-span-checker' ); ?></span>
+									<?php endif; ?>
+									<?php if ( ! empty( $last_ip ) ) : ?>
+										<br><small class="description" style="color: #666;">
+											<?php esc_html_e( 'IP:', 'wp-span-checker' ); ?> <code style="font-size: 11px;"><?php echo esc_html( $last_ip ); ?></code>
+										</small>
+									<?php endif; ?>
+								<?php else : ?>
+									<?php echo esc_html( $user_label ); ?>
 								<?php endif; ?>
 							</td>
 							<td>

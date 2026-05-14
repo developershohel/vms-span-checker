@@ -40,10 +40,11 @@ if ( isset( $_SERVER['REQUEST_METHOD'] ) && 'POST' === $_SERVER['REQUEST_METHOD'
 	
 	// Save frontend settings to AI config
 	$ai_cfg_data = array(
-		'registration_guard_frontend'  => ! empty( $_POST['rg_frontend'] ),
-		'registration_guard_recaptcha' => ! empty( $_POST['rg_recaptcha'] ),
-		'registration_guard_scope'     => isset( $_POST['rg_scope'] ) ? sanitize_text_field( wp_unslash( $_POST['rg_scope'] ) ) : 'default',
-		'registration_guard_page_ids'  => isset( $_POST['rg_page_ids'] ) ? sanitize_text_field( wp_unslash( $_POST['rg_page_ids'] ) ) : '',
+		'registration_guard_frontend'      => ! empty( $_POST['rg_frontend'] ),
+		'registration_guard_recaptcha'     => ! empty( $_POST['rg_recaptcha'] ),
+		'registration_guard_scope'         => isset( $_POST['rg_scope'] ) ? sanitize_text_field( wp_unslash( $_POST['rg_scope'] ) ) : 'default',
+		'registration_guard_page_ids'      => isset( $_POST['rg_page_ids'] ) ? sanitize_text_field( wp_unslash( $_POST['rg_page_ids'] ) ) : '',
+		'registration_guard_form_selector' => isset( $_POST['rg_form_selector'] ) ? sanitize_text_field( wp_unslash( $_POST['rg_form_selector'] ) ) : '',
 	);
 	\WP_Span_Checker\AI_Span_Config::update( $ai_cfg_data );
 	$cfg = Registration_Guard::get();
@@ -276,6 +277,17 @@ $can_register = get_option( 'users_can_register' );
 					<p class="description"><?php esc_html_e( 'Select pages that contain custom registration forms (e.g., WooCommerce registration, membership plugin signup pages).', 'wp-span-checker' ); ?></p>
 				</td>
 			</tr>
+			<tr id="rg_selector_row" style="display:none;">
+				<th scope="row"><label for="rg_form_selector"><?php esc_html_e( 'Form Selector', 'wp-span-checker' ); ?> <span style="color:#d63638;">*</span></label></th>
+				<td>
+					<input type="text" name="rg_form_selector" id="rg_form_selector" class="regular-text" value="<?php echo esc_attr( (string) ( $ai_cfg['registration_guard_form_selector'] ?? '' ) ); ?>" placeholder=".woocommerce-form-register, #register-form">
+					<p class="description">
+						<?php esc_html_e( 'CSS selector to identify the registration form. Examples: .woocommerce-form-register, #my-register-form', 'wp-span-checker' ); ?>
+						<br>
+						<strong><?php esc_html_e( 'Required for custom registration pages to ensure validation is applied only to the correct form.', 'wp-span-checker' ); ?></strong>
+					</p>
+				</td>
+			</tr>
 		</table>
 			<p class="submit">
 				<input type="submit" class="button button-primary" value="<?php esc_attr_e( 'Save settings', 'wp-span-checker' ); ?>">
@@ -358,7 +370,9 @@ jQuery(function($) {
 
 	function togglePageIds() {
 		var scope = $('#rg_scope').val();
-		$('#rg_pages_row').toggle(scope === 'specific');
+		var isSpecific = scope === 'specific';
+		$('#rg_pages_row').toggle(isSpecific);
+		$('#rg_selector_row').toggle(isSpecific);
 	}
 	$('#rg_scope').on('change', togglePageIds);
 	togglePageIds();

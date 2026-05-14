@@ -108,14 +108,22 @@ $wsc_presets = wp_span_checker_page_target_presets();
 			</div>
 			<div class="wsc-form-group" id="wsc-form-selector-group">
 				<label for="form_selector" class="wsc-form-label">
-					<?php esc_html_e( 'Form id/class', 'wp-span-checker' ); ?>
+					<?php esc_html_e( 'Form Selector', 'wp-span-checker' ); ?>
 					<span class="wsc-label-optional" id="wsc-form-selector-optional"><?php esc_html_e( '(optional)', 'wp-span-checker' ); ?></span>
 					<span class="wsc-label-required wsc-hidden" id="wsc-form-selector-required"><?php esc_html_e( '(required for Entire site)', 'wp-span-checker' ); ?></span>
 				</label>
 				<input class="wsc-input wsc-input-primary" type="text" name="form_selector" id="form_selector" value=""
-					placeholder="#contact-form.contact-us"/>
-				<span class="wsc-form-info-message wsc-text-info"><?php esc_html_e( 'CSS selector for the form element, e.g. #contactus.contact-us (ID plus classes). Old mappings that used separate Form ID + classes still load here.', 'wp-span-checker' ); ?></span>
-				<span class="wsc-form-info-message wsc-text-warning wsc-hidden" id="wsc-entire-site-notice"><?php esc_html_e( 'When targeting the entire site, Form id/class is required so the script can identify the correct form on each page.', 'wp-span-checker' ); ?></span>
+					placeholder=".tnp-subscription form, #contact-form, .wpcf7-form"/>
+				<span class="wsc-form-info-message wsc-text-info">
+					<?php esc_html_e( 'CSS selector to identify the form. Supports:', 'wp-span-checker' ); ?>
+					<ul style="margin: 5px 0 0 20px; list-style: disc;">
+						<li><code>#form-id</code> - <?php esc_html_e( 'Form by ID', 'wp-span-checker' ); ?></li>
+						<li><code>.form-class</code> - <?php esc_html_e( 'Form by class', 'wp-span-checker' ); ?></li>
+						<li><code>.wrapper form</code> - <?php esc_html_e( 'Form inside a wrapper (descendant selector)', 'wp-span-checker' ); ?></li>
+						<li><code>#parent .child form</code> - <?php esc_html_e( 'Complex selectors', 'wp-span-checker' ); ?></li>
+					</ul>
+				</span>
+				<span class="wsc-form-info-message wsc-text-warning wsc-hidden" id="wsc-entire-site-notice"><?php esc_html_e( 'When targeting the entire site, Form Selector is required so the script can identify the correct form on each page.', 'wp-span-checker' ); ?></span>
 				<input type="hidden" name="form_id" id="form_id" value="">
 				<input type="hidden" name="form_class" id="form_class" value="">
 				<span class="wsc-form-error-message wsc-form-error"></span>
@@ -380,7 +388,7 @@ $wsc_presets = wp_span_checker_page_target_presets();
 					<th><?php esc_html_e( 'ID', 'wp-span-checker' ); ?></th>
 					<th><?php esc_html_e( 'Form type', 'wp-span-checker' ); ?></th>
 					<th><?php esc_html_e( 'Page', 'wp-span-checker' ); ?></th>
-					<th><?php esc_html_e( 'Form id/class', 'wp-span-checker' ); ?></th>
+					<th><?php esc_html_e( 'Form Selector', 'wp-span-checker' ); ?></th>
 					<th><?php esc_html_e( 'Submit', 'wp-span-checker' ); ?></th>
 					<th><?php esc_html_e( 'Mode', 'wp-span-checker' ); ?></th>
 					<th class="wsc-min-w-300"><?php esc_html_e( 'Validation', 'wp-span-checker' ); ?></th>

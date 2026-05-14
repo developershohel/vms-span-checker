@@ -289,6 +289,11 @@ class Registration_Guard
 					'message' => self::truncate_for_log($msg, 200),
 				)
 			);
+			
+			if (function_exists('wp_span_checker_record_strike')) {
+				wp_span_checker_record_strike((string) $result['message'], 'registration', 0, $user_email);
+			}
+			
 			self::maybe_redirect_registration_error($msg, $hook_source);
 		}
 
@@ -306,12 +311,7 @@ class Registration_Guard
 		$state   = self::get_rate_state($ip);
 		$current = (int) ($state['day_fails'] ?? 0);
 		$max     = max(1, (int) ($cfg['rate_limit_max_per_day'] ?? 10));
-		return sprintf(
-			/* translators: 1: current failed attempts today, 2: maximum per day */
-			__('You have reached %1$d of %2$d allowed registration attempts for today.', 'wp-span-checker'),
-			$current,
-			$max
-		);
+		return wp_span_checker_get_error_message('reg_rate_limit_count', array($current, $max));
 	}
 
 	/**
@@ -321,19 +321,19 @@ class Registration_Guard
 	{
 		$r = strtolower($reason);
 		if (false !== strpos($r, 'does not resolve in dns')) {
-			return __('Failed check: domain is not live in DNS records.', 'wp-span-checker');
+			return wp_span_checker_get_error_message('reg_dns_failed');
 		}
 		if (false !== strpos($r, 'no mx')) {
-			return __('Failed check: domain has no valid MX/mail DNS records.', 'wp-span-checker');
+			return wp_span_checker_get_error_message('reg_mx_failed');
 		}
 		if (false !== strpos($r, 'disposable')) {
-			return __('Failed check: disposable email domains are not allowed.', 'wp-span-checker');
+			return wp_span_checker_get_error_message('reg_disposable');
 		}
 		if (false !== strpos($r, 'too many failed registration attempts')
 			|| false !== strpos($r, 'daily registration attempt limit reached')) {
-			return __('Failed check: registration attempt limit reached for your network.', 'wp-span-checker');
+			return wp_span_checker_get_error_message('reg_rate_limit');
 		}
-		return __('Failed check: the provided email domain did not pass reputation screening.', 'wp-span-checker');
+		return wp_span_checker_get_error_message('reg_reputation_failed');
 	}
 
 	/**
@@ -342,14 +342,13 @@ class Registration_Guard
 	private static function brand_registration_block_message(string $reason, string $attempt_line = ''): string
 	{
 		$parts   = array();
-		$parts[] = __('Registration could not be completed due to security validation checks.', 'wp-span-checker');
+		$parts[] = wp_span_checker_get_error_message('reg_blocked_intro');
 		$parts[] = self::registration_failed_check_line($reason);
-		$parts[] = $reason;
 		if ('' !== $attempt_line) {
 			$parts[] = $attempt_line;
 		}
-		$parts[] = __('If you believe this result is incorrect, please contact the site administrator for assistance.', 'wp-span-checker');
-		return implode("\n\n", $parts);
+		$parts[] = wp_span_checker_get_error_message('reg_contact_admin');
+		return implode(' ', $parts);
 	}
 
 	/**
@@ -384,7 +383,7 @@ class Registration_Guard
 		set_transient(
 			'wsc_rerr_' . $token,
 			array(
-				'title'   => __('Registration blocked', 'wp-span-checker'),
+				'title'   => wp_span_checker_get_error_message('reg_blocked_title'),
 				'message' => $message,
 				'hook'    => $hook_source,
 			),
@@ -414,7 +413,7 @@ class Registration_Guard
 			return;
 		}
 		self::$frontend_registration_notice = array(
-			'title'   => isset($data['title']) ? (string) $data['title'] : __('Registration blocked', 'wp-span-checker'),
+			'title'   => isset($data['title']) ? (string) $data['title'] : wp_span_checker_get_error_message('reg_blocked_title'),
 			'message' => (string) $data['message'],
 		);
 	}

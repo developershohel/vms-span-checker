@@ -437,7 +437,7 @@ class Ajax {
 					if ( ! empty( $rules['mx'] ) && $domain && ! $mx_valid ) {
 						$result = array(
 							'status'  => false,
-							'message' => __( 'Email domain appears invalid (no mail server found).', 'wp-span-checker' ),
+							'message' => wp_span_checker_get_error_message( 'email_mx_failed' ),
 						);
 						break;
 					}
@@ -447,7 +447,7 @@ class Ajax {
 						if ( $is_disposable ) {
 							$result = array(
 								'status'  => false,
-								'message' => __( 'Disposable email addresses are not allowed.', 'wp-span-checker' ),
+								'message' => wp_span_checker_get_error_message( 'email_disposable' ),
 							);
 							break;
 						}
@@ -464,7 +464,7 @@ class Ajax {
 						if ( $webrisk_result && isset( $webrisk_result['threat'] ) && $webrisk_result['threat'] ) {
 							$result = array(
 								'status'  => false,
-								'message' => __( 'This domain is flagged as malicious.', 'wp-span-checker' ),
+								'message' => wp_span_checker_get_error_message( 'email_webrisk_flagged' ),
 							);
 							break;
 						}
@@ -475,7 +475,7 @@ class Ajax {
 						if ( $vt_result && isset( $vt_result['malicious'] ) && $vt_result['malicious'] > 0 ) {
 							$result = array(
 								'status'  => false,
-								'message' => __( 'This domain is flagged as potentially harmful.', 'wp-span-checker' ),
+								'message' => wp_span_checker_get_error_message( 'email_virustotal_flagged' ),
 							);
 							break;
 						}
@@ -493,7 +493,7 @@ class Ajax {
 						if ( ! $domain_exists ) {
 							$result = array(
 								'status'  => false,
-								'message' => __( 'This domain does not exist or is unreachable.', 'wp-span-checker' ),
+								'message' => wp_span_checker_get_error_message( 'url_dns_failed' ),
 							);
 							break;
 						}
@@ -504,7 +504,7 @@ class Ajax {
 						if ( $webrisk_result && isset( $webrisk_result['threat'] ) && $webrisk_result['threat'] ) {
 							$result = array(
 								'status'  => false,
-								'message' => __( 'This URL is flagged as malicious.', 'wp-span-checker' ),
+								'message' => wp_span_checker_get_error_message( 'url_webrisk_flagged' ),
 							);
 							break;
 						}
@@ -515,7 +515,7 @@ class Ajax {
 						if ( $vt_result && isset( $vt_result['malicious'] ) && $vt_result['malicious'] > 0 ) {
 							$result = array(
 								'status'  => false,
-								'message' => __( 'This URL is flagged as potentially harmful.', 'wp-span-checker' ),
+								'message' => wp_span_checker_get_error_message( 'url_virustotal_flagged' ),
 							);
 							break;
 						}
@@ -547,7 +547,7 @@ class Ajax {
 					if ( $spam_result && isset( $spam_result['is_spam'] ) && $spam_result['is_spam'] ) {
 						$result = array(
 							'status'  => false,
-							'message' => __( 'Your message appears to be spam.', 'wp-span-checker' ),
+							'message' => wp_span_checker_get_error_message( 'spam_detected' ),
 						);
 					}
 				}
@@ -559,7 +559,7 @@ class Ajax {
 					if ( $user ) {
 						$result = array(
 							'status'  => false,
-							'message' => __( 'This username is already taken.', 'wp-span-checker' ),
+							'message' => wp_span_checker_get_error_message( 'username_taken' ),
 						);
 					}
 				}
@@ -596,10 +596,10 @@ class Ajax {
 						'status'  => false,
 						'blocked' => true,
 						'errors'  => array(
-							array(
-								'fieldName' => 'form',
-								'message'   => __( 'You have been blocked due to repeated violations. Please contact support if you believe this is an error.', 'wp-span-checker' ),
-							),
+						array(
+							'fieldName' => 'form',
+							'message'   => wp_span_checker_get_error_message( 'user_blocked' ),
+						),
 						),
 					) );
 					return;
@@ -684,13 +684,13 @@ class Ajax {
 
 						// If MX rule explicitly enabled OR API checks need MX as prerequisite
 						if ( ( ! empty( $rules['mx'] ) || $needs_api_checks ) && ! $mx_valid ) {
-							$error = __( 'Email domain cannot receive emails (no MX record found).', 'wp-span-checker' );
+							$error = wp_span_checker_get_error_message( 'email_mx_failed' );
 							break;
 						}
 
 						if ( ! empty( $rules['disposable'] ) ) {
 							if ( wp_span_checker_is_disposable_domain( $domain ) ) {
-								$error = __( 'Disposable email addresses are not allowed.', 'wp-span-checker' );
+								$error = wp_span_checker_get_error_message( 'email_disposable' );
 								break;
 							}
 						}
@@ -699,7 +699,7 @@ class Ajax {
 						if ( ! empty( $rules['webrisk'] ) ) {
 							$webrisk_result = wp_span_checker_check_webrisk( $domain );
 							if ( $webrisk_result && isset( $webrisk_result['threat'] ) && $webrisk_result['threat'] ) {
-								$error = __( 'This domain is flagged as malicious.', 'wp-span-checker' );
+								$error = wp_span_checker_get_error_message( 'email_webrisk_flagged' );
 								break;
 							}
 						}
@@ -707,7 +707,7 @@ class Ajax {
 						if ( ! empty( $rules['virustotal'] ) ) {
 							$vt_result = wp_span_checker_check_virustotal( $domain );
 							if ( $vt_result && isset( $vt_result['malicious'] ) && $vt_result['malicious'] > 0 ) {
-								$error = __( 'This domain is flagged as potentially harmful.', 'wp-span-checker' );
+								$error = wp_span_checker_get_error_message( 'email_virustotal_flagged' );
 								break;
 							}
 						}
@@ -726,7 +726,7 @@ class Ajax {
 						// Check domain DNS - mandatory before API checks
 						$domain_exists = wp_span_checker_check_domain_dns( $domain );
 						if ( $needs_api_checks && ! $domain_exists ) {
-							$error = __( 'This domain does not exist (no DNS A record found).', 'wp-span-checker' );
+							$error = wp_span_checker_get_error_message( 'url_dns_failed' );
 							break;
 						}
 						
@@ -734,7 +734,7 @@ class Ajax {
 						if ( ! empty( $rules['webrisk'] ) ) {
 							$webrisk_result = wp_span_checker_check_webrisk( $domain );
 							if ( $webrisk_result && isset( $webrisk_result['threat'] ) && $webrisk_result['threat'] ) {
-								$error = __( 'This URL is flagged as malicious.', 'wp-span-checker' );
+								$error = wp_span_checker_get_error_message( 'url_webrisk_flagged' );
 								break;
 							}
 						}
@@ -742,7 +742,7 @@ class Ajax {
 						if ( ! empty( $rules['virustotal'] ) ) {
 							$vt_result = wp_span_checker_check_virustotal( $domain );
 							if ( $vt_result && isset( $vt_result['malicious'] ) && $vt_result['malicious'] > 0 ) {
-								$error = __( 'This URL is flagged as potentially harmful.', 'wp-span-checker' );
+								$error = wp_span_checker_get_error_message( 'url_virustotal_flagged' );
 								break;
 							}
 						}
@@ -804,7 +804,19 @@ class Ajax {
 					}
 				}
 				$reason = implode( '; ', array_slice( $strike_reasons, 0, 3 ) );
-				$strike_result = wp_span_checker_record_strike( $reason, 'form_guard' );
+				
+				// Extract email from fields for guest strike tracking
+				$guest_email = '';
+				foreach ( $fields as $field ) {
+					$ft = isset( $field['fieldType'] ) ? $field['fieldType'] : '';
+					$fv = isset( $field['value'] ) ? $field['value'] : '';
+					if ( 'email' === $ft && is_email( $fv ) ) {
+						$guest_email = sanitize_email( $fv );
+						break;
+					}
+				}
+				
+				$strike_result = wp_span_checker_record_strike( $reason, 'form_guard', 0, $guest_email );
 
 				$response = array(
 					'status' => false,
@@ -814,7 +826,7 @@ class Ajax {
 				// Add strike info to response
 				if ( $strike_result['blocked'] ) {
 					$response['blocked'] = true;
-					$response['strike_message'] = __( 'You have been blocked due to repeated violations.', 'wp-span-checker' );
+					$response['strike_message'] = wp_span_checker_get_error_message( 'user_blocked' );
 				}
 
 				wp_send_json_success( $response );
@@ -1035,7 +1047,7 @@ public function ajax_search_posts() {
 		if ( empty( $token ) ) {
 			return array(
 				'success' => false,
-				'message' => __( 'reCAPTCHA verification required.', 'wp-span-checker' ),
+				'message' => wp_span_checker_get_error_message( 'recaptcha_required' ),
 			);
 		}
 
@@ -1065,7 +1077,7 @@ public function ajax_search_posts() {
 		if ( is_wp_error( $response ) ) {
 			return array(
 				'success' => false,
-				'message' => __( 'reCAPTCHA verification failed. Please try again.', 'wp-span-checker' ),
+				'message' => wp_span_checker_get_error_message( 'recaptcha_failed' ),
 			);
 		}
 
@@ -1076,7 +1088,7 @@ public function ajax_search_posts() {
 			$error_codes = isset( $data['error-codes'] ) ? implode( ', ', $data['error-codes'] ) : 'unknown';
 			return array(
 				'success' => false,
-				'message' => __( 'reCAPTCHA verification failed. Please try again.', 'wp-span-checker' ),
+				'message' => wp_span_checker_get_error_message( 'recaptcha_failed' ),
 			);
 		}
 
@@ -1088,7 +1100,7 @@ public function ajax_search_posts() {
 			if ( $score < 0.5 ) {
 				return array(
 					'success' => false,
-					'message' => __( 'reCAPTCHA verification failed. Please try again.', 'wp-span-checker' ),
+					'message' => wp_span_checker_get_error_message( 'recaptcha_failed' ),
 					'score'   => $score,
 				);
 			}
@@ -1110,9 +1122,11 @@ public function ajax_search_posts() {
 		$email = isset( $_POST['email'] ) ? sanitize_email( wp_unslash( $_POST['email'] ) ) : '';
 		
 		if ( empty( $email ) || ! is_email( $email ) ) {
+			$msg = wp_span_checker_get_error_message( 'email_invalid_format' );
+			wp_span_checker_record_strike( $msg, 'subscribe_guard', 0, $email );
 			wp_send_json_success( array(
 				'status'  => false,
-				'message' => __( 'Please enter a valid email address.', 'wp-span-checker' ),
+				'message' => $msg,
 			) );
 			return;
 		}
@@ -1125,9 +1139,11 @@ public function ajax_search_posts() {
 		$domain = end( $parts );
 
 		if ( empty( $domain ) ) {
+			$msg = wp_span_checker_get_error_message( 'email_invalid_format' );
+			wp_span_checker_record_strike( $msg, 'subscribe_guard', 0, $email );
 			wp_send_json_success( array(
 				'status'  => false,
-				'message' => __( 'Invalid email address format.', 'wp-span-checker' ),
+				'message' => $msg,
 			) );
 			return;
 		}
@@ -1139,9 +1155,11 @@ public function ajax_search_posts() {
 		if ( ! empty( $cfg['subscribe_guard_check_dns'] ) || $needs_api_checks ) {
 			$has_dns = wp_span_checker_check_domain_dns( $domain );
 			if ( ! $has_dns ) {
+				$msg = wp_span_checker_get_error_message( 'email_dns_failed' );
+				wp_span_checker_record_strike( $msg, 'subscribe_guard', 0, $email );
 				wp_send_json_success( array(
 					'status'  => false,
-					'message' => __( 'This email domain does not exist (no DNS A record found).', 'wp-span-checker' ),
+					'message' => $msg,
 				) );
 				return;
 			}
@@ -1151,9 +1169,11 @@ public function ajax_search_posts() {
 		if ( ! empty( $cfg['subscribe_guard_check_mx'] ) || $needs_api_checks ) {
 			$has_mx = wp_span_checker_check_mx_record( $domain );
 			if ( ! $has_mx ) {
+				$msg = wp_span_checker_get_error_message( 'email_mx_failed' );
+				wp_span_checker_record_strike( $msg, 'subscribe_guard', 0, $email );
 				wp_send_json_success( array(
 					'status'  => false,
-					'message' => __( 'This email domain cannot receive emails (no MX record found).', 'wp-span-checker' ),
+					'message' => $msg,
 				) );
 				return;
 			}
@@ -1163,9 +1183,11 @@ public function ajax_search_posts() {
 		if ( ! empty( $cfg['subscribe_guard_check_disposable'] ) ) {
 			$is_disposable = wp_span_checker_is_disposable_domain( $domain );
 			if ( $is_disposable ) {
+				$msg = wp_span_checker_get_error_message( 'email_disposable' );
+				wp_span_checker_record_strike( $msg, 'subscribe_guard', 0, $email );
 				wp_send_json_success( array(
 					'status'  => false,
-					'message' => __( 'Disposable email addresses are not allowed.', 'wp-span-checker' ),
+					'message' => $msg,
 				) );
 				return;
 			}
@@ -1175,9 +1197,11 @@ public function ajax_search_posts() {
 		if ( ! empty( $cfg['subscribe_guard_webrisk'] ) ) {
 			$webrisk_result = wp_span_checker_check_webrisk( $domain );
 			if ( $webrisk_result && ! empty( $webrisk_result['threat'] ) ) {
+				$msg = wp_span_checker_get_error_message( 'email_webrisk_flagged' );
+				wp_span_checker_record_strike( $msg, 'subscribe_guard', 0, $email );
 				wp_send_json_success( array(
 					'status'  => false,
-					'message' => __( 'This email domain has been flagged for security issues.', 'wp-span-checker' ),
+					'message' => $msg,
 				) );
 				return;
 			}
@@ -1187,9 +1211,11 @@ public function ajax_search_posts() {
 		if ( ! empty( $cfg['subscribe_guard_virustotal'] ) ) {
 			$vt_result = wp_span_checker_check_virustotal( $domain );
 			if ( $vt_result && isset( $vt_result['malicious'] ) && $vt_result['malicious'] > 0 ) {
+				$msg = wp_span_checker_get_error_message( 'email_virustotal_flagged' );
+				wp_span_checker_record_strike( $msg, 'subscribe_guard', 0, $email );
 				wp_send_json_success( array(
 					'status'  => false,
-					'message' => __( 'This email domain has been flagged as potentially harmful.', 'wp-span-checker' ),
+					'message' => $msg,
 				) );
 				return;
 			}
@@ -1221,7 +1247,7 @@ public function ajax_search_posts() {
 			if ( ! is_email( $email ) ) {
 				$errors[] = array(
 					'field'   => 'email',
-					'message' => __( 'Please enter a valid email address.', 'wp-span-checker' ),
+					'message' => wp_span_checker_get_error_message( 'email_invalid_format' ),
 				);
 			} else {
 				$parts  = explode( '@', $email );
@@ -1236,7 +1262,7 @@ public function ajax_search_posts() {
 					if ( ! $has_dns ) {
 						$errors[] = array(
 							'field'   => 'email',
-							'message' => __( 'This email domain does not exist (no DNS A record found).', 'wp-span-checker' ),
+							'message' => wp_span_checker_get_error_message( 'email_dns_failed' ),
 						);
 					}
 				}
@@ -1247,7 +1273,7 @@ public function ajax_search_posts() {
 					if ( ! $has_mx ) {
 						$errors[] = array(
 							'field'   => 'email',
-							'message' => __( 'This email domain cannot receive emails (no MX record found).', 'wp-span-checker' ),
+							'message' => wp_span_checker_get_error_message( 'email_mx_failed' ),
 						);
 					}
 				}
@@ -1258,7 +1284,7 @@ public function ajax_search_posts() {
 					if ( $is_disposable ) {
 						$errors[] = array(
 							'field'   => 'email',
-							'message' => __( 'Disposable email addresses are not allowed.', 'wp-span-checker' ),
+							'message' => wp_span_checker_get_error_message( 'email_disposable' ),
 						);
 					}
 				}
@@ -1269,7 +1295,7 @@ public function ajax_search_posts() {
 					if ( $webrisk_result && ! empty( $webrisk_result['threat'] ) ) {
 						$errors[] = array(
 							'field'   => 'email',
-							'message' => __( 'This email domain has been flagged for security issues.', 'wp-span-checker' ),
+							'message' => wp_span_checker_get_error_message( 'email_webrisk_flagged' ),
 						);
 					}
 				}
@@ -1280,7 +1306,7 @@ public function ajax_search_posts() {
 					if ( $vt_result && isset( $vt_result['malicious'] ) && $vt_result['malicious'] > 0 ) {
 						$errors[] = array(
 							'field'   => 'email',
-							'message' => __( 'This email domain has been flagged as potentially harmful.', 'wp-span-checker' ),
+							'message' => wp_span_checker_get_error_message( 'email_virustotal_flagged' ),
 						);
 					}
 				}
@@ -1300,7 +1326,7 @@ public function ajax_search_posts() {
 			if ( $spam_result && isset( $spam_result['is_spam'] ) && $spam_result['is_spam'] ) {
 				$errors[] = array(
 					'field'   => 'message',
-					'message' => __( 'Your message appears to be spam.', 'wp-span-checker' ),
+					'message' => wp_span_checker_get_error_message( 'spam_detected' ),
 				);
 			}
 		}
@@ -1308,7 +1334,7 @@ public function ajax_search_posts() {
 		// Record strike if errors
 		if ( ! empty( $errors ) ) {
 			$reasons = array_map( function( $e ) { return $e['message']; }, $errors );
-			wp_span_checker_record_strike( implode( '; ', $reasons ), 'contact_guard' );
+			wp_span_checker_record_strike( implode( '; ', $reasons ), 'contact_guard', 0, $email );
 
 			wp_send_json_success( array(
 				'status' => false,
@@ -1335,7 +1361,7 @@ public function ajax_search_posts() {
 		if ( empty( $email ) || ! is_email( $email ) ) {
 			wp_send_json_success( array(
 				'status'  => false,
-				'message' => __( 'Please enter a valid email address.', 'wp-span-checker' ),
+				'message' => wp_span_checker_get_error_message( 'email_invalid_format' ),
 			) );
 			return;
 		}
@@ -1349,7 +1375,7 @@ public function ajax_search_posts() {
 			if ( ! $recaptcha_result['success'] ) {
 				wp_send_json_success( array(
 					'status'  => false,
-					'message' => __( 'reCAPTCHA verification failed. Please try again.', 'wp-span-checker' ),
+					'message' => wp_span_checker_get_error_message( 'recaptcha_failed' ),
 				) );
 				return;
 			}

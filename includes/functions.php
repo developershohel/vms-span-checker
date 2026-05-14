@@ -605,17 +605,31 @@ function wp_span_checker_sanitize_page_targets_param( $raw ): string {
  * @return array<string, string>
  */
 function wp_span_checker_get_js_i18n() {
+	$m = wp_span_checker_get_all_error_messages();
+	
 	return array(
 		'formNotFound'             => __( 'Form not found. Check Form ID / class under WP Span Checker Form Guard.', 'wp-span-checker' ),
-		'emailInvalid'             => __( 'Email address is invalid', 'wp-span-checker' ),
-		'validationFailed'         => __( 'Validation failed', 'wp-span-checker' ),
-		'emailRequired'            => __( 'Valid email is required', 'wp-span-checker' ),
-		'emailFieldRequired'       => __( 'Email is required', 'wp-span-checker' ),
-		'passwordRequired'         => __( 'Password is required', 'wp-span-checker' ),
+		'emailInvalid'             => $m['email_invalid_format'],
+		'validationFailed'         => $m['validation_failed'],
+		'emailRequired'            => $m['email_invalid_format'],
+		'emailFieldRequired'       => $m['field_required'],
+		'passwordRequired'         => $m['field_required'],
 		'passwordRequirements'     => __( 'Password must meet all requirements.', 'wp-span-checker' ),
-		'urlRequired'              => __( 'URL is required', 'wp-span-checker' ),
-		'urlNotValid'              => __( 'URL not valid', 'wp-span-checker' ),
+		'urlRequired'              => $m['field_required'],
+		'urlNotValid'              => $m['url_invalid'],
 		'urlValid'                 => __( 'URL is valid', 'wp-span-checker' ),
+		'fieldRequired'            => $m['field_required'],
+		'serverError'              => $m['server_error'],
+		'recaptchaRequired'        => $m['recaptcha_required'],
+		'recaptchaFailed'          => $m['recaptcha_failed'],
+		'emailDnsFailed'           => $m['email_dns_failed'],
+		'emailMxFailed'            => $m['email_mx_failed'],
+		'emailDisposable'          => $m['email_disposable'],
+		'emailWebriskFlagged'      => $m['email_webrisk_flagged'],
+		'emailVirustotalFlagged'   => $m['email_virustotal_flagged'],
+		'urlDnsFailed'             => $m['url_dns_failed'],
+		'urlWebriskFlagged'        => $m['url_webrisk_flagged'],
+		'urlVirustotalFlagged'     => $m['url_virustotal_flagged'],
 		'confirmDeleteDomain'      => __( 'Are you sure you want to delete this domain?', 'wp-span-checker' ),
 		'confirmDeleteDomainTitle' => __( 'Remove this domain?', 'wp-span-checker' ),
 		'confirmDeleteFormSetting' => __( 'Are you sure you want to delete this Form Guard mapping?', 'wp-span-checker' ),
@@ -705,16 +719,16 @@ function wp_span_checker_get_js_i18n() {
 		'autoMode'                 => __( 'Auto', 'wp-span-checker' ),
 		'manualMode'               => __( 'Manual', 'wp-span-checker' ),
 		'defaultRules'             => __( 'Default rules', 'wp-span-checker' ),
-		'emailInvalidFormat'       => __( 'Please enter a valid email address.', 'wp-span-checker' ),
-		'emailDisposable'          => __( 'Disposable email addresses are not allowed.', 'wp-span-checker' ),
-		'emailDomainInvalid'       => __( 'Email domain appears invalid.', 'wp-span-checker' ),
-		'urlInvalidFormat'         => __( 'Please enter a valid URL.', 'wp-span-checker' ),
+		'emailInvalidFormat'       => $m['email_invalid_format'],
+		'emailDisposableMsg'       => $m['email_disposable'],
+		'emailDomainInvalid'       => $m['email_mx_failed'],
+		'urlInvalidFormat'         => $m['url_invalid'],
 		'passwordWeak'             => __( 'Password is too weak. Use at least 8 characters with uppercase, lowercase, number, and symbol.', 'wp-span-checker' ),
 		'linksNotAllowed'          => __( 'Links are not allowed in this field.', 'wp-span-checker' ),
 		'urlsNotAllowed'           => __( 'URLs are not allowed in this field.', 'wp-span-checker' ),
-		'usernameExists'           => __( 'This username is already taken.', 'wp-span-checker' ),
-		'spamDetected'             => __( 'Your message appears to be spam.', 'wp-span-checker' ),
-		'userBlocked'              => __( 'You have been blocked due to repeated violations. Please contact support.', 'wp-span-checker' ),
+		'usernameExists'           => $m['username_taken'],
+		'spamDetected'             => $m['spam_detected'],
+		'userBlocked'              => $m['user_blocked'],
 		'blocked'                  => __( 'Blocked', 'wp-span-checker' ),
 	);
 }
@@ -845,12 +859,13 @@ function wp_span_checker_check_virustotal( string $domain ) {
 /**
  * Record a strike against a user/visitor for spam behavior.
  *
- * @param string $reason    The reason for the strike.
- * @param string $source    The source of the strike (form_guard, comment, etc).
- * @param int    $user_id   Optional user ID for logged-in users.
+ * @param string $reason      The reason for the strike.
+ * @param string $source      The source of the strike (form_guard, comment, etc).
+ * @param int    $user_id     Optional user ID for logged-in users.
+ * @param string $guest_email Optional email for guest users.
  * @return array{blocked: bool, login_blocked: bool, strikes: int}
  */
-function wp_span_checker_record_strike( string $reason, string $source = 'form_guard', int $user_id = 0 ): array {
+function wp_span_checker_record_strike( string $reason, string $source = 'form_guard', int $user_id = 0, string $guest_email = '' ): array {
 	global $wpdb;
 
 	// Check if admin is exempt
@@ -881,7 +896,7 @@ function wp_span_checker_record_strike( string $reason, string $source = 'form_g
 		$user_id = get_current_user_id();
 	}
 
-	// Generate actor key (prefer user ID, fallback to IP hash)
+	// Generate actor key - for guests, use IP only so strikes accumulate by IP address
 	if ( $user_id > 0 ) {
 		$actor_key   = 'user_' . $user_id;
 		$actor_label = '';
@@ -890,8 +905,14 @@ function wp_span_checker_record_strike( string $reason, string $source = 'form_g
 			$actor_label = $user_obj->user_login;
 		}
 	} else {
-		$actor_key   = 'guest_' . md5( $ip . ( isset( $_SERVER['HTTP_USER_AGENT'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ) : '' ) );
-		$actor_label = 'Guest (' . substr( $ip, 0, 12 ) . '...)';
+		// Use IP-only hash for guests - all requests from same IP share strikes
+		$actor_key   = 'ip_' . md5( $ip );
+		$actor_label = 'Guest (' . $ip . ')';
+		// Include email in label if provided
+		if ( ! empty( $guest_email ) ) {
+			$guest_email = sanitize_email( $guest_email );
+			$actor_label = $guest_email . ' (' . $ip . ')';
+		}
 	}
 
 	// Calculate expiry time
@@ -1024,12 +1045,21 @@ function wp_span_checker_is_login_blocked( int $user_id = 0 ): bool {
 		}
 	}
 
-	// Also check by IP for guests
-	$guest_key = 'guest_' . md5( $ip . ( isset( $_SERVER['HTTP_USER_AGENT'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ) : '' ) );
+	// Also check by IP for guests (IP-only key)
+	$guest_key = 'ip_' . md5( $ip );
 	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 	$row = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table} WHERE actor_key = %s", $guest_key ), ARRAY_A );
 	if ( $row && ! empty( $row['login_blocked'] ) ) {
 		if ( empty( $row['strikes_expire_at'] ) || strtotime( $row['strikes_expire_at'] ) > time() ) {
+			return true;
+		}
+	}
+
+	// Legacy: also check old guest_ keys for backward compatibility
+	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	$legacy_rows = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$table} WHERE actor_key LIKE %s AND login_blocked = 1 AND last_ip = %s", 'guest_%', $ip ), ARRAY_A );
+	foreach ( (array) $legacy_rows as $legacy_row ) {
+		if ( empty( $legacy_row['strikes_expire_at'] ) || strtotime( $legacy_row['strikes_expire_at'] ) > time() ) {
 			return true;
 		}
 	}
@@ -1053,13 +1083,21 @@ function wp_span_checker_get_strike_count( int $user_id = 0 ): int {
 	if ( $user_id > 0 ) {
 		$actor_key = 'user_' . $user_id;
 	} else {
-		$actor_key = 'guest_' . md5( $ip . ( isset( $_SERVER['HTTP_USER_AGENT'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ) : '' ) );
+		// Use IP-only key for guests
+		$actor_key = 'ip_' . md5( $ip );
 	}
 
 	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 	$row = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table} WHERE actor_key = %s", $actor_key ), ARRAY_A );
 	if ( ! $row ) {
-		return 0;
+		// Check legacy guest_ keys by IP for backward compatibility
+		if ( $user_id <= 0 ) {
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$row = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table} WHERE actor_key LIKE %s AND last_ip = %s ORDER BY strikes DESC LIMIT 1", 'guest_%', $ip ), ARRAY_A );
+		}
+		if ( ! $row ) {
+			return 0;
+		}
 	}
 
 	// Check if strikes have expired
@@ -1068,6 +1106,62 @@ function wp_span_checker_get_strike_count( int $user_id = 0 ): int {
 	}
 
 	return (int) $row['strikes'];
+}
+
+/**
+ * Check if current user/visitor is blocked from form submissions.
+ *
+ * @param int $user_id Optional user ID.
+ * @return bool
+ */
+function wp_span_checker_is_form_blocked( int $user_id = 0 ): bool {
+	global $wpdb;
+
+	$cfg = \WP_Span_Checker\AI_Span_Config::get();
+	if ( empty( $cfg['block_user_enabled'] ) ) {
+		return false;
+	}
+
+	// Admin exemption
+	if ( ! empty( $cfg['block_user_exempt_admins'] ) && current_user_can( 'manage_options' ) ) {
+		return false;
+	}
+
+	$table = $wpdb->prefix . 'span_checker_comment_enforcement';
+	$ip    = wp_span_checker_get_user_ip();
+
+	// Check by user ID
+	if ( $user_id > 0 ) {
+		$actor_key = 'user_' . $user_id;
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$row = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table} WHERE actor_key = %s", $actor_key ), ARRAY_A );
+		if ( $row && ! empty( $row['blocked'] ) ) {
+			if ( empty( $row['strikes_expire_at'] ) || strtotime( $row['strikes_expire_at'] ) > time() ) {
+				return true;
+			}
+		}
+	}
+
+	// Check by IP for guests (IP-only key)
+	$guest_key = 'ip_' . md5( $ip );
+	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	$row = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table} WHERE actor_key = %s", $guest_key ), ARRAY_A );
+	if ( $row && ! empty( $row['blocked'] ) ) {
+		if ( empty( $row['strikes_expire_at'] ) || strtotime( $row['strikes_expire_at'] ) > time() ) {
+			return true;
+		}
+	}
+
+	// Legacy: also check old guest_ keys by IP
+	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	$legacy_rows = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$table} WHERE actor_key LIKE %s AND blocked = 1 AND last_ip = %s", 'guest_%', $ip ), ARRAY_A );
+	foreach ( (array) $legacy_rows as $legacy_row ) {
+		if ( empty( $legacy_row['strikes_expire_at'] ) || strtotime( $legacy_row['strikes_expire_at'] ) > time() ) {
+			return true;
+		}
+	}
+
+	return false;
 }
 
 /**
@@ -1280,4 +1374,117 @@ function wp_span_checker_check_ai_spam( string $content, array $context = array(
 	return array(
 		'is_spam' => ( strpos( $upper_reply, 'SPAM' ) !== false && strpos( $upper_reply, 'NOT_SPAM' ) === false && strpos( $upper_reply, '"OK"' ) === false ),
 	);
+}
+
+/**
+ * Get default error messages for validation.
+ *
+ * @return array<string, string>
+ */
+function wp_span_checker_get_default_error_messages(): array {
+	return array(
+		// Registration Guard Messages
+		'reg_blocked_title'      => __( 'Registration Blocked', 'wp-span-checker' ),
+		'reg_blocked_intro'      => __( 'We could not complete your registration due to security checks.', 'wp-span-checker' ),
+		'reg_dns_failed'         => __( 'The email domain does not appear to exist.', 'wp-span-checker' ),
+		'reg_mx_failed'          => __( 'The email domain cannot receive messages.', 'wp-span-checker' ),
+		'reg_disposable'         => __( 'Temporary email addresses are not permitted.', 'wp-span-checker' ),
+		'reg_rate_limit'         => __( 'Too many registration attempts. Please try again later.', 'wp-span-checker' ),
+		'reg_reputation_failed'  => __( 'This email domain did not pass our security screening.', 'wp-span-checker' ),
+		'reg_rate_limit_count'   => __( 'Attempt %1$d of %2$d for today.', 'wp-span-checker' ),
+		'reg_contact_admin'      => __( 'Contact the site administrator if you need assistance.', 'wp-span-checker' ),
+
+		// Email Validation Messages
+		'email_invalid_format'   => __( 'Please enter a valid email address.', 'wp-span-checker' ),
+		'email_dns_failed'       => __( 'This email domain does not exist.', 'wp-span-checker' ),
+		'email_mx_failed'        => __( 'This email domain cannot receive messages.', 'wp-span-checker' ),
+		'email_disposable'       => __( 'Temporary email addresses are not allowed.', 'wp-span-checker' ),
+		'email_webrisk_flagged'  => __( 'This email domain has security issues.', 'wp-span-checker' ),
+		'email_virustotal_flagged' => __( 'This email domain may be unsafe.', 'wp-span-checker' ),
+
+		// URL Validation Messages
+		'url_invalid'            => __( 'Please enter a valid URL.', 'wp-span-checker' ),
+		'url_dns_failed'         => __( 'This URL cannot be reached.', 'wp-span-checker' ),
+		'url_webrisk_flagged'    => __( 'This URL has been flagged for security issues.', 'wp-span-checker' ),
+		'url_virustotal_flagged' => __( 'This URL may be unsafe.', 'wp-span-checker' ),
+
+		// Content & Spam Messages
+		'spam_detected'          => __( 'Your submission appears to be spam.', 'wp-span-checker' ),
+		'username_taken'         => __( 'This username is already in use.', 'wp-span-checker' ),
+
+		// reCAPTCHA Messages
+		'recaptcha_required'     => __( 'Please complete the security verification.', 'wp-span-checker' ),
+		'recaptcha_failed'       => __( 'Security verification failed. Please try again.', 'wp-span-checker' ),
+
+		// General Messages
+		'user_blocked'           => __( 'Access denied due to repeated violations.', 'wp-span-checker' ),
+		'validation_failed'      => __( 'Validation failed. Please check your input.', 'wp-span-checker' ),
+		'field_required'         => __( 'This field is required.', 'wp-span-checker' ),
+		'server_error'           => __( 'A server error occurred. Please try again.', 'wp-span-checker' ),
+	);
+}
+
+/**
+ * Get a specific error message (custom or default).
+ *
+ * @param string $key     Message key.
+ * @param array  $args    Optional sprintf arguments.
+ * @return string
+ */
+function wp_span_checker_get_error_message( string $key, array $args = array() ): string {
+	static $custom_messages = null;
+	static $defaults = null;
+
+	if ( null === $custom_messages ) {
+		$custom_messages = get_option( 'wsc-error-messages', array() );
+	}
+	if ( null === $defaults ) {
+		$defaults = wp_span_checker_get_default_error_messages();
+	}
+
+	$message = '';
+	if ( isset( $custom_messages[ $key ] ) && '' !== trim( $custom_messages[ $key ] ) ) {
+		$message = $custom_messages[ $key ];
+	} elseif ( isset( $defaults[ $key ] ) ) {
+		$message = $defaults[ $key ];
+	}
+
+	if ( '' === $message ) {
+		return $message;
+	}
+
+	// Check if message contains placeholders like %1$d, %2$s, %d, %s, etc.
+	$has_placeholders = preg_match( '/%(\d+\$)?[dfsb]/', $message );
+
+	if ( $has_placeholders && ! empty( $args ) ) {
+		// Message has placeholders and args provided - use vsprintf
+		$message = vsprintf( $message, $args );
+	} elseif ( $has_placeholders && empty( $args ) ) {
+		// Message has placeholders but no args - strip placeholders for safe display
+		// Replace %1$d, %2$d style placeholders with empty string or a safe value
+		$message = preg_replace( '/%(\d+\$)?d/', '0', $message );
+		$message = preg_replace( '/%(\d+\$)?s/', '', $message );
+		$message = preg_replace( '/%(\d+\$)?f/', '0', $message );
+		$message = preg_replace( '/%(\d+\$)?b/', '', $message );
+	}
+	// If no placeholders, just return message as-is
+
+	return $message;
+}
+
+/**
+ * Get all error messages for JavaScript localization.
+ *
+ * @return array<string, string>
+ */
+function wp_span_checker_get_all_error_messages(): array {
+	$defaults = wp_span_checker_get_default_error_messages();
+	$custom   = get_option( 'wsc-error-messages', array() );
+
+	$messages = array();
+	foreach ( $defaults as $key => $default ) {
+		$messages[ $key ] = ( isset( $custom[ $key ] ) && '' !== trim( $custom[ $key ] ) ) ? $custom[ $key ] : $default;
+	}
+
+	return $messages;
 }

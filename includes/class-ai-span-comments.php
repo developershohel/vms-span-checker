@@ -250,7 +250,7 @@ class AI_Span_Comments {
 			$spam_check = Comment_Spam_Rules::evaluate( $commentdata, $c );
 			if ( is_wp_error( $spam_check ) ) {
 				if ( ! empty( $c['comment_strike_on_heuristic'] ) ) {
-					Comment_Enforcement::register_strike( $actor, $spam_check->get_error_message(), $c );
+					Comment_Enforcement::register_strike( $actor, $spam_check->get_error_message(), $c, 'comment' );
 				}
 				return $spam_check;
 			}
@@ -276,7 +276,7 @@ class AI_Span_Comments {
 				if ( ! is_wp_error( $raw ) ) {
 					$verdict = AI_Span_Completion::parse_json_verdict( (string) $raw );
 					if ( ! is_wp_error( $verdict ) && 'spam' === $verdict['status'] ) {
-						Comment_Enforcement::register_strike( $actor, $verdict['message'], $c );
+						Comment_Enforcement::register_strike( $actor, $verdict['message'], $c, 'comment' );
 						return new WP_Error(
 							'wsc_spam',
 							sprintf(

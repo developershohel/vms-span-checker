@@ -103,6 +103,14 @@ class Admin_Menu {
 		);
 		add_submenu_page(
 			'wp-span-checker',
+			__( 'Error Messages', 'wp-span-checker' ),
+			__( 'Error Messages', 'wp-span-checker' ),
+			'manage_options',
+			'wsc-error-messages',
+			array( $this, 'error_messages_page' )
+		);
+		add_submenu_page(
+			'wp-span-checker',
 			__( 'AI Span Settings', 'wp-span-checker' ),
 			__( 'AI Span Settings', 'wp-span-checker' ),
 			'manage_options',
@@ -253,6 +261,13 @@ class Admin_Menu {
 	 */
 	public function form_settings_page() {
 		require WP_SPAN_CHECKER_DIR . 'templates/form-settings.php';
+	}
+
+	/**
+	 * Error messages customization page.
+	 */
+	public function error_messages_page() {
+		require WP_SPAN_CHECKER_DIR . 'templates/error-messages.php';
 	}
 
 	/**

@@ -28,7 +28,8 @@ if ( isset( $_SERVER['REQUEST_METHOD'] ) && 'POST' === $_SERVER['REQUEST_METHOD'
 		'contact_guard_page_id'       => isset( $_POST['contact_guard_page_id'] ) ? absint( $_POST['contact_guard_page_id'] ) : 0,
 		'contact_guard_scope'         => isset( $_POST['contact_guard_scope'] ) ? sanitize_text_field( wp_unslash( $_POST['contact_guard_scope'] ) ) : 'site',
 		'contact_guard_page_ids'      => isset( $_POST['contact_guard_page_ids'] ) ? sanitize_text_field( wp_unslash( $_POST['contact_guard_page_ids'] ) ) : '',
-		'contact_guard_form_selector' => isset( $_POST['contact_guard_form_selector'] ) ? sanitize_text_field( wp_unslash( $_POST['contact_guard_form_selector'] ) ) : '',
+		'contact_guard_form_selector'   => isset( $_POST['contact_guard_form_selector'] ) ? sanitize_text_field( wp_unslash( $_POST['contact_guard_form_selector'] ) ) : '',
+		'contact_guard_submit_selector' => isset( $_POST['contact_guard_submit_selector'] ) ? sanitize_text_field( wp_unslash( $_POST['contact_guard_submit_selector'] ) ) : '',
 		'contact_guard_check_dns'     => ! empty( $_POST['contact_guard_check_dns'] ),
 		'contact_guard_check_mx'      => ! empty( $_POST['contact_guard_check_mx'] ),
 		'contact_guard_check_disposable' => ! empty( $_POST['contact_guard_check_disposable'] ),
@@ -63,6 +64,10 @@ $has_ai_key      = ! empty( $ai_config['openai_api_key'] ) || ! empty( $ai_confi
 
 	<?php if ( $updated ) : ?>
 		<div class="updated"><p><?php esc_html_e( 'Contact Guard settings saved.', 'wp-span-checker' ); ?></p></div>
+	<?php endif; ?>
+
+	<?php if ( ! empty( $cfg['contact_guard_enabled'] ) && empty( $cfg['contact_guard_form_selector'] ) ) : ?>
+		<div class="notice notice-warning"><p><span class="dashicons dashicons-warning"></span> <?php esc_html_e( 'Contact Guard is enabled but no Form Selector is configured. The guard will not work until you specify a form selector.', 'wp-span-checker' ); ?></p></div>
 	<?php endif; ?>
 
 	<div class="wsc-card" style="max-width: 800px;">
@@ -143,13 +148,26 @@ $has_ai_key      = ! empty( $ai_config['openai_api_key'] ) || ! empty( $ai_confi
 					</td>
 				</tr>
 				<tr>
-					<th scope="row"><label for="contact_guard_form_selector"><?php esc_html_e( 'Form Selector', 'wp-span-checker' ); ?></label></th>
+					<th scope="row"><label for="contact_guard_form_selector"><?php esc_html_e( 'Form Selector', 'wp-span-checker' ); ?> <span style="color:#d63638;">*</span></label></th>
 					<td>
-						<input type="text" name="contact_guard_form_selector" id="contact_guard_form_selector" class="regular-text" value="<?php echo esc_attr( (string) ( $cfg['contact_guard_form_selector'] ?? '' ) ); ?>" placeholder=".wpcf7-form, #contact-form, .wpforms-form">
+						<input type="text" name="contact_guard_form_selector" id="contact_guard_form_selector" class="regular-text" value="<?php echo esc_attr( (string) ( $cfg['contact_guard_form_selector'] ?? '' ) ); ?>" placeholder=".wpcf7-form, #contact-form, .wpforms-form" required>
 						<p class="description">
-							<?php esc_html_e( 'CSS selector(s) to identify contact forms. Examples: .wpcf7-form, .wpforms-form', 'wp-span-checker' ); ?>
+							<?php esc_html_e( 'CSS selector(s) to identify contact forms. Examples: .wpcf7-form, .wpforms-form, #quform-form-1', 'wp-span-checker' ); ?>
 							<br>
-							<?php esc_html_e( 'Leave empty to auto-detect forms with email and message/textarea fields.', 'wp-span-checker' ); ?>
+							<strong><?php esc_html_e( 'Required: Specify the form ID or class to ensure protection is applied only to the correct form.', 'wp-span-checker' ); ?></strong>
+							<br>
+							<?php esc_html_e( 'Supports selectors like: #form-id, .form-class, .wrapper form, #parent .child-form', 'wp-span-checker' ); ?>
+						</p>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row"><label for="contact_guard_submit_selector"><?php esc_html_e( 'Submit Button Selector', 'wp-span-checker' ); ?></label></th>
+					<td>
+						<input type="text" name="contact_guard_submit_selector" id="contact_guard_submit_selector" class="regular-text" value="<?php echo esc_attr( (string) ( $cfg['contact_guard_submit_selector'] ?? '' ) ); ?>" placeholder=".quform-submit, #submit-btn">
+						<p class="description">
+							<?php esc_html_e( 'Optional: CSS selector for the submit button. Leave empty for auto-detection.', 'wp-span-checker' ); ?>
+							<br>
+							<?php esc_html_e( 'Use this if the form has multiple submit buttons or if auto-detection picks the wrong one (e.g., Quform has a hidden default button).', 'wp-span-checker' ); ?>
 						</p>
 					</td>
 				</tr>

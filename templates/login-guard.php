@@ -24,10 +24,11 @@ if ( isset( $_SERVER['REQUEST_METHOD'] ) && 'POST' === $_SERVER['REQUEST_METHOD'
 	}
 
 	$incoming = array(
-		'login_guard_enabled'   => ! empty( $_POST['login_guard_enabled'] ),
-		'login_guard_recaptcha' => ! empty( $_POST['login_guard_recaptcha'] ),
-		'login_guard_scope'     => isset( $_POST['login_guard_scope'] ) ? sanitize_text_field( wp_unslash( $_POST['login_guard_scope'] ) ) : 'default',
-		'login_guard_page_ids'  => isset( $_POST['login_guard_page_ids'] ) ? sanitize_text_field( wp_unslash( $_POST['login_guard_page_ids'] ) ) : '',
+		'login_guard_enabled'       => ! empty( $_POST['login_guard_enabled'] ),
+		'login_guard_recaptcha'     => ! empty( $_POST['login_guard_recaptcha'] ),
+		'login_guard_scope'         => isset( $_POST['login_guard_scope'] ) ? sanitize_text_field( wp_unslash( $_POST['login_guard_scope'] ) ) : 'default',
+		'login_guard_page_ids'      => isset( $_POST['login_guard_page_ids'] ) ? sanitize_text_field( wp_unslash( $_POST['login_guard_page_ids'] ) ) : '',
+		'login_guard_form_selector' => isset( $_POST['login_guard_form_selector'] ) ? sanitize_text_field( wp_unslash( $_POST['login_guard_form_selector'] ) ) : '',
 	);
 
 	AI_Span_Config::update( $incoming );
@@ -132,6 +133,17 @@ $has_recaptcha_key = ! empty( $recaptcha_cfg['site_key'] ) && ! empty( $recaptch
 						<p class="description"><?php esc_html_e( 'Select pages that contain custom login forms (e.g., WooCommerce My Account, membership plugin login pages).', 'wp-span-checker' ); ?></p>
 					</td>
 				</tr>
+				<tr id="login_guard_selector_row" style="display:none;">
+					<th scope="row"><label for="login_guard_form_selector"><?php esc_html_e( 'Form Selector', 'wp-span-checker' ); ?> <span style="color:#d63638;">*</span></label></th>
+					<td>
+						<input type="text" name="login_guard_form_selector" id="login_guard_form_selector" class="regular-text" value="<?php echo esc_attr( (string) ( $cfg['login_guard_form_selector'] ?? '' ) ); ?>" placeholder=".woocommerce-form-login, #login-form">
+						<p class="description">
+							<?php esc_html_e( 'CSS selector to identify the login form. Examples: .woocommerce-form-login, #my-login-form', 'wp-span-checker' ); ?>
+							<br>
+							<strong><?php esc_html_e( 'Required for custom login pages to ensure reCAPTCHA is applied only to the correct form.', 'wp-span-checker' ); ?></strong>
+						</p>
+					</td>
+				</tr>
 			</table>
 
 			<p class="submit">
@@ -231,7 +243,9 @@ jQuery(function($) {
 
 	function togglePageIds() {
 		var scope = $('#login_guard_scope').val();
-		$('#login_guard_pages_row').toggle(scope === 'specific');
+		var isSpecific = scope === 'specific';
+		$('#login_guard_pages_row').toggle(isSpecific);
+		$('#login_guard_selector_row').toggle(isSpecific);
 	}
 	$('#login_guard_scope').on('change', togglePageIds);
 	togglePageIds();

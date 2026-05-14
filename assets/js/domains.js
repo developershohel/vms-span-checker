@@ -1312,8 +1312,8 @@ jQuery(document).ready(function ($) {
         if (allPagesChecked && !hasFormSelector) {
             formError.removeClass('wsc-text-success');
             formError.addClass('wsc-form-error');
-            formError.html(wscT('formSelectorRequiredForEntireSite', 'Form id/class is required when targeting the entire site.'));
-            wscErrToast(wscT('formSelectorRequiredForEntireSite', 'Form id/class is required for Entire site.'));
+            formError.html(wscT('formSelectorRequiredForEntireSite', 'Form Selector is required when targeting the entire site.'));
+            wscErrToast(wscT('formSelectorRequiredForEntireSite', 'Form Selector is required for Entire site.'));
             return;
         }
         

@@ -27,7 +27,8 @@ if ( isset( $_SERVER['REQUEST_METHOD'] ) && 'POST' === $_SERVER['REQUEST_METHOD'
 		'subscribe_guard_enabled'     => ! empty( $_POST['subscribe_guard_enabled'] ),
 		'subscribe_guard_scope'       => isset( $_POST['subscribe_guard_scope'] ) ? sanitize_text_field( wp_unslash( $_POST['subscribe_guard_scope'] ) ) : 'site',
 		'subscribe_guard_page_ids'    => isset( $_POST['subscribe_guard_page_ids'] ) ? sanitize_text_field( wp_unslash( $_POST['subscribe_guard_page_ids'] ) ) : '',
-		'subscribe_guard_form_selector' => isset( $_POST['subscribe_guard_form_selector'] ) ? sanitize_text_field( wp_unslash( $_POST['subscribe_guard_form_selector'] ) ) : '',
+		'subscribe_guard_form_selector'   => isset( $_POST['subscribe_guard_form_selector'] ) ? sanitize_text_field( wp_unslash( $_POST['subscribe_guard_form_selector'] ) ) : '',
+		'subscribe_guard_submit_selector' => isset( $_POST['subscribe_guard_submit_selector'] ) ? sanitize_text_field( wp_unslash( $_POST['subscribe_guard_submit_selector'] ) ) : '',
 		'subscribe_guard_check_dns'   => ! empty( $_POST['subscribe_guard_check_dns'] ),
 		'subscribe_guard_check_mx'    => ! empty( $_POST['subscribe_guard_check_mx'] ),
 		'subscribe_guard_check_disposable' => ! empty( $_POST['subscribe_guard_check_disposable'] ),
@@ -133,6 +134,17 @@ $has_vt_key      = ! empty( $vt_config['keys'] ) && is_array( $vt_config['keys']
 							<?php esc_html_e( 'CSS selector(s) to identify subscribe forms. Examples: .newsletter-form, #mc4wp-form, .mailchimp-form', 'wp-span-checker' ); ?>
 							<br>
 							<strong><?php esc_html_e( 'Required: A page may have multiple forms, so a selector is needed to target the correct one.', 'wp-span-checker' ); ?></strong>
+						</p>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row"><label for="subscribe_guard_submit_selector"><?php esc_html_e( 'Submit Button Selector', 'wp-span-checker' ); ?></label></th>
+					<td>
+						<input type="text" name="subscribe_guard_submit_selector" id="subscribe_guard_submit_selector" class="regular-text" value="<?php echo esc_attr( (string) ( $cfg['subscribe_guard_submit_selector'] ?? '' ) ); ?>" placeholder=".mc4wp-submit, #subscribe-btn">
+						<p class="description">
+							<?php esc_html_e( 'Optional: CSS selector for the submit button. Leave empty for auto-detection.', 'wp-span-checker' ); ?>
+							<br>
+							<?php esc_html_e( 'Use this if the form has multiple submit buttons or if auto-detection picks the wrong one.', 'wp-span-checker' ); ?>
 						</p>
 					</td>
 				</tr>

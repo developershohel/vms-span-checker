@@ -16,7 +16,10 @@
     var recaptchaEnabled = config.recaptchaEnabled || false;
     var recaptchaSiteKey = config.recaptchaSiteKey || '';
     var recaptchaVersion = config.recaptchaVersion || 'v2';
+    var formSelector = config.formSelector || '';
     var i18n = config.i18n || {};
+    var recaptchaWidgetId = null;
+    var registrationGuardAttached = false;
 
     function t(key, fallback) {
         return i18n[key] || fallback || key;
@@ -57,6 +60,78 @@
     function clearAllErrors($form) {
         $form.find('.wsc-field-invalid').removeClass('wsc-field-invalid');
         $form.find('.wsc-reg-error').remove();
+    }
+
+    function isButtonVisible($btn) {
+        if (!$btn.length) return false;
+        if ($btn.attr('aria-hidden') === 'true') return false;
+        if ($btn.attr('tabindex') === '-1') {
+            var styles = $btn.attr('style') || '';
+            if (styles.indexOf('display: none') !== -1 || 
+                styles.indexOf('visibility: hidden') !== -1 ||
+                (styles.indexOf('position: absolute') !== -1 && styles.indexOf('left: -9999') !== -1)) {
+                return false;
+            }
+        }
+        try {
+            var computed = window.getComputedStyle($btn[0]);
+            if (computed.display === 'none' || computed.visibility === 'hidden' || computed.opacity === '0') {
+                return false;
+            }
+        } catch(e) {}
+        return true;
+    }
+
+    function findVisibleSubmit($form, selector) {
+        var $buttons = $form.find(selector);
+        for (var i = 0; i < $buttons.length; i++) {
+            var $btn = $buttons.eq(i);
+            if (isButtonVisible($btn)) return $btn;
+        }
+        return $();
+    }
+
+    function findSubmitButton($form) {
+        // 1. WordPress registration specific submit
+        var $btn = $form.find('#wp-submit').first();
+        if ($btn.length && isButtonVisible($btn)) return $btn;
+        
+        // 2. input[type="submit"] - visible
+        $btn = findVisibleSubmit($form, 'input[type="submit"]');
+        if ($btn.length) return $btn;
+        
+        // 3. button[type="submit"] - visible
+        $btn = findVisibleSubmit($form, 'button[type="submit"]:not(.quform-default-submit)');
+        if ($btn.length) return $btn;
+        
+        // 4. Common registration submit classes - visible
+        $btn = findVisibleSubmit($form, '.submit, .registration-submit, .btn-submit, .wp-submit, .register-submit');
+        if ($btn.length) return $btn;
+        
+        // 5. Any element with type="submit" - visible
+        $btn = findVisibleSubmit($form, '[type="submit"]');
+        if ($btn.length) return $btn;
+        
+        // 6. Button without type - visible
+        $btn = findVisibleSubmit($form, 'button:not([type]):not([aria-hidden="true"])');
+        if ($btn.length) return $btn;
+        
+        // 7. Button not explicitly button/reset - visible
+        $btn = findVisibleSubmit($form, 'button:not([type="button"]):not([type="reset"]):not([aria-hidden="true"])');
+        if ($btn.length) return $btn;
+        
+        // 8. Last visible button as fallback
+        var $allButtons = $form.find('button');
+        for (var i = $allButtons.length - 1; i >= 0; i--) {
+            var $b = $allButtons.eq(i);
+            if (isButtonVisible($b)) return $b;
+        }
+        
+        // 9. Last input[type="button"]
+        $btn = $form.find('input[type="button"]').last();
+        if ($btn.length && isButtonVisible($btn)) return $btn;
+        
+        return $();
     }
 
     function copyButtonStyles($source, $target) {
@@ -150,7 +225,7 @@
                     resolve(null);
                 }
             } else {
-                var response = typeof grecaptcha !== 'undefined' ? grecaptcha.getResponse() : '';
+                var response = typeof grecaptcha !== 'undefined' ? grecaptcha.getResponse(recaptchaWidgetId) : '';
                 if (response) {
                     resolve(response);
                 } else {
@@ -160,10 +235,41 @@
         });
     }
 
+    function resolveFormElement(el) {
+        var $el = $(el);
+        if ($el.is('form')) {
+            return el;
+        }
+        var $inner = $el.find('form').first();
+        return $inner.length ? $inner[0] : null;
+    }
+
     function setupRegistrationGuard() {
-        var $form = $('#registerform, form[name="registerform"], .woocommerce-form-register, .register form, form.registration-form');
+        if (registrationGuardAttached) {
+            return;
+        }
+
+        var $form = null;
         
-        if (!$form.length) {
+        // Use provided form selector if available
+        if (formSelector && formSelector.trim() !== '') {
+            var matches = $(formSelector);
+            for (var i = 0; i < matches.length; i++) {
+                var formEl = resolveFormElement(matches[i]);
+                if (formEl) {
+                    $form = $(formEl);
+                    break;
+                }
+            }
+        }
+        
+        // Fall back to default WordPress registration selectors if no custom selector
+        if (!$form || !$form.length) {
+            $form = $('#registerform, form[name="registerform"], .woocommerce-form-register, .register form, form.registration-form').first();
+        }
+        
+        // If still not found, try auto-detection as last resort
+        if (!$form || !$form.length) {
             $('form').each(function() {
                 var $f = $(this);
                 var formId = ($f.attr('id') || '').toLowerCase();
@@ -174,18 +280,26 @@
                     formClass.indexOf('register') !== -1 ||
                     formAction.indexOf('register') !== -1 ||
                     formAction.indexOf('signup') !== -1) {
-                    $form = $form.add($f);
+                    $form = $f;
+                    return false;
                 }
             });
         }
 
-        if (!$form.length) {
+        if (!$form || !$form.length) {
+            console.log('[WP Span Checker] Registration Guard: No registration form found.');
             return;
         }
 
-        var $thisForm = $form.first();
+        var $thisForm = $form;
 
         if ($thisForm.data('wsc-registration-guard')) {
+            return;
+        }
+
+        // Check if form is already protected by another guard
+        if ($thisForm.data('wsc-guard-protected')) {
+            console.log('[WP Span Checker] Registration Guard: Form already protected by another guard, skipping');
             return;
         }
 
@@ -196,6 +310,8 @@
         }
 
         $thisForm.data('wsc-registration-guard', true);
+        $thisForm.data('wsc-guard-protected', true); // Mark as protected
+        registrationGuardAttached = true;
         console.log('[WP Span Checker] Registration Guard attached to form:', $thisForm[0]);
 
         if (!frontendEnabled) {
@@ -205,10 +321,11 @@
             return;
         }
 
-        var $originalSubmit = $thisForm.find('#wp-submit, input[type="submit"], button[type="submit"]').first();
+        var $originalSubmit = findSubmitButton($thisForm);
 
         if (!$originalSubmit.length) {
-            $originalSubmit = $thisForm.find('button:not([type])').first();
+            console.log('[WP Span Checker] Registration Guard: No submit button found');
+            return;
         }
 
         var $actionsWrap = $('<div class="wsc-guard-actions"></div>');
@@ -222,7 +339,8 @@
         hideOriginalSubmit($originalSubmit);
 
         if (recaptchaEnabled && recaptchaSiteKey && recaptchaVersion === 'v2') {
-            var recaptchaContainer = $('<div class="wsc-recaptcha-container"></div>');
+            var uniqueId = 'wsc-reg-recaptcha-' + Math.random().toString(36).substr(2, 9);
+            var recaptchaContainer = $('<div id="' + uniqueId + '" class="wsc-recaptcha-container" style="margin: 10px 0;"></div>');
             $actionsWrap.prepend(recaptchaContainer);
 
             $validationBtn.prop('disabled', true).css('opacity', '0.6');
@@ -230,7 +348,7 @@
             var checkRecaptcha = function() {
                 if (typeof grecaptcha !== 'undefined' && grecaptcha.render) {
                     try {
-                        grecaptcha.render(recaptchaContainer[0], {
+                        recaptchaWidgetId = grecaptcha.render(recaptchaContainer[0], {
                             sitekey: recaptchaSiteKey,
                             callback: function() {
                                 $validationBtn.prop('disabled', false).css('opacity', '1');
@@ -311,8 +429,8 @@
                         showFieldError($emailField, result.message || t('emailInvalid', 'This email address is not accepted.'));
                         showToast('error', result.message || t('emailInvalid', 'This email address is not accepted.'));
 
-                        if (recaptchaEnabled && recaptchaVersion === 'v2' && typeof grecaptcha !== 'undefined') {
-                            grecaptcha.reset();
+                        if (recaptchaEnabled && recaptchaVersion === 'v2' && typeof grecaptcha !== 'undefined' && recaptchaWidgetId !== null) {
+                            grecaptcha.reset(recaptchaWidgetId);
                             $validationBtn.prop('disabled', true).css('opacity', '0.6');
                         }
                     }
@@ -338,17 +456,19 @@
     }
 
     function setupRecaptchaOnly($form) {
-        var $submitBtn = $form.find('#wp-submit, input[type="submit"], button[type="submit"]').first();
+        var $submitBtn = findSubmitButton($form);
         
         if (!$submitBtn.length) {
+            console.log('[WP Span Checker] Registration Guard: No submit button found for reCAPTCHA');
             return;
         }
 
         if (recaptchaVersion === 'v2') {
+            var uniqueId = 'wsc-reg-recaptcha-only-' + Math.random().toString(36).substr(2, 9);
             var $submitParent = $submitBtn.closest('p, .submit').first();
             var $actionsWrap = $('<div class="wsc-guard-actions"></div>');
             $submitParent.before($actionsWrap);
-            var recaptchaContainer = $('<div class="wsc-recaptcha-container"></div>');
+            var recaptchaContainer = $('<div id="' + uniqueId + '" class="wsc-recaptcha-container" style="margin: 10px 0;"></div>');
             $actionsWrap.append(recaptchaContainer);
             $actionsWrap.append($submitParent.detach());
 
@@ -357,7 +477,7 @@
             var checkRecaptcha = function() {
                 if (typeof grecaptcha !== 'undefined' && grecaptcha.render) {
                     try {
-                        grecaptcha.render(recaptchaContainer[0], {
+                        recaptchaWidgetId = grecaptcha.render(recaptchaContainer[0], {
                             sitekey: recaptchaSiteKey,
                             callback: function(token) {
                                 $submitBtn.prop('disabled', false).css('opacity', '1');

@@ -60,6 +60,24 @@ jQuery(function ($) {
     }
 
     /**
+     * Check if a form is already protected by any WP Span Checker guard.
+     * This prevents multiple guards from applying to the same form.
+     */
+    function wscIsFormAlreadyProtected($form) {
+        if (!$form.length) return false;
+        return $form.data('wsc-guard-protected') === true;
+    }
+
+    /**
+     * Mark a form as protected by WP Span Checker.
+     */
+    function wscMarkFormAsProtected($form) {
+        if ($form.length) {
+            $form.data('wsc-guard-protected', true);
+        }
+    }
+
+    /**
      * Get all content forms (excluding admin bar and wp-admin forms)
      */
     function wscGetContentForms() {
@@ -628,18 +646,19 @@ jQuery(function ($) {
         const formSelector = String(setting.form_id || '').trim();
         const submitSelector = String(setting.submit_selector || '').trim();
         
+        // If form selector is provided, ONLY use that selector - no fallback
         if (formSelector) {
             const $form = resolveForm$(formSelector, setting.form_class);
             if ($form.length && !wscShouldSkipForm($form)) {
                 console.log('[WP Span Checker] Form found by selector:', formSelector);
                 return $form;
             }
-            if (matchResult.requiresFormSelector) {
-                console.log('[WP Span Checker] Form not found for required selector:', formSelector);
-                return $();
-            }
+            // Form selector was specified but not found - do NOT fall back
+            console.log('[WP Span Checker] Form not found for selector:', formSelector, '- NOT falling back to auto-detection');
+            return $();
         }
         
+        // Only auto-detect if NO form selector was provided and page doesn't require it
         if (!matchResult.requiresFormSelector) {
             if (submitSelector) {
                 const $submitBtn = $(submitSelector).first();
@@ -684,18 +703,56 @@ jQuery(function ($) {
     function resolveForm$(formId, formClass) {
         const fid = String(formId || '').trim();
         const fcls = String(formClass || '').trim();
-        if (wscLooksCombinedSelector(fid)) {
-            const $hit = $(fid);
-            if (!$hit.length) {
+        
+        console.log('[WP Span Checker] resolveForm$ called with formId:', fid, 'formClass:', fcls);
+        
+        // Check if it's a combined/complex CSS selector (contains #, ., [, or space for descendant)
+        if (wscLooksCombinedSelector(fid) || fid.indexOf(' ') !== -1) {
+            console.log('[WP Span Checker] Trying combined selector:', fid);
+            
+            try {
+                const $hit = $(fid);
+                console.log('[WP Span Checker] Selector matched elements:', $hit.length);
+                
+                if ($hit.length) {
+                    console.log('[WP Span Checker] Matched element(s) tagName(s):', $hit.toArray().map(el => el.tagName).join(', '));
+                }
+                
+                if (!$hit.length) {
+                    console.log('[WP Span Checker] No elements found for selector:', fid);
+                    return $();
+                }
+                
+                // If the selector directly returns form elements
+                const $formHit = $hit.filter('form').first();
+                if ($formHit.length) {
+                    console.log('[WP Span Checker] Found form via filter, form id:', $formHit.attr('id'), 'class:', $formHit.attr('class'));
+                    return $formHit;
+                }
+                
+                // If the selector returns a wrapper, find the form inside it
+                const $innerForm = $hit.find('form').first();
+                if ($innerForm.length) {
+                    console.log('[WP Span Checker] Found form inside matched element, form id:', $innerForm.attr('id'), 'class:', $innerForm.attr('class'));
+                    return $innerForm;
+                }
+                
+                // If the selector returns an element inside a form, find the parent form
+                const $inForm = $hit.closest('form').first();
+                if ($inForm.length) {
+                    console.log('[WP Span Checker] Found form as ancestor, form id:', $inForm.attr('id'), 'class:', $inForm.attr('class'));
+                    return $inForm;
+                }
+                
+                console.log('[WP Span Checker] No form found for selector:', fid);
+                return $();
+            } catch (e) {
+                console.error('[WP Span Checker] Error with selector:', fid, e);
                 return $();
             }
-            const $formHit = $hit.filter('form').first();
-            if ($formHit.length) {
-                return $formHit;
-            }
-            const $inForm = $hit.closest('form').first();
-            return $inForm.length ? $inForm : $();
         }
+        
+        // Legacy handling for simple ID/class format
         const id = fid.replace(/^#/, '');
         const rawClass = fcls.replace(/^\./g, '');
         const classes = rawClass.split(/\s+/).filter(Boolean).map(function (c) {
@@ -713,6 +770,50 @@ jQuery(function ($) {
         return $();
     }
 
+    /**
+     * Check if a button is visible (not hidden via aria-hidden, display:none, visibility:hidden, etc.)
+     */
+    function isButtonVisible($btn) {
+        if (!$btn.length) return false;
+        
+        // Skip aria-hidden buttons
+        if ($btn.attr('aria-hidden') === 'true') return false;
+        
+        // Skip buttons with tabindex=-1 and hidden styles (like quform-default-submit)
+        if ($btn.attr('tabindex') === '-1') {
+            var styles = $btn.attr('style') || '';
+            if (styles.indexOf('display: none') !== -1 || 
+                styles.indexOf('visibility: hidden') !== -1 ||
+                styles.indexOf('position: absolute') !== -1 && styles.indexOf('left: -9999') !== -1) {
+                return false;
+            }
+        }
+        
+        // Check computed visibility
+        try {
+            var computed = window.getComputedStyle($btn[0]);
+            if (computed.display === 'none' || computed.visibility === 'hidden' || computed.opacity === '0') {
+                return false;
+            }
+        } catch(e) {}
+        
+        return true;
+    }
+    
+    /**
+     * Find visible submit buttons, filtering out hidden/default ones
+     */
+    function findVisibleSubmit($form, selector) {
+        var $buttons = $form.find(selector);
+        for (var i = 0; i < $buttons.length; i++) {
+            var $btn = $buttons.eq(i);
+            if (isButtonVisible($btn)) {
+                return $btn;
+            }
+        }
+        return $();
+    }
+
     function resolveSubmit$($form, submitSelector) {
         const raw = String(submitSelector || '').trim();
         if (raw) {
@@ -721,44 +822,83 @@ jQuery(function ($) {
                 $btn = $(raw);
             }
             if ($btn.length) {
-                console.log('[WP Span Checker] Found submit button with custom selector:', raw);
+                // If custom selector, find first visible one
+                for (var i = 0; i < $btn.length; i++) {
+                    var $b = $btn.eq(i);
+                    if (isButtonVisible($b)) {
+                        console.log('[WP Span Checker] Found visible submit button with custom selector:', raw);
+                        return $b;
+                    }
+                }
+                // Fallback to first if none visible
+                console.log('[WP Span Checker] Found submit button with custom selector (no visible check):', raw);
                 return $btn.first();
             }
         }
         
-        let $btn = $form.find('input[type="submit"]').first();
+        // 1. input[type="submit"] - standard submit input (usually visible)
+        let $btn = findVisibleSubmit($form, 'input[type="submit"]');
         if ($btn.length) {
-            console.log('[WP Span Checker] Found input[type="submit"]');
+            console.log('[WP Span Checker] Found visible input[type="submit"]');
             return $btn;
         }
         
-        $btn = $form.find('button[type="submit"]').first();
+        // 2. button[type="submit"] - explicit submit button (filter hidden ones like quform-default-submit)
+        $btn = findVisibleSubmit($form, 'button[type="submit"]:not(.quform-default-submit)');
         if ($btn.length) {
-            console.log('[WP Span Checker] Found button[type="submit"]');
+            console.log('[WP Span Checker] Found visible button[type="submit"]');
             return $btn;
         }
         
-        $btn = $form.find('.wpcf7-submit').first();
+        // 3. Common submit button classes (visible ones)
+        $btn = findVisibleSubmit($form, '.quform-submit:not(.quform-default-submit), .wpcf7-submit, .sib-default-btn, .tnp-submit, .mc4wp-submit, .wpforms-submit');
         if ($btn.length) {
-            console.log('[WP Span Checker] Found .wpcf7-submit');
+            console.log('[WP Span Checker] Found visible button by common submit class');
             return $btn;
         }
         
-        $btn = $form.find('[type="submit"]').first();
+        // 4. Any element with type="submit" (visible)
+        $btn = findVisibleSubmit($form, '[type="submit"]');
         if ($btn.length) {
-            console.log('[WP Span Checker] Found [type="submit"]');
+            console.log('[WP Span Checker] Found visible [type="submit"]');
             return $btn;
         }
         
-        $btn = $form.find('button:not([type="button"]):not([type="reset"])').first();
+        // 5. Button without type attribute (defaults to submit in HTML) - visible
+        $btn = findVisibleSubmit($form, 'button:not([type]):not([aria-hidden="true"])');
         if ($btn.length) {
-            console.log('[WP Span Checker] Found button (default type=submit)');
+            console.log('[WP Span Checker] Found visible button without type (defaults to submit)');
             return $btn;
         }
         
-        $btn = $form.find('button').last();
+        // 6. Button that is not explicitly button or reset type - visible
+        $btn = findVisibleSubmit($form, 'button:not([type="button"]):not([type="reset"]):not([aria-hidden="true"])');
         if ($btn.length) {
-            console.log('[WP Span Checker] Found last button as fallback');
+            console.log('[WP Span Checker] Found visible button (not button/reset type)');
+            return $btn;
+        }
+        
+        // 7. Generic submit classes - visible
+        $btn = findVisibleSubmit($form, '.submit, .btn-submit, .form-submit');
+        if ($btn.length) {
+            console.log('[WP Span Checker] Found visible button by generic submit class');
+            return $btn;
+        }
+        
+        // 8. Last visible button in form as fallback
+        var $allButtons = $form.find('button');
+        for (var i = $allButtons.length - 1; i >= 0; i--) {
+            var $b = $allButtons.eq(i);
+            if (isButtonVisible($b)) {
+                console.log('[WP Span Checker] Found last visible button as fallback');
+                return $b;
+            }
+        }
+        
+        // 9. Last input[type="button"] that might act as submit
+        $btn = $form.find('input[type="button"]').last();
+        if ($btn.length && isButtonVisible($btn)) {
+            console.log('[WP Span Checker] Found last visible input[type="button"] as fallback');
             return $btn;
         }
         
@@ -1772,6 +1912,9 @@ jQuery(function ($) {
         entry.validating = false;
     }
 
+    console.log('[WP Span Checker] Total settings to process:', settings.length);
+    console.log('[WP Span Checker] All settings:', JSON.stringify(settings.map(s => ({id: s.id, form_id: s.form_id, page_id: s.page_id})), null, 2));
+    
     settings.forEach(function (setting) {
         const mappingId = parseInt(setting.id, 10) || 0;
         const fallbackWr = parseInt(setting.is_webrisk, 10) || 0;
@@ -1782,6 +1925,14 @@ jQuery(function ($) {
         const submit_selector = setting.submit_selector ?? '';
         const rawSettings = setting.settings ? setting.settings : '{}';
         let formSettingData;
+        
+        console.log('[WP Span Checker] Processing setting:', {
+            mappingId: mappingId,
+            form_id: form_id,
+            form_class: form_class,
+            page_id: setting.page_id,
+            enableRecaptcha: enableRecaptcha
+        });
         try {
             formSettingData = typeof rawSettings === 'string' ? JSON.parse(rawSettings) : rawSettings;
         } catch (e) {
@@ -1848,6 +1999,16 @@ jQuery(function ($) {
             console.log('[WP Span Checker] Element is not a FORM, skipping');
             return;
         }
+
+        // Check if form is already protected by another guard
+        if (wscIsFormAlreadyProtected($form)) {
+            console.log('[WP Span Checker] Form already protected by another guard, skipping mapping ID:', mappingId);
+            return;
+        }
+
+        // Mark form as protected
+        wscMarkFormAsProtected($form);
+        console.log('[WP Span Checker] Marked form as protected for mapping ID:', mappingId);
 
         const isAutoValidation = parseInt(setting.auto_validation, 10) === 1 || setting.auto_validation === true || setting.auto_validation === '1';
         let autoRules = {};

@@ -309,7 +309,7 @@ final class Product_Review_Guard {
 			$spam_check = Comment_Spam_Rules::evaluate( $commentdata, $spam_cfg );
 			if ( is_wp_error( $spam_check ) ) {
 				if ( ! empty( $spam_cfg['comment_strike_on_heuristic'] ) ) {
-					Comment_Enforcement::register_strike( $actor, $spam_check->get_error_message(), $c );
+					Comment_Enforcement::register_strike( $actor, $spam_check->get_error_message(), $c, 'product_review' );
 				}
 				return $spam_check;
 			}
@@ -350,7 +350,7 @@ final class Product_Review_Guard {
 				if ( ! is_wp_error( $raw ) ) {
 					$verdict = AI_Span_Completion::parse_json_verdict( (string) $raw );
 					if ( ! is_wp_error( $verdict ) && 'spam' === $verdict['status'] ) {
-						Comment_Enforcement::register_strike( $actor, $verdict['message'], $c );
+						Comment_Enforcement::register_strike( $actor, $verdict['message'], $c, 'product_review' );
 						return new WP_Error(
 							'wsc_spam',
 							sprintf(

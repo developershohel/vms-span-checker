@@ -13,6 +13,7 @@
     var ajaxUrl = config.ajaxUrl || '';
     var nonce = config.nonce || '';
     var formSelector = config.formSelector || '';
+    var submitSelector = config.submitSelector || '';
     var i18n = config.i18n || {};
     var recaptchaEnabled = config.recaptchaEnabled || false;
     var recaptchaSiteKey = config.recaptchaSiteKey || '';
@@ -59,41 +60,36 @@
             return [];
         }
 
-        if (formSelector && formSelector.trim() !== '') {
-            var matches = $(formSelector);
-            for (var i = 0; i < matches.length; i++) {
-                var formEl = resolveFormElement(matches[i]);
-                if (!formEl) {
-                    continue;
-                }
-                var $form = $(formEl);
-                if ($form.data('wsc-contact-guard')) {
-                    continue;
-                }
-                if (formEl.id === 'adminbarsearch' || $form.closest('#wpadminbar').length > 0) {
-                    continue;
-                }
-                if (findEmailField($form).length === 0) {
-                    continue;
-                }
-                return [formEl];
-            }
+        // Form selector is required - only use provided selector
+        if (!formSelector || formSelector.trim() === '') {
+            console.log('[WP Span Checker] Contact Guard: No form selector configured. Form selector is required.');
             return [];
         }
 
-        var $all = $('form');
-        for (var j = 0; j < $all.length; j++) {
-            var f = $all[j];
-            var $f = $(f);
-            if ($f.data('wsc-contact-guard')) {
+        var matches = $(formSelector);
+        console.log('[WP Span Checker] Contact Guard: Checking selector:', formSelector, 'found:', matches.length, 'elements');
+        for (var i = 0; i < matches.length; i++) {
+            var formEl = resolveFormElement(matches[i]);
+            if (!formEl) {
                 continue;
             }
-            if (f.id === 'adminbarsearch' || $f.closest('#wpadminbar').length > 0) {
+            var $form = $(formEl);
+            if ($form.data('wsc-contact-guard')) {
+                console.log('[WP Span Checker] Contact Guard: Form already has contact guard');
                 continue;
             }
-            if (isContactForm($f) && findEmailField($f).length > 0) {
-                return [f];
+            // Check if form is already protected by another guard (Form Guard, Subscribe Guard, etc.)
+            if ($form.data('wsc-guard-protected')) {
+                console.log('[WP Span Checker] Contact Guard: Form already protected by another guard');
+                continue;
             }
+            if (formEl.id === 'adminbarsearch' || $form.closest('#wpadminbar').length > 0) {
+                continue;
+            }
+            if (findEmailField($form).length === 0) {
+                continue;
+            }
+            return [formEl];
         }
 
         return [];
@@ -132,6 +128,87 @@
 
     function findMessageField($form) {
         return $form.find('textarea').first();
+    }
+
+    function isButtonVisible($btn) {
+        if (!$btn.length) return false;
+        if ($btn.attr('aria-hidden') === 'true') return false;
+        if ($btn.attr('tabindex') === '-1') {
+            var styles = $btn.attr('style') || '';
+            if (styles.indexOf('display: none') !== -1 || 
+                styles.indexOf('visibility: hidden') !== -1 ||
+                (styles.indexOf('position: absolute') !== -1 && styles.indexOf('left: -9999') !== -1)) {
+                return false;
+            }
+        }
+        try {
+            var computed = window.getComputedStyle($btn[0]);
+            if (computed.display === 'none' || computed.visibility === 'hidden' || computed.opacity === '0') {
+                return false;
+            }
+        } catch(e) {}
+        return true;
+    }
+
+    function findVisibleSubmit($form, selector) {
+        var $buttons = $form.find(selector);
+        for (var i = 0; i < $buttons.length; i++) {
+            var $btn = $buttons.eq(i);
+            if (isButtonVisible($btn)) return $btn;
+        }
+        return $();
+    }
+
+    function findSubmitButton($form) {
+        // 0. Use custom submit selector if provided
+        if (submitSelector && submitSelector.trim() !== '') {
+            var $btn = findVisibleSubmit($form, submitSelector);
+            if ($btn.length) {
+                console.log('[WP Span Checker] Contact Guard: Found submit via custom selector:', submitSelector);
+                return $btn;
+            }
+        }
+        
+        // 1. input[type="submit"] - visible
+        var $btn = findVisibleSubmit($form, 'input[type="submit"]');
+        if ($btn.length) return $btn;
+        
+        // 2. button[type="submit"] - visible, exclude hidden defaults
+        $btn = findVisibleSubmit($form, 'button[type="submit"]:not(.quform-default-submit)');
+        if ($btn.length) return $btn;
+        
+        // 3. Common submit classes for contact forms - visible
+        $btn = findVisibleSubmit($form, '.wpcf7-submit, .quform-submit:not(.quform-default-submit), .wpforms-submit, .sib-default-btn');
+        if ($btn.length) return $btn;
+        
+        // 4. Any element with type="submit" - visible
+        $btn = findVisibleSubmit($form, '[type="submit"]');
+        if ($btn.length) return $btn;
+        
+        // 5. Button without type (defaults to submit in HTML) - visible
+        $btn = findVisibleSubmit($form, 'button:not([type]):not([aria-hidden="true"])');
+        if ($btn.length) return $btn;
+        
+        // 6. Button not explicitly button/reset - visible
+        $btn = findVisibleSubmit($form, 'button:not([type="button"]):not([type="reset"]):not([aria-hidden="true"])');
+        if ($btn.length) return $btn;
+        
+        // 7. Generic submit classes - visible
+        $btn = findVisibleSubmit($form, '.submit, .btn-submit, .form-submit');
+        if ($btn.length) return $btn;
+        
+        // 8. Last visible button as fallback
+        var $allButtons = $form.find('button');
+        for (var i = $allButtons.length - 1; i >= 0; i--) {
+            var $b = $allButtons.eq(i);
+            if (isButtonVisible($b)) return $b;
+        }
+        
+        // 9. Last input[type="button"]
+        $btn = $form.find('input[type="button"]').last();
+        if ($btn.length && isButtonVisible($btn)) return $btn;
+        
+        return $();
     }
 
     function validateContact(email, message, recaptchaToken) {
@@ -251,7 +328,7 @@
                     resolve(null);
                 }
             } else {
-                var response = typeof grecaptcha !== 'undefined' ? grecaptcha.getResponse() : '';
+                var response = typeof grecaptcha !== 'undefined' ? grecaptcha.getResponse(recaptchaWidgetId) : '';
                 if (response) {
                     resolve(response);
                 } else {
@@ -261,13 +338,16 @@
         });
     }
 
+    var recaptchaWidgetId = null;
+
     function renderRecaptcha($actionsWrap, $validationBtn) {
         if (!recaptchaEnabled || !recaptchaSiteKey) {
             return;
         }
 
         if (recaptchaVersion === 'v2') {
-            var recaptchaContainer = $('<div class="wsc-recaptcha-container"></div>');
+            var uniqueId = 'wsc-recaptcha-' + Math.random().toString(36).substr(2, 9);
+            var recaptchaContainer = $('<div id="' + uniqueId + '" class="wsc-recaptcha-container" style="margin: 10px 0;"></div>');
             $actionsWrap.prepend(recaptchaContainer);
             
             $validationBtn.prop('disabled', true).css('opacity', '0.6');
@@ -275,7 +355,7 @@
             var checkRecaptcha = function() {
                 if (typeof grecaptcha !== 'undefined' && grecaptcha.render) {
                     try {
-                        grecaptcha.render(recaptchaContainer[0], {
+                        recaptchaWidgetId = grecaptcha.render(recaptchaContainer[0], {
                             sitekey: recaptchaSiteKey,
                             callback: function() {
                                 $validationBtn.prop('disabled', false).css('opacity', '1');
@@ -302,6 +382,12 @@
             return;
         }
 
+        // Check if form is already protected by another guard (Form Guard, Subscribe Guard, etc.)
+        if ($form.data('wsc-guard-protected')) {
+            console.log('[WP Span Checker] Contact Guard: Form already protected by another guard, skipping');
+            return;
+        }
+
         var $emailField = findEmailField($form);
         var $messageField = findMessageField($form);
 
@@ -310,12 +396,14 @@
         }
 
         $form.data('wsc-contact-guard', true);
+        $form.data('wsc-guard-protected', true); // Mark as protected
         contactGuardAttached = true;
         console.log('[WP Span Checker] Contact Guard attached to form:', form);
 
-        var $originalSubmit = $form.find('input[type="submit"], button[type="submit"]').first();
+        var $originalSubmit = findSubmitButton($form);
         if (!$originalSubmit.length) {
-            $originalSubmit = $form.find('button:not([type])').first();
+            console.log('[WP Span Checker] Contact Guard: No submit button found');
+            return;
         }
 
         var $actionsWrap = $('<div class="wsc-guard-actions"></div>');
@@ -435,8 +523,8 @@
                             showToast('error', t('validationFailed', 'Validation failed.'));
                         }
 
-                        if (recaptchaEnabled && recaptchaVersion === 'v2' && typeof grecaptcha !== 'undefined') {
-                            grecaptcha.reset();
+                        if (recaptchaEnabled && recaptchaVersion === 'v2' && typeof grecaptcha !== 'undefined' && recaptchaWidgetId !== null) {
+                            grecaptcha.reset(recaptchaWidgetId);
                             $validationBtn.prop('disabled', true).css('opacity', '0.6');
                         }
                     }

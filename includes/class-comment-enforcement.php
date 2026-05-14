@@ -68,8 +68,9 @@ final class Comment_Enforcement {
 	/**
 	 * @param array{key:string,label:string} $actor  .
 	 * @param array<string, mixed>           $config AI_Span_Config row.
+	 * @param string                         $source Strike source (comment, product_review).
 	 */
-	public static function register_strike( array $actor, string $reason, array $config ): void {
+	public static function register_strike( array $actor, string $reason, array $config, string $source = 'comment' ): void {
 		global $wpdb;
 		$table       = $wpdb->prefix . 'span_checker_comment_enforcement';
 		$max_comment = (int) ( $config['comment_max_strikes'] ?? 5 );
@@ -103,9 +104,10 @@ final class Comment_Enforcement {
 					'last_strike_at' => $now,
 					'last_reason'    => $reason,
 					'actor_label'    => $actor['label'],
+					'strike_source'  => $source,
 				),
 				array( 'actor_key' => $actor['key'] ),
-				array( '%d', '%d', '%d', '%s', '%s', '%s', '%s', '%s' ),
+				array( '%d', '%d', '%d', '%s', '%s', '%s', '%s', '%s', '%s' ),
 				array( '%s' )
 			);
 			return;
@@ -123,6 +125,7 @@ final class Comment_Enforcement {
 			'last_ip'        => $ip,
 			'last_strike_at' => $now,
 			'last_reason'    => $reason,
+			'strike_source'  => $source,
 		);
 		if ( $blocked ) {
 			$row['blocked_at'] = $now;
