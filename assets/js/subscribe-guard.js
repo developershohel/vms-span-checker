@@ -243,7 +243,7 @@
             'margin': computed.margin,
             'border': computed.border,
             'border-radius': computed.borderRadius,
-            'width': computed.width,
+            'width': 'auto',
             'height': computed.height,
             'min-width': computed.minWidth,
             'min-height': computed.minHeight,

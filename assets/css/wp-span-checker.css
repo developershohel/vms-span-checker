@@ -2992,6 +2992,7 @@ body.wsc-plugin-admin .wsc-switch-control .wsc-switch-option.wsc-check {
 
 /* Validation button styles */
 .wsc-validation-btn {
+  width: auto;
   cursor: pointer;
   transition: opacity 0.2s ease, background-color 0.2s ease;
 }

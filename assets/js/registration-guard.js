@@ -149,7 +149,7 @@
             'margin': computed.margin,
             'border': computed.border,
             'border-radius': computed.borderRadius,
-            'width': computed.width,
+            'width': 'auto',
             'height': computed.height,
             'line-height': computed.lineHeight,
             'cursor': 'pointer',
