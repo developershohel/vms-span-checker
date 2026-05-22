@@ -2,10 +2,10 @@
 /**
  * Contract for one pluggable spam check step (heuristic pipeline).
  *
- * @package WP_Span_Checker
+ * @package VMS_Span_Checker
  */
 
-namespace WP_Span_Checker\Spam;
+namespace VMS_Span_Checker\Spam;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

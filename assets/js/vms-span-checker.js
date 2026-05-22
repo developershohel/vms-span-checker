@@ -21,7 +21,7 @@ const wpSpanCheckerToast = Swal.mixin({
 })();
 
 jQuery(function ($) {
-    console.log('[WP Span Checker] Form Guard initializing...');
+    console.log('[VMS Span Checker] Form Guard initializing...');
     
     const I = typeof WPSpanChecker !== 'undefined' && WPSpanChecker.i18n ? WPSpanChecker.i18n : {};
     const t = function (key, fallback) {
@@ -60,7 +60,7 @@ jQuery(function ($) {
     }
 
     /**
-     * Check if a form is already protected by any WP Span Checker guard.
+     * Check if a form is already protected by any VMS Span Checker guard.
      * This prevents multiple guards from applying to the same form.
      */
     function wscIsFormAlreadyProtected($form) {
@@ -69,7 +69,7 @@ jQuery(function ($) {
     }
 
     /**
-     * Mark a form as protected by WP Span Checker.
+     * Mark a form as protected by VMS Span Checker.
      */
     function wscMarkFormAsProtected($form) {
         if ($form.length) {
@@ -91,7 +91,7 @@ jQuery(function ($) {
     console.log('nonce', nonce);
     console.log('pageType', pageType);
     console.log('bodyClasses', bodyClasses);
-    console.log('[WP Span Checker] Settings loaded:', settings.length, 'mapping(s)');
+    console.log('[VMS Span Checker] Settings loaded:', settings.length, 'mapping(s)');
 
     function wscBodyHasClass(className) {
         if (!className) return false;
@@ -123,7 +123,7 @@ jQuery(function ($) {
             
             if (target === 'all-pages') {
                 if (!formSelector) {
-                    console.log('[WP Span Checker] Entire site target requires form selector');
+                    console.log('[VMS Span Checker] Entire site target requires form selector');
                     return { matches: false, requiresFormSelector: true };
                 }
                 return { matches: true, requiresFormSelector: true };
@@ -132,15 +132,15 @@ jQuery(function ($) {
             if (/^\d+$/.test(target)) {
                 const targetId = parseInt(target, 10);
                 if (pageType === 'page' && wscBodyHasClass('page-id-' + targetId)) {
-                    console.log('[WP Span Checker] Matched page ID:', targetId);
+                    console.log('[VMS Span Checker] Matched page ID:', targetId);
                     return { matches: true, requiresFormSelector: false };
                 }
                 if (pageType === 'post' && wscBodyHasClass('postid-' + targetId)) {
-                    console.log('[WP Span Checker] Matched post ID:', targetId);
+                    console.log('[VMS Span Checker] Matched post ID:', targetId);
                     return { matches: true, requiresFormSelector: false };
                 }
                 if (targetId === pageID) {
-                    console.log('[WP Span Checker] Matched by pageID:', targetId);
+                    console.log('[VMS Span Checker] Matched by pageID:', targetId);
                     return { matches: true, requiresFormSelector: false };
                 }
                 continue;
@@ -148,7 +148,7 @@ jQuery(function ($) {
             
             const presetClass = presetClasses[target];
             if (presetClass && wscBodyHasClass(presetClass)) {
-                console.log('[WP Span Checker] Matched preset:', target, 'via class:', presetClass);
+                console.log('[VMS Span Checker] Matched preset:', target, 'via class:', presetClass);
                 return { matches: true, requiresFormSelector: false };
             }
             
@@ -230,7 +230,7 @@ jQuery(function ($) {
         const fields = [];
         const rules = autoRules || {};
         
-        console.log('[WP Span Checker] Auto-detecting fields with rules:', rules);
+        console.log('[VMS Span Checker] Auto-detecting fields with rules:', rules);
         
         $form.find('input, textarea, select').each(function() {
             const $field = $(this);
@@ -271,7 +271,7 @@ jQuery(function ($) {
                             virustotal: !!rules.email.virustotal
                         };
                     }
-                    console.log('[WP Span Checker] Email field:', $field.attr('name'), 'required:', isRequired, 'rules:', fieldConfig.rules);
+                    console.log('[VMS Span Checker] Email field:', $field.attr('name'), 'required:', isRequired, 'rules:', fieldConfig.rules);
                     break;
                 case 'url':
                     // URL fields should allow URLs - apply URL validation rules, NOT block_urls
@@ -282,7 +282,7 @@ jQuery(function ($) {
                             virustotal: !!rules.url.virustotal
                         };
                     }
-                    console.log('[WP Span Checker] URL/Website field:', $field.attr('name'), 'required:', isRequired, 'rules:', fieldConfig.rules);
+                    console.log('[VMS Span Checker] URL/Website field:', $field.attr('name'), 'required:', isRequired, 'rules:', fieldConfig.rules);
                     break;
                 case 'textarea':
                     if (rules.textarea) {
@@ -291,7 +291,7 @@ jQuery(function ($) {
                             ai_spam: !!rules.textarea.ai_spam
                         };
                     }
-                    console.log('[WP Span Checker] Textarea field:', $field.attr('name'), 'required:', isRequired, 'rules:', fieldConfig.rules, 'autoRules.textarea:', rules.textarea);
+                    console.log('[VMS Span Checker] Textarea field:', $field.attr('name'), 'required:', isRequired, 'rules:', fieldConfig.rules, 'autoRules.textarea:', rules.textarea);
                     break;
                 case 'username':
                     if (rules.username) {
@@ -299,7 +299,7 @@ jQuery(function ($) {
                             check_exists: !!rules.username.check_exists
                         };
                     }
-                    console.log('[WP Span Checker] Username field:', $field.attr('name'), 'required:', isRequired, 'rules:', fieldConfig.rules);
+                    console.log('[VMS Span Checker] Username field:', $field.attr('name'), 'required:', isRequired, 'rules:', fieldConfig.rules);
                     break;
                 case 'password':
                     if (rules.password) {
@@ -307,7 +307,7 @@ jQuery(function ($) {
                             strength: !!rules.password.strength
                         };
                     }
-                    console.log('[WP Span Checker] Password field:', $field.attr('name'), 'required:', isRequired, 'rules:', fieldConfig.rules);
+                    console.log('[VMS Span Checker] Password field:', $field.attr('name'), 'required:', isRequired, 'rules:', fieldConfig.rules);
                     break;
                 case 'text':
                     // Only apply block_urls to generic text fields, NOT to URL-type fields
@@ -316,14 +316,14 @@ jQuery(function ($) {
                             block_urls: !!rules.text.block_urls
                         };
                     }
-                    console.log('[WP Span Checker] Text field:', $field.attr('name'), 'required:', isRequired, 'rules:', fieldConfig.rules, 'rules.text:', rules.text);
+                    console.log('[VMS Span Checker] Text field:', $field.attr('name'), 'required:', isRequired, 'rules:', fieldConfig.rules, 'rules.text:', rules.text);
                     break;
             }
             
             fields.push(fieldConfig);
         });
         
-        console.log('[WP Span Checker] Total fields detected:', fields.length);
+        console.log('[VMS Span Checker] Total fields detected:', fields.length);
         return fields;
     }
 
@@ -534,7 +534,7 @@ jQuery(function ($) {
                 }
                 break;
             case 'text':
-                console.log('[WP Span Checker] Validating text field, block_urls:', rules.block_urls, 'value:', value);
+                console.log('[VMS Span Checker] Validating text field, block_urls:', rules.block_urls, 'value:', value);
                 if (rules.block_urls) {
                     // Match URLs: http(s)://, www., or domain.ext patterns
                     const urlPatterns = [
@@ -544,11 +544,11 @@ jQuery(function ($) {
                     ];
                     const hasUrl = urlPatterns.some(function(pattern) {
                         const matches = pattern.test(value);
-                        if (matches) console.log('[WP Span Checker] URL pattern matched:', pattern);
+                        if (matches) console.log('[VMS Span Checker] URL pattern matched:', pattern);
                         return matches;
                     });
                     if (hasUrl) {
-                        console.log('[WP Span Checker] URL detected in text field, blocking');
+                        console.log('[VMS Span Checker] URL detected in text field, blocking');
                         return { valid: false, message: t('urlsNotAllowed', 'URLs are not allowed in this field.'), $field: $field };
                     }
                 }
@@ -604,7 +604,7 @@ jQuery(function ($) {
                     }
                 },
                 error: function(xhr, status, error) {
-                    console.error('[WP Span Checker] AJAX error:', error);
+                    console.error('[VMS Span Checker] AJAX error:', error);
                     reject(new Error(t('serverError', 'Server error. Please try again.')));
                 }
             });
@@ -650,11 +650,11 @@ jQuery(function ($) {
         if (formSelector) {
             const $form = resolveForm$(formSelector, setting.form_class);
             if ($form.length && !wscShouldSkipForm($form)) {
-                console.log('[WP Span Checker] Form found by selector:', formSelector);
+                console.log('[VMS Span Checker] Form found by selector:', formSelector);
                 return $form;
             }
             // Form selector was specified but not found - do NOT fall back
-            console.log('[WP Span Checker] Form not found for selector:', formSelector, '- NOT falling back to auto-detection');
+            console.log('[VMS Span Checker] Form not found for selector:', formSelector, '- NOT falling back to auto-detection');
             return $();
         }
         
@@ -665,7 +665,7 @@ jQuery(function ($) {
                 if ($submitBtn.length) {
                     const $form = $submitBtn.closest('form');
                     if ($form.length && !wscShouldSkipForm($form)) {
-                        console.log('[WP Span Checker] Form found via submit selector');
+                        console.log('[VMS Span Checker] Form found via submit selector');
                         return $form;
                     }
                 }
@@ -673,11 +673,11 @@ jQuery(function ($) {
             
             const $forms = wscGetContentForms();
             if ($forms.length === 1) {
-                console.log('[WP Span Checker] Single content form found on page');
+                console.log('[VMS Span Checker] Single content form found on page');
                 return $forms.first();
             }
             if ($forms.length > 1) {
-                console.log('[WP Span Checker] Multiple content forms found, returning first one');
+                console.log('[VMS Span Checker] Multiple content forms found, returning first one');
                 return $forms.first();
             }
         }
@@ -704,50 +704,50 @@ jQuery(function ($) {
         const fid = String(formId || '').trim();
         const fcls = String(formClass || '').trim();
         
-        console.log('[WP Span Checker] resolveForm$ called with formId:', fid, 'formClass:', fcls);
+        console.log('[VMS Span Checker] resolveForm$ called with formId:', fid, 'formClass:', fcls);
         
         // Check if it's a combined/complex CSS selector (contains #, ., [, or space for descendant)
         if (wscLooksCombinedSelector(fid) || fid.indexOf(' ') !== -1) {
-            console.log('[WP Span Checker] Trying combined selector:', fid);
+            console.log('[VMS Span Checker] Trying combined selector:', fid);
             
             try {
                 const $hit = $(fid);
-                console.log('[WP Span Checker] Selector matched elements:', $hit.length);
+                console.log('[VMS Span Checker] Selector matched elements:', $hit.length);
                 
                 if ($hit.length) {
-                    console.log('[WP Span Checker] Matched element(s) tagName(s):', $hit.toArray().map(el => el.tagName).join(', '));
+                    console.log('[VMS Span Checker] Matched element(s) tagName(s):', $hit.toArray().map(el => el.tagName).join(', '));
                 }
                 
                 if (!$hit.length) {
-                    console.log('[WP Span Checker] No elements found for selector:', fid);
+                    console.log('[VMS Span Checker] No elements found for selector:', fid);
                     return $();
                 }
                 
                 // If the selector directly returns form elements
                 const $formHit = $hit.filter('form').first();
                 if ($formHit.length) {
-                    console.log('[WP Span Checker] Found form via filter, form id:', $formHit.attr('id'), 'class:', $formHit.attr('class'));
+                    console.log('[VMS Span Checker] Found form via filter, form id:', $formHit.attr('id'), 'class:', $formHit.attr('class'));
                     return $formHit;
                 }
                 
                 // If the selector returns a wrapper, find the form inside it
                 const $innerForm = $hit.find('form').first();
                 if ($innerForm.length) {
-                    console.log('[WP Span Checker] Found form inside matched element, form id:', $innerForm.attr('id'), 'class:', $innerForm.attr('class'));
+                    console.log('[VMS Span Checker] Found form inside matched element, form id:', $innerForm.attr('id'), 'class:', $innerForm.attr('class'));
                     return $innerForm;
                 }
                 
                 // If the selector returns an element inside a form, find the parent form
                 const $inForm = $hit.closest('form').first();
                 if ($inForm.length) {
-                    console.log('[WP Span Checker] Found form as ancestor, form id:', $inForm.attr('id'), 'class:', $inForm.attr('class'));
+                    console.log('[VMS Span Checker] Found form as ancestor, form id:', $inForm.attr('id'), 'class:', $inForm.attr('class'));
                     return $inForm;
                 }
                 
-                console.log('[WP Span Checker] No form found for selector:', fid);
+                console.log('[VMS Span Checker] No form found for selector:', fid);
                 return $();
             } catch (e) {
-                console.error('[WP Span Checker] Error with selector:', fid, e);
+                console.error('[VMS Span Checker] Error with selector:', fid, e);
                 return $();
             }
         }
@@ -826,12 +826,12 @@ jQuery(function ($) {
                 for (var i = 0; i < $btn.length; i++) {
                     var $b = $btn.eq(i);
                     if (isButtonVisible($b)) {
-                        console.log('[WP Span Checker] Found visible submit button with custom selector:', raw);
+                        console.log('[VMS Span Checker] Found visible submit button with custom selector:', raw);
                         return $b;
                     }
                 }
                 // Fallback to first if none visible
-                console.log('[WP Span Checker] Found submit button with custom selector (no visible check):', raw);
+                console.log('[VMS Span Checker] Found submit button with custom selector (no visible check):', raw);
                 return $btn.first();
             }
         }
@@ -839,49 +839,49 @@ jQuery(function ($) {
         // 1. input[type="submit"] - standard submit input (usually visible)
         let $btn = findVisibleSubmit($form, 'input[type="submit"]');
         if ($btn.length) {
-            console.log('[WP Span Checker] Found visible input[type="submit"]');
+            console.log('[VMS Span Checker] Found visible input[type="submit"]');
             return $btn;
         }
         
         // 2. button[type="submit"] - explicit submit button (filter hidden ones like quform-default-submit)
         $btn = findVisibleSubmit($form, 'button[type="submit"]:not(.quform-default-submit)');
         if ($btn.length) {
-            console.log('[WP Span Checker] Found visible button[type="submit"]');
+            console.log('[VMS Span Checker] Found visible button[type="submit"]');
             return $btn;
         }
         
         // 3. Common submit button classes (visible ones)
         $btn = findVisibleSubmit($form, '.quform-submit:not(.quform-default-submit), .wpcf7-submit, .sib-default-btn, .tnp-submit, .mc4wp-submit, .wpforms-submit');
         if ($btn.length) {
-            console.log('[WP Span Checker] Found visible button by common submit class');
+            console.log('[VMS Span Checker] Found visible button by common submit class');
             return $btn;
         }
         
         // 4. Any element with type="submit" (visible)
         $btn = findVisibleSubmit($form, '[type="submit"]');
         if ($btn.length) {
-            console.log('[WP Span Checker] Found visible [type="submit"]');
+            console.log('[VMS Span Checker] Found visible [type="submit"]');
             return $btn;
         }
         
         // 5. Button without type attribute (defaults to submit in HTML) - visible
         $btn = findVisibleSubmit($form, 'button:not([type]):not([aria-hidden="true"])');
         if ($btn.length) {
-            console.log('[WP Span Checker] Found visible button without type (defaults to submit)');
+            console.log('[VMS Span Checker] Found visible button without type (defaults to submit)');
             return $btn;
         }
         
         // 6. Button that is not explicitly button or reset type - visible
         $btn = findVisibleSubmit($form, 'button:not([type="button"]):not([type="reset"]):not([aria-hidden="true"])');
         if ($btn.length) {
-            console.log('[WP Span Checker] Found visible button (not button/reset type)');
+            console.log('[VMS Span Checker] Found visible button (not button/reset type)');
             return $btn;
         }
         
         // 7. Generic submit classes - visible
         $btn = findVisibleSubmit($form, '.submit, .btn-submit, .form-submit');
         if ($btn.length) {
-            console.log('[WP Span Checker] Found visible button by generic submit class');
+            console.log('[VMS Span Checker] Found visible button by generic submit class');
             return $btn;
         }
         
@@ -890,7 +890,7 @@ jQuery(function ($) {
         for (var i = $allButtons.length - 1; i >= 0; i--) {
             var $b = $allButtons.eq(i);
             if (isButtonVisible($b)) {
-                console.log('[WP Span Checker] Found last visible button as fallback');
+                console.log('[VMS Span Checker] Found last visible button as fallback');
                 return $b;
             }
         }
@@ -898,11 +898,11 @@ jQuery(function ($) {
         // 9. Last input[type="button"] that might act as submit
         $btn = $form.find('input[type="button"]').last();
         if ($btn.length && isButtonVisible($btn)) {
-            console.log('[WP Span Checker] Found last visible input[type="button"] as fallback');
+            console.log('[VMS Span Checker] Found last visible input[type="button"] as fallback');
             return $btn;
         }
         
-        console.log('[WP Span Checker] No submit button found in form');
+        console.log('[VMS Span Checker] No submit button found in form');
         return $();
     }
 
@@ -1334,7 +1334,7 @@ jQuery(function ($) {
     
     window.wscRecaptchaReady = function() {
         recaptchaLoaded = true;
-        console.log('[WP Span Checker] reCAPTCHA loaded');
+        console.log('[VMS Span Checker] reCAPTCHA loaded');
         recaptchaCallbacks.forEach(function(cb) { cb(); });
         recaptchaCallbacks = [];
     };
@@ -1380,7 +1380,7 @@ jQuery(function ($) {
                             if (entry.$validationBtn) {
                                 entry.$validationBtn.prop('disabled', false);
                             }
-                            console.log('[WP Span Checker] reCAPTCHA v2 verified');
+                            console.log('[VMS Span Checker] reCAPTCHA v2 verified');
                         },
                         'expired-callback': function() {
                             entry.recaptchaToken = null;
@@ -1399,7 +1399,7 @@ jQuery(function ($) {
                     }
                     if (callback) callback(widgetId);
                 } catch (e) {
-                    console.error('[WP Span Checker] reCAPTCHA render error:', e);
+                    console.error('[VMS Span Checker] reCAPTCHA render error:', e);
                     if (callback) callback(null);
                 }
             });
@@ -1437,12 +1437,12 @@ jQuery(function ($) {
         const formEl = $form.get(0);
         
         if (entry.validationBtnCreated) {
-            console.log('[WP Span Checker] Validation button already created');
+            console.log('[VMS Span Checker] Validation button already created');
             return;
         }
         
         if (!$originalSubmit.length) {
-            console.log('[WP Span Checker] No submit button found');
+            console.log('[VMS Span Checker] No submit button found');
             return;
         }
         
@@ -1493,7 +1493,7 @@ jQuery(function ($) {
                 }
             });
         } catch(e) {
-            console.log('[WP Span Checker] Could not copy computed styles');
+            console.log('[VMS Span Checker] Could not copy computed styles');
         }
         
         // Make sure validation button is visible
@@ -1523,12 +1523,12 @@ jQuery(function ($) {
         entry.$validationBtn = $validationBtn;
         entry.enableRecaptcha = enableRecaptcha;
         
-        console.log('[WP Span Checker] Validation button created:', btnText, 'reCAPTCHA:', enableRecaptcha);
+        console.log('[VMS Span Checker] Validation button created:', btnText, 'reCAPTCHA:', enableRecaptcha);
         
         // Render reCAPTCHA if enabled
         if (enableRecaptcha && WPSpanChecker.recaptcha && WPSpanChecker.recaptcha.siteKey) {
             wscRenderRecaptcha($form, entry, function(widgetId) {
-                console.log('[WP Span Checker] reCAPTCHA rendered, widget:', widgetId);
+                console.log('[VMS Span Checker] reCAPTCHA rendered, widget:', widgetId);
             });
         }
         
@@ -1537,10 +1537,10 @@ jQuery(function ($) {
             e.preventDefault();
             e.stopPropagation();
             
-            console.log('[WP Span Checker] Validation button clicked');
+            console.log('[VMS Span Checker] Validation button clicked');
             
             if (entry.validating) {
-                console.log('[WP Span Checker] Already validating, ignoring');
+                console.log('[VMS Span Checker] Already validating, ignoring');
                 return false;
             }
             
@@ -1563,7 +1563,7 @@ jQuery(function ($) {
         $form.on('keypress.wscValidation', function(e) {
             if (e.which === 13 && !$(e.target).is('textarea')) {
                 e.preventDefault();
-                console.log('[WP Span Checker] Enter key pressed, triggering validation');
+                console.log('[VMS Span Checker] Enter key pressed, triggering validation');
                 $validationBtn.click();
                 return false;
             }
@@ -1579,8 +1579,8 @@ jQuery(function ($) {
         const originalBtnText = entry.originalBtnText || t('submit', 'Submit');
         const validatingText = t('validating', 'Validating...');
 
-        console.log('[WP Span Checker] ========== STARTING VALIDATION ==========');
-        console.log('[WP Span Checker] Configs count:', entry.configs.length);
+        console.log('[VMS Span Checker] ========== STARTING VALIDATION ==========');
+        console.log('[VMS Span Checker] Configs count:', entry.configs.length);
 
         // Clear all previous field errors
         wscClearAllFieldErrors($(formEl));
@@ -1595,7 +1595,7 @@ jQuery(function ($) {
             $validationBtn.prop('disabled', true);
         }
 
-        const before = new CustomEvent('wp_span_checker:guard_before_validate', {
+        const before = new CustomEvent('vms_span_checker:guard_before_validate', {
             cancelable: true,
             bubbles: true,
             detail: { form: formEl },
@@ -1611,7 +1611,7 @@ jQuery(function ($) {
         entry.configs.forEach(function (cfg) {
             const mappingId = cfg.mappingId;
             
-            console.log('[WP Span Checker] Config - isAuto:', cfg.isAuto, 'autoFields:', cfg.autoFields ? cfg.autoFields.length : 0);
+            console.log('[VMS Span Checker] Config - isAuto:', cfg.isAuto, 'autoFields:', cfg.autoFields ? cfg.autoFields.length : 0);
             
             if (cfg.isAuto && cfg.autoFields) {
                 cfg.autoFields.forEach(function(fieldConfig) {
@@ -1621,12 +1621,12 @@ jQuery(function ($) {
                     const rules = fieldConfig.rules || {};
                     const isRequired = fieldConfig.required;
                     
-                    console.log('[WP Span Checker] Field:', fieldType, 'name:', fieldConfig.name, 'required:', isRequired, 'value:', val ? '"' + val.substring(0, 30) + '..."' : '(empty)');
-                    console.log('[WP Span Checker] Rules:', JSON.stringify(rules));
+                    console.log('[VMS Span Checker] Field:', fieldType, 'name:', fieldConfig.name, 'required:', isRequired, 'value:', val ? '"' + val.substring(0, 30) + '..."' : '(empty)');
+                    console.log('[VMS Span Checker] Rules:', JSON.stringify(rules));
                     
                     // Client-side validation (includes required check)
                     const clientResult = wscValidateAutoField(fieldConfig);
-                    console.log('[WP Span Checker] Client validation result:', clientResult);
+                    console.log('[VMS Span Checker] Client validation result:', clientResult);
                     
                     if (!clientResult.valid) {
                         autoJobs.push({
@@ -1640,7 +1640,7 @@ jQuery(function ($) {
                     
                     // Skip server validation if field is empty (and not required - already checked above)
                     if (!val) {
-                        console.log('[WP Span Checker] Skipping server validation for empty non-required field');
+                        console.log('[VMS Span Checker] Skipping server validation for empty non-required field');
                         return;
                     }
                     
@@ -1650,9 +1650,9 @@ jQuery(function ($) {
                                        (fieldType === 'textarea' && rules.ai_spam) ||
                                        (fieldType === 'username' && rules.check_exists);
                     
-                    console.log('[WP Span Checker] Server validation check - fieldType:', fieldType, 'rules:', rules, 'needsServer:', needsServer);
+                    console.log('[VMS Span Checker] Server validation check - fieldType:', fieldType, 'rules:', rules, 'needsServer:', needsServer);
                     if (fieldType === 'textarea') {
-                        console.log('[WP Span Checker] Textarea ai_spam rule:', rules.ai_spam);
+                        console.log('[VMS Span Checker] Textarea ai_spam rule:', rules.ai_spam);
                     }
                     
                     if (needsServer) {
@@ -1682,7 +1682,7 @@ jQuery(function ($) {
         // Check for client-side errors first - show inline errors
         const clientErrors = autoJobs.filter(function(j) { return j.clientError; });
         if (clientErrors.length > 0) {
-            console.log('[WP Span Checker] CLIENT VALIDATION FAILED - errors:', clientErrors.length);
+            console.log('[VMS Span Checker] CLIENT VALIDATION FAILED - errors:', clientErrors.length);
             
             // Show inline error for each field
             clientErrors.forEach(function(err) {
@@ -1702,11 +1702,11 @@ jQuery(function ($) {
         
         const serverAutoJobs = autoJobs.filter(function(j) { return j.needsServer; });
 
-        console.log('[WP Span Checker] Jobs - manual:', jobs.length, ', auto-server:', serverAutoJobs.length);
+        console.log('[VMS Span Checker] Jobs - manual:', jobs.length, ', auto-server:', serverAutoJobs.length);
 
         // If no server validation needed, proceed to submit
         if (jobs.length === 0 && serverAutoJobs.length === 0) {
-            console.log('[WP Span Checker] No server validation needed, proceeding to submit');
+            console.log('[VMS Span Checker] No server validation needed, proceeding to submit');
             wscProceedWithSubmit(formEl, entry);
             return;
         }
@@ -1736,27 +1736,27 @@ jQuery(function ($) {
             });
         });
         
-        console.log('[WP Span Checker] Sending', allServerJobs.length, 'fields for server validation');
+        console.log('[VMS Span Checker] Sending', allServerJobs.length, 'fields for server validation');
         
         // Get reCAPTCHA token if enabled
         var doValidation = function(recaptchaToken) {
             wscValidateAllFieldsServer(allServerJobs, recaptchaToken)
             .then(function(result) {
                 if (result.status) {
-                    console.log('[WP Span Checker] ========== ALL VALIDATIONS PASSED ==========');
+                    console.log('[VMS Span Checker] ========== ALL VALIDATIONS PASSED ==========');
                     formEl.dispatchEvent(
-                        new CustomEvent('wp_span_checker:guard_validated', {
+                        new CustomEvent('vms_span_checker:guard_validated', {
                             bubbles: true,
                             detail: { form: formEl },
                         })
                     );
                     wscProceedWithSubmit(formEl, entry);
                 } else {
-                    console.log('[WP Span Checker] ========== VALIDATION FAILED ==========');
+                    console.log('[VMS Span Checker] ========== VALIDATION FAILED ==========');
                     
                     // Check if user is blocked
                     if (result.blocked) {
-                        console.log('[WP Span Checker] User is BLOCKED');
+                        console.log('[VMS Span Checker] User is BLOCKED');
                         var blockMessage = result.strike_message || t('userBlocked', 'You have been blocked due to repeated violations. Please contact support.');
                         
                         // Disable the validation button
@@ -1819,7 +1819,7 @@ jQuery(function ($) {
                 }
             })
             .catch(function(err) {
-                console.log('[WP Span Checker] Server validation error:', err);
+                console.log('[VMS Span Checker] Server validation error:', err);
                 wpSpanCheckerToast.fire({
                     icon: 'error',
                     title: t('validationFailed', 'Validation failed. Please try again.'),
@@ -1831,7 +1831,7 @@ jQuery(function ($) {
         // Get reCAPTCHA token if enabled, then run validation
         if (entry.enableRecaptcha && entry.recaptchaRendered) {
             wscGetRecaptchaToken(entry, function(token) {
-                console.log('[WP Span Checker] reCAPTCHA token obtained:', token ? 'yes' : 'no');
+                console.log('[VMS Span Checker] reCAPTCHA token obtained:', token ? 'yes' : 'no');
                 doValidation(token);
             });
         } else {
@@ -1859,7 +1859,7 @@ jQuery(function ($) {
             $validationBtn.prop('disabled', true);
         }
 
-        console.log('[WP Span Checker] Validation PASSED! Now clicking original submit button...');
+        console.log('[VMS Span Checker] Validation PASSED! Now clicking original submit button...');
 
         entry.validating = false;
 
@@ -1872,7 +1872,7 @@ jQuery(function ($) {
                 });
                 
                 // Click the ORIGINAL submit button - this triggers CF7/other plugin handlers
-                console.log('[WP Span Checker] Clicking original submit button');
+                console.log('[VMS Span Checker] Clicking original submit button');
                 $originalSubmit[0].click();
                 
                 // Hide it again after click
@@ -1883,7 +1883,7 @@ jQuery(function ($) {
                 }, 100);
             } else {
                 // Fallback to native form submit
-                console.log('[WP Span Checker] No original submit, using native form submit');
+                console.log('[VMS Span Checker] No original submit, using native form submit');
                 HTMLFormElement.prototype.submit.call(formEl);
             }
 
@@ -1912,8 +1912,8 @@ jQuery(function ($) {
         entry.validating = false;
     }
 
-    console.log('[WP Span Checker] Total settings to process:', settings.length);
-    console.log('[WP Span Checker] All settings:', JSON.stringify(settings.map(s => ({id: s.id, form_id: s.form_id, page_id: s.page_id})), null, 2));
+    console.log('[VMS Span Checker] Total settings to process:', settings.length);
+    console.log('[VMS Span Checker] All settings:', JSON.stringify(settings.map(s => ({id: s.id, form_id: s.form_id, page_id: s.page_id})), null, 2));
     
     settings.forEach(function (setting) {
         const mappingId = parseInt(setting.id, 10) || 0;
@@ -1926,7 +1926,7 @@ jQuery(function ($) {
         const rawSettings = setting.settings ? setting.settings : '{}';
         let formSettingData;
         
-        console.log('[WP Span Checker] Processing setting:', {
+        console.log('[VMS Span Checker] Processing setting:', {
             mappingId: mappingId,
             form_id: form_id,
             form_class: form_class,
@@ -1944,17 +1944,17 @@ jQuery(function ($) {
 
         const matchResult = wscSettingMatchesCurrentPage(setting);
         if (!matchResult.matches) {
-            console.log('[WP Span Checker] Skipping mapping ID:', mappingId, '- page does not match targets');
+            console.log('[VMS Span Checker] Skipping mapping ID:', mappingId, '- page does not match targets');
             return;
         }
         
-        console.log('[WP Span Checker] Processing mapping ID:', mappingId, 'requiresFormSelector:', matchResult.requiresFormSelector);
+        console.log('[VMS Span Checker] Processing mapping ID:', mappingId, 'requiresFormSelector:', matchResult.requiresFormSelector);
 
         let $form = wscFindFormForSetting(setting, matchResult);
         
         if (!$form.length) {
             if (matchResult.requiresFormSelector) {
-                console.log('[WP Span Checker] Form not found - required for entire site mapping ID:', mappingId);
+                console.log('[VMS Span Checker] Form not found - required for entire site mapping ID:', mappingId);
                 return;
             }
             
@@ -1964,29 +1964,29 @@ jQuery(function ($) {
             if (hasFormSelector) {
                 $form = resolveForm$(form_id, form_class);
                 if (!$form.length || wscShouldSkipForm($form)) {
-                    console.log('[WP Span Checker] Form not found or should be skipped for selector:', form_id || form_class);
+                    console.log('[VMS Span Checker] Form not found or should be skipped for selector:', form_id || form_class);
                     return;
                 }
-                console.log('[WP Span Checker] Form found by form selector for mapping ID:', mappingId);
+                console.log('[VMS Span Checker] Form found by form selector for mapping ID:', mappingId);
             } else if (hasSubmitSelector) {
                 const $submitBtn = $(submit_selector).first();
                 if (!$submitBtn.length) {
-                    console.log('[WP Span Checker] Submit button not found for selector:', submit_selector);
+                    console.log('[VMS Span Checker] Submit button not found for selector:', submit_selector);
                     return;
                 }
                 $form = $submitBtn.closest('form');
                 if (!$form.length || wscShouldSkipForm($form)) {
-                    console.log('[WP Span Checker] No form found or should be skipped for submit button:', submit_selector);
+                    console.log('[VMS Span Checker] No form found or should be skipped for submit button:', submit_selector);
                     return;
                 }
-                console.log('[WP Span Checker] Form found by submit selector for mapping ID:', mappingId);
+                console.log('[VMS Span Checker] Form found by submit selector for mapping ID:', mappingId);
             } else {
                 const $forms = wscGetContentForms();
                 if ($forms.length >= 1) {
                     $form = $forms.first();
-                    console.log('[WP Span Checker] Content form found on page for mapping ID:', mappingId, '(forms on page:', $forms.length, ')');
+                    console.log('[VMS Span Checker] Content form found on page for mapping ID:', mappingId, '(forms on page:', $forms.length, ')');
                 } else {
-                    console.log('[WP Span Checker] No content forms found on page for mapping ID:', mappingId);
+                    console.log('[VMS Span Checker] No content forms found on page for mapping ID:', mappingId);
                     return;
                 }
             }
@@ -1996,19 +1996,19 @@ jQuery(function ($) {
 
         const formEl = $form.get(0);
         if (!formEl || formEl.tagName !== 'FORM') {
-            console.log('[WP Span Checker] Element is not a FORM, skipping');
+            console.log('[VMS Span Checker] Element is not a FORM, skipping');
             return;
         }
 
         // Check if form is already protected by another guard
         if (wscIsFormAlreadyProtected($form)) {
-            console.log('[WP Span Checker] Form already protected by another guard, skipping mapping ID:', mappingId);
+            console.log('[VMS Span Checker] Form already protected by another guard, skipping mapping ID:', mappingId);
             return;
         }
 
         // Mark form as protected
         wscMarkFormAsProtected($form);
-        console.log('[WP Span Checker] Marked form as protected for mapping ID:', mappingId);
+        console.log('[VMS Span Checker] Marked form as protected for mapping ID:', mappingId);
 
         const isAutoValidation = parseInt(setting.auto_validation, 10) === 1 || setting.auto_validation === true || setting.auto_validation === '1';
         let autoRules = {};
@@ -2023,8 +2023,8 @@ jQuery(function ($) {
 
         if (isAutoValidation) {
             const autoFields = wscAutoDetectFormFields($form, autoRules);
-            console.log('[WP Span Checker] Auto-detected fields:', autoFields.length, 'for mapping ID:', mappingId);
-            console.log('[WP Span Checker] Auto rules:', autoRules);
+            console.log('[VMS Span Checker] Auto-detected fields:', autoFields.length, 'for mapping ID:', mappingId);
+            console.log('[VMS Span Checker] Auto rules:', autoRules);
             
             wscRegisterFormGuardConfig(formEl, {
                 mappingId: mappingId,
@@ -2035,7 +2035,7 @@ jQuery(function ($) {
             });
             
             const entry = wscGetFormGuardEntry(formEl);
-            console.log('[WP Span Checker] Setting up form validation interceptor for auto-validation, reCAPTCHA:', enableRecaptcha);
+            console.log('[VMS Span Checker] Setting up form validation interceptor for auto-validation, reCAPTCHA:', enableRecaptcha);
             wscSetupFormValidation($form, submitButton, entry, enableRecaptcha);
             
             // Add real-time validation feedback on field change - show inline errors
@@ -2152,7 +2152,7 @@ jQuery(function ($) {
 
         const entry = wscGetFormGuardEntry(formEl);
 
-        console.log('[WP Span Checker] Setting up form validation interceptor for manual validation, reCAPTCHA:', enableRecaptcha);
+        console.log('[VMS Span Checker] Setting up form validation interceptor for manual validation, reCAPTCHA:', enableRecaptcha);
         wscSetupFormValidation($form, submitButton, entry, enableRecaptcha);
 
         formSettingData.forEach(function (formSetting, fieldIndex) {

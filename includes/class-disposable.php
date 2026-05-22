@@ -1,6 +1,21 @@
 <?php
+/**
+ * Disposable domain repository.
+ *
+ * All queries target the plugin-owned `{$wpdb->prefix}span_disposable_domains`
+ * custom table; identifiers are hardcoded and values pass through
+ * `$wpdb->prepare()` / insert / delete helpers.
+ *
+ * @package VMS_Span_Checker
+ *
+ * phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
+ * phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
+ * phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+ * phpcs:disable WordPress.DB.PreparedSQL.NotPrepared
+ * phpcs:disable PluginCheck.Security.DirectDB.UnescapedDBParameter
+ */
 
-namespace WP_Span_Checker;
+namespace VMS_Span_Checker;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

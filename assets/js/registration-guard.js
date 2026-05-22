@@ -1,5 +1,5 @@
 /**
- * WP Span Checker - Registration Guard Frontend
+ * VMS Span Checker - Registration Guard Frontend
  * Adds validation button and reCAPTCHA protection to WordPress registration forms.
  */
 (function($) {
@@ -287,7 +287,7 @@
         }
 
         if (!$form || !$form.length) {
-            console.log('[WP Span Checker] Registration Guard: No registration form found.');
+            console.log('[VMS Span Checker] Registration Guard: No registration form found.');
             return;
         }
 
@@ -299,7 +299,7 @@
 
         // Check if form is already protected by another guard
         if ($thisForm.data('wsc-guard-protected')) {
-            console.log('[WP Span Checker] Registration Guard: Form already protected by another guard, skipping');
+            console.log('[VMS Span Checker] Registration Guard: Form already protected by another guard, skipping');
             return;
         }
 
@@ -312,7 +312,7 @@
         $thisForm.data('wsc-registration-guard', true);
         $thisForm.data('wsc-guard-protected', true); // Mark as protected
         registrationGuardAttached = true;
-        console.log('[WP Span Checker] Registration Guard attached to form:', $thisForm[0]);
+        console.log('[VMS Span Checker] Registration Guard attached to form:', $thisForm[0]);
 
         if (!frontendEnabled) {
             if (recaptchaEnabled && recaptchaSiteKey) {
@@ -324,7 +324,7 @@
         var $originalSubmit = findSubmitButton($thisForm);
 
         if (!$originalSubmit.length) {
-            console.log('[WP Span Checker] Registration Guard: No submit button found');
+            console.log('[VMS Span Checker] Registration Guard: No submit button found');
             return;
         }
 
@@ -405,7 +405,7 @@
                     $validationBtn.val(submitText).prop('disabled', false);
 
                     if (result.status) {
-                        console.log('[WP Span Checker] Registration Guard: Validation passed');
+                        console.log('[VMS Span Checker] Registration Guard: Validation passed');
 
                         $thisForm.append('<input type="hidden" name="wsc_validation_token" value="' + (result.token || '') + '">');
 
@@ -438,7 +438,7 @@
                 .catch(function(err) {
                     isValidating = false;
                     $validationBtn.val(submitText).prop('disabled', recaptchaEnabled && recaptchaVersion === 'v2');
-                    console.error('[WP Span Checker] Registration Guard error:', err);
+                    console.error('[VMS Span Checker] Registration Guard error:', err);
                     showToast('error', err.message || t('serverError', 'Validation error. Please try again.'));
                 });
         });
@@ -459,7 +459,7 @@
         var $submitBtn = findSubmitButton($form);
         
         if (!$submitBtn.length) {
-            console.log('[WP Span Checker] Registration Guard: No submit button found for reCAPTCHA');
+            console.log('[VMS Span Checker] Registration Guard: No submit button found for reCAPTCHA');
             return;
         }
 

@@ -2,10 +2,20 @@
 /**
  * Dashboard statistics and log queries.
  *
- * @package WP_Span_Checker
+ * All queries read aggregated data from the plugin-owned
+ * `{$wpdb->prefix}vms_span_checker_logs` custom table. Identifiers are hardcoded
+ * and dynamic values are prepared via `$wpdb->prepare()`.
+ *
+ * @package VMS_Span_Checker
+ *
+ * phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
+ * phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
+ * phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+ * phpcs:disable WordPress.DB.PreparedSQL.NotPrepared
+ * phpcs:disable PluginCheck.Security.DirectDB.UnescapedDBParameter
  */
 
-namespace WP_Span_Checker;
+namespace VMS_Span_Checker;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -32,13 +42,13 @@ class Dashboard {
 	}
 
 	/**
-	 * Summary metrics for WP Span Checker.
+	 * Summary metrics for VMS Span Checker.
 	 *
 	 * @return array<string, int|bool>
 	 */
 	public function get_summary() {
-		$logs  = $this->wpdb->prefix . 'span_checker_logs';
-		$forms = $this->wpdb->prefix . 'span_checker_form_settings';
+		$logs  = $this->wpdb->prefix . 'vms_span_checker_logs';
+		$forms = $this->wpdb->prefix . 'vms_span_checker_form_settings';
 
 		$vt_config = get_option( 'wsc-virustotal-config', array() );
 		$vt_keys   = isset( $vt_config['keys'] ) && is_array( $vt_config['keys'] ) ? $vt_config['keys'] : array();
@@ -73,7 +83,7 @@ class Dashboard {
 	public function get_spam_logs( $limit = 20 ) {
 		return $this->wpdb->get_results(
 			$this->wpdb->prepare(
-				"SELECT * FROM {$this->wpdb->prefix}span_checker_logs WHERE status = %s ORDER BY created_at DESC LIMIT %d",
+				"SELECT * FROM {$this->wpdb->prefix}vms_span_checker_logs WHERE status = %s ORDER BY created_at DESC LIMIT %d",
 				'failed',
 				$limit
 			),
@@ -92,7 +102,7 @@ class Dashboard {
 	 * }
 	 */
 	public function get_analysis( $top_n = 5 ) {
-		$logs  = $this->wpdb->prefix . 'span_checker_logs';
+		$logs  = $this->wpdb->prefix . 'vms_span_checker_logs';
 		$top_n = max( 1, min( 20, (int) $top_n ) );
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name uses trusted prefix only.

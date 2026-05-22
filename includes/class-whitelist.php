@@ -1,7 +1,25 @@
 <?php
-namespace WP_Span_Checker;
+/**
+ * Whitelist domain repository.
+ *
+ * All queries target the plugin-owned `{$wpdb->prefix}span_whitelist_domains`
+ * custom table. Identifiers are hardcoded; values are always passed through
+ * `$wpdb->prepare()` or `$wpdb->insert()` / `$wpdb->delete()` helpers.
+ *
+ * @package VMS_Span_Checker
+ *
+ * phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
+ * phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
+ * phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+ * phpcs:disable WordPress.DB.PreparedSQL.NotPrepared
+ * phpcs:disable PluginCheck.Security.DirectDB.UnescapedDBParameter
+ */
 
-if ( ! defined( 'ABSPATH' ) ) exit;
+namespace VMS_Span_Checker;
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
 
 class Whitelist {
 	private $wpdb;

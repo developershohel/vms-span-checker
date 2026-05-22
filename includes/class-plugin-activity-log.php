@@ -2,10 +2,10 @@
 /**
  * Records wp-login events into {@see Logger} for the Tools console.
  *
- * @package WP_Span_Checker
+ * @package VMS_Span_Checker
  */
 
-namespace WP_Span_Checker;
+namespace VMS_Span_Checker;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -27,7 +27,7 @@ class Plugin_Activity_Log {
 	 */
 	public function on_wp_login( $user_login, $user ): void {
 		unset( $user );
-		$ip = function_exists( 'wp_span_checker_get_user_ip' ) ? wp_span_checker_get_user_ip() : '';
+		$ip = function_exists( 'vms_span_checker_get_user_ip' ) ? vms_span_checker_get_user_ip() : '';
 		( new Logger() )->log(
 			'wp_login',
 			$ip,
@@ -35,7 +35,7 @@ class Plugin_Activity_Log {
 			'success',
 			sprintf(
 				/* translators: %s: user login (not password). */
-				__( 'Signed in: %s', 'wp-span-checker' ),
+				__( 'Signed in: %s', 'vms-span-checker' ),
 				sanitize_user( (string) $user_login, true )
 			)
 		);
@@ -45,7 +45,7 @@ class Plugin_Activity_Log {
 	 * @param string $username Attempted username or email.
 	 */
 	public function on_wp_login_failed( $username ): void {
-		$ip = function_exists( 'wp_span_checker_get_user_ip' ) ? wp_span_checker_get_user_ip() : '';
+		$ip = function_exists( 'vms_span_checker_get_user_ip' ) ? vms_span_checker_get_user_ip() : '';
 		( new Logger() )->log(
 			'wp_login_failed',
 			$ip,
@@ -53,7 +53,7 @@ class Plugin_Activity_Log {
 			'failed',
 			sprintf(
 				/* translators: %s: attempted username (not password). */
-				__( 'Failed sign-in: %s', 'wp-span-checker' ),
+				__( 'Failed sign-in: %s', 'vms-span-checker' ),
 				sanitize_user( (string) $username, true )
 			)
 		);

@@ -1,5 +1,5 @@
 /**
- * WP Span Checker - Contact Guard
+ * VMS Span Checker - Contact Guard
  * Validates contact forms with email and message fields using a validation button approach.
  */
 (function($) {
@@ -62,12 +62,12 @@
 
         // Form selector is required - only use provided selector
         if (!formSelector || formSelector.trim() === '') {
-            console.log('[WP Span Checker] Contact Guard: No form selector configured. Form selector is required.');
+            console.log('[VMS Span Checker] Contact Guard: No form selector configured. Form selector is required.');
             return [];
         }
 
         var matches = $(formSelector);
-        console.log('[WP Span Checker] Contact Guard: Checking selector:', formSelector, 'found:', matches.length, 'elements');
+        console.log('[VMS Span Checker] Contact Guard: Checking selector:', formSelector, 'found:', matches.length, 'elements');
         for (var i = 0; i < matches.length; i++) {
             var formEl = resolveFormElement(matches[i]);
             if (!formEl) {
@@ -75,12 +75,12 @@
             }
             var $form = $(formEl);
             if ($form.data('wsc-contact-guard')) {
-                console.log('[WP Span Checker] Contact Guard: Form already has contact guard');
+                console.log('[VMS Span Checker] Contact Guard: Form already has contact guard');
                 continue;
             }
             // Check if form is already protected by another guard (Form Guard, Subscribe Guard, etc.)
             if ($form.data('wsc-guard-protected')) {
-                console.log('[WP Span Checker] Contact Guard: Form already protected by another guard');
+                console.log('[VMS Span Checker] Contact Guard: Form already protected by another guard');
                 continue;
             }
             if (formEl.id === 'adminbarsearch' || $form.closest('#wpadminbar').length > 0) {
@@ -164,7 +164,7 @@
         if (submitSelector && submitSelector.trim() !== '') {
             var $btn = findVisibleSubmit($form, submitSelector);
             if ($btn.length) {
-                console.log('[WP Span Checker] Contact Guard: Found submit via custom selector:', submitSelector);
+                console.log('[VMS Span Checker] Contact Guard: Found submit via custom selector:', submitSelector);
                 return $btn;
             }
         }
@@ -384,7 +384,7 @@
 
         // Check if form is already protected by another guard (Form Guard, Subscribe Guard, etc.)
         if ($form.data('wsc-guard-protected')) {
-            console.log('[WP Span Checker] Contact Guard: Form already protected by another guard, skipping');
+            console.log('[VMS Span Checker] Contact Guard: Form already protected by another guard, skipping');
             return;
         }
 
@@ -398,11 +398,11 @@
         $form.data('wsc-contact-guard', true);
         $form.data('wsc-guard-protected', true); // Mark as protected
         contactGuardAttached = true;
-        console.log('[WP Span Checker] Contact Guard attached to form:', form);
+        console.log('[VMS Span Checker] Contact Guard attached to form:', form);
 
         var $originalSubmit = findSubmitButton($form);
         if (!$originalSubmit.length) {
-            console.log('[WP Span Checker] Contact Guard: No submit button found');
+            console.log('[VMS Span Checker] Contact Guard: No submit button found');
             return;
         }
 
@@ -489,7 +489,7 @@
                     }
 
                     if (result.status) {
-                        console.log('[WP Span Checker] Contact Guard: Validation passed, submitting form');
+                        console.log('[VMS Span Checker] Contact Guard: Validation passed, submitting form');
                         
                         $originalSubmit.css({
                             'display': '',
@@ -532,7 +532,7 @@
                 .catch(function(err) {
                     isValidating = false;
                     $validationBtn.val(submitText).prop('disabled', recaptchaEnabled && recaptchaVersion === 'v2');
-                    console.error('[WP Span Checker] Contact Guard error:', err);
+                    console.error('[VMS Span Checker] Contact Guard error:', err);
                     showToast('error', err.message || t('serverError', 'Validation error. Please try again.'));
                 });
         });
@@ -566,12 +566,12 @@
     }
 
     function init() {
-        console.log('[WP Span Checker] Contact Guard initializing...');
+        console.log('[VMS Span Checker] Contact Guard initializing...');
         
         loadRecaptchaScript();
         
         var forms = detectContactForms();
-        console.log('[WP Span Checker] Contact Guard found', forms.length, 'form(s)');
+        console.log('[VMS Span Checker] Contact Guard found', forms.length, 'form(s)');
         
         forms.forEach(function(form) {
             setupGuard(form);

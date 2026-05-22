@@ -2,10 +2,10 @@
 /**
  * VirusTotal API v3 client.
  *
- * @package WP_Span_Checker
+ * @package VMS_Span_Checker
  */
 
-namespace WP_Span_Checker\Services;
+namespace VMS_Span_Checker\Services;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -61,7 +61,7 @@ class VirusTotal {
 		if ( empty( $this->api_keys ) ) {
 			return array(
 				'status'  => false,
-				'message' => __( 'Security reputation check is temporarily unavailable. Please try again later.', 'wp-span-checker' ),
+				'message' => __( 'Security reputation check is temporarily unavailable. Please try again later.', 'vms-span-checker' ),
 			);
 		}
 
@@ -69,7 +69,7 @@ class VirusTotal {
 		if ( ! $api_key ) {
 			return array(
 				'status'  => false,
-				'message' => __( 'Security reputation check is temporarily unavailable. Please try again later.', 'wp-span-checker' ),
+				'message' => __( 'Security reputation check is temporarily unavailable. Please try again later.', 'vms-span-checker' ),
 			);
 		}
 
@@ -88,7 +88,7 @@ class VirusTotal {
 		if ( is_wp_error( $response ) ) {
 			return array(
 				'status'  => false,
-				'message' => __( 'Security reputation check could not be completed. Please try again.', 'wp-span-checker' ),
+				'message' => __( 'Security reputation check could not be completed. Please try again.', 'vms-span-checker' ),
 			);
 		}
 
@@ -96,7 +96,7 @@ class VirusTotal {
 		if ( $http_code < 200 || $http_code >= 300 ) {
 			return array(
 				'status'  => false,
-				'message' => __( 'Security reputation check could not be completed. Please try again.', 'wp-span-checker' ),
+				'message' => __( 'Security reputation check could not be completed. Please try again.', 'vms-span-checker' ),
 			);
 		}
 
@@ -104,7 +104,7 @@ class VirusTotal {
 		if ( ! $body ) {
 			return array(
 				'status'  => false,
-				'message' => __( 'Security reputation check returned an empty response. Please try again.', 'wp-span-checker' ),
+				'message' => __( 'Security reputation check returned an empty response. Please try again.', 'vms-span-checker' ),
 			);
 		}
 
@@ -112,7 +112,7 @@ class VirusTotal {
 		if ( ! is_array( $data ) ) {
 			return array(
 				'status'  => false,
-				'message' => __( 'Security reputation check returned an invalid response. Please try again.', 'wp-span-checker' ),
+				'message' => __( 'Security reputation check returned an invalid response. Please try again.', 'vms-span-checker' ),
 			);
 		}
 
@@ -123,7 +123,7 @@ class VirusTotal {
 		if ( empty( $stats ) ) {
 			return array(
 				'status'  => false,
-				'message' => __( 'Security reputation report was incomplete. Please try again.', 'wp-span-checker' ),
+				'message' => __( 'Security reputation report was incomplete. Please try again.', 'vms-span-checker' ),
 			);
 		}
 
@@ -137,9 +137,9 @@ class VirusTotal {
 		if ( $malicious > $max_bad ) {
 			return array(
 				'status'  => false,
-				/* translators: 1: malicious engine count, 2: allowed max */
 				'message' => sprintf(
-					__( 'This email domain failed security reputation checks (%1$d signals; allowed max %2$d).', 'wp-span-checker' ),
+					/* translators: 1: malicious engine count, 2: allowed max */
+					__( 'This email domain failed security reputation checks (%1$d signals; allowed max %2$d).', 'vms-span-checker' ),
 					$malicious,
 					$max_bad
 				),
@@ -149,9 +149,9 @@ class VirusTotal {
 		if ( $max_susp >= 0 && $suspicious > $max_susp ) {
 			return array(
 				'status'  => false,
-				/* translators: 1: suspicious engine count, 2: allowed max */
 				'message' => sprintf(
-					__( 'This email domain failed security reputation checks (%1$d suspicious signals; allowed max %2$d).', 'wp-span-checker' ),
+					/* translators: 1: suspicious engine count, 2: allowed max */
+					__( 'This email domain failed security reputation checks (%1$d suspicious signals; allowed max %2$d).', 'vms-span-checker' ),
 					$suspicious,
 					$max_susp
 				),
@@ -160,7 +160,7 @@ class VirusTotal {
 
 		return array(
 			'status'  => true,
-			'message' => __( 'Domain passed reputation checks.', 'wp-span-checker' ),
+			'message' => __( 'Domain passed reputation checks.', 'vms-span-checker' ),
 		);
 	}
 }

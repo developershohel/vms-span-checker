@@ -1,9 +1,9 @@
-=== WP Span Checker - Spam Protection & Email Validation ===
+=== VMS Span Checker ===
 Contributors: developershohel
 Donate link: https://vmsuniverse.com/donate
-Tags: spam protection, email validation, disposable email, form security, anti-spam, contact form, comment spam, virustotal, ai spam detection
+Tags: spam, email, disposable, anti-spam, validation
 Requires at least: 6.0
-Tested up to: 6.5
+Tested up to: 6.9
 Requires PHP: 7.4
 Stable tag: 1.0.0
 License: GPLv2 or later
@@ -13,7 +13,7 @@ Protect your WordPress forms from spam, fake emails, and malicious domains with 
 
 == Description ==
 
-**WP Span Checker** is a comprehensive spam protection plugin that validates email domains, blocks disposable emails, and protects your forms from malicious submissions using multiple security layers.
+**VMS Span Checker** is a comprehensive spam protection plugin that validates email domains, blocks disposable emails, and protects your forms from malicious submissions using multiple security layers.
 
 = Key Features =
 
@@ -58,7 +58,7 @@ Protect your WordPress forms from spam, fake emails, and malicious domains with 
 
 = Supported Forms =
 
-WP Span Checker works with any HTML form including:
+VMS Span Checker works with any HTML form including:
 
 * Contact Form 7
 * WPForms
@@ -99,7 +99,7 @@ Basic protection works without any API keys. For enhanced security:
 = Automatic Installation =
 
 1. Go to **Plugins > Add New** in your WordPress admin
-2. Search for "WP Span Checker"
+2. Search for "VMS Span Checker"
 3. Click **Install Now** and then **Activate**
 
 = Manual Installation =
@@ -111,7 +111,7 @@ Basic protection works without any API keys. For enhanced security:
 
 = After Activation =
 
-1. Navigate to **WP Span Checker** in your admin menu
+1. Navigate to **VMS Span Checker** in your admin menu
 2. Go to **Form Guard** and add your first form mapping
 3. Configure validation options as needed
 4. (Optional) Add API keys for enhanced protection
@@ -128,7 +128,7 @@ No. Validation is performed via AJAX before form submission. Most checks complet
 
 = Is it compatible with my form plugin? =
 
-WP Span Checker works with any HTML form. It's tested with Contact Form 7, WPForms, Gravity Forms, Ninja Forms, Newsletter Plugin, and many more.
+VMS Span Checker works with any HTML form. It's tested with Contact Form 7, WPForms, Gravity Forms, Ninja Forms, Newsletter Plugin, and many more.
 
 = Is it GDPR compliant? =
 
@@ -144,7 +144,7 @@ Yes. The plugin only processes email domains, not full email addresses or person
 
 = Can I whitelist specific domains? =
 
-Yes. Go to **WP Span Checker > Whitelist Domains** and add trusted domains. Whitelisted domains bypass all validation checks.
+Yes. Go to **VMS Span Checker > Whitelist Domains** and add trusted domains. Whitelisted domains bypass all validation checks.
 
 = Why is a legitimate email being blocked? =
 
@@ -163,7 +163,7 @@ The plugin includes over 10,000 known disposable email domains, and you can add 
 
 = Does it work with WooCommerce? =
 
-Yes! WP Span Checker includes a dedicated Product Review Guard for WooCommerce and can protect checkout/registration forms.
+Yes! VMS Span Checker includes a dedicated Product Review Guard for WooCommerce and can protect checkout/registration forms.
 
 == Screenshots ==
 
@@ -207,7 +207,7 @@ Yes! WP Span Checker includes a dedicated Product Review Guard for WooCommerce a
 == Upgrade Notice ==
 
 = 1.0.0 =
-Initial release of WP Span Checker. Install to protect your forms from spam and malicious submissions.
+Initial release of VMS Span Checker. Install to protect your forms from spam and malicious submissions.
 
 == Additional Information ==
 
@@ -225,8 +225,8 @@ Initial release of WP Span Checker. Install to protect your forms from spam and 
 
 = Support =
 
-* Documentation: [https://vmsuniverse.com/docs/wp-span-checker](https://vmsuniverse.com/docs/wp-span-checker)
-* Support Forum: [WordPress.org Support](https://wordpress.org/support/plugin/wp-span-checker/)
+* Documentation: [https://vmsuniverse.com/docs/vms-span-checker](https://vmsuniverse.com/docs/vms-span-checker)
+* Support Forum: [WordPress.org Support](https://wordpress.org/support/plugin/vms-span-checker/)
 * Email: support@vmsuniverse.com
 
 = Credits =

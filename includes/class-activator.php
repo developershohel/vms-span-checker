@@ -2,10 +2,22 @@
 /**
  * Plugin activation: database tables and initial data.
  *
- * @package WP_Span_Checker
+ * The queries in this file create and seed plugin-owned custom tables. They
+ * intentionally use direct `$wpdb` calls (no caching, schema changes, and
+ * interpolated table names built from `$wpdb->prefix`). All identifiers are
+ * hardcoded inside the plugin and never derived from user input.
+ *
+ * @package VMS_Span_Checker
+ *
+ * phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
+ * phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
+ * phpcs:disable WordPress.DB.DirectDatabaseQuery.SchemaChange
+ * phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+ * phpcs:disable WordPress.DB.PreparedSQL.NotPrepared
+ * phpcs:disable PluginCheck.Security.DirectDB.UnescapedDBParameter
  */
 
-namespace WP_Span_Checker;
+namespace VMS_Span_Checker;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -23,6 +35,10 @@ class Activator {
 
 		$charset_collate = $wpdb->get_charset_collate();
 
+		// Free plugin owns these tables. The Pro plugin's own activator creates
+		// `vms_span_checker_form_settings`, `vms_span_checker_forms` and
+		// `vms_span_checker_ai_post_summary` (Pro tables). Pre-existing
+		// installs that already have those tables keep them — we never DROP.
 		$tables = array(
 			"CREATE TABLE {$wpdb->prefix}span_whitelist_domains (
 				id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
@@ -36,22 +52,7 @@ class Activator {
 				PRIMARY KEY  (id),
 				UNIQUE KEY domain (domain)
 			) $charset_collate;",
-			"CREATE TABLE {$wpdb->prefix}span_checker_form_settings (
-				id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-				form_type varchar(50) NOT NULL DEFAULT '',
-				page_id text NOT NULL,
-				form_id varchar(191) NOT NULL DEFAULT '',
-				form_class varchar(500) NOT NULL DEFAULT '',
-				submit_selector varchar(500) NOT NULL DEFAULT '',
-				auto_validation tinyint(1) NOT NULL DEFAULT 1,
-				auto_rules longtext NULL,
-				settings longtext NULL,
-				is_webrisk tinyint(1) NOT NULL DEFAULT 0,
-				is_virustotal tinyint(1) NOT NULL DEFAULT 0,
-				PRIMARY KEY  (id),
-				KEY form_id (form_id(100))
-			) $charset_collate;",
-			"CREATE TABLE {$wpdb->prefix}span_checker_logs (
+			"CREATE TABLE {$wpdb->prefix}vms_span_checker_logs (
 				id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 				type varchar(50) NOT NULL DEFAULT '',
 				ip varchar(100) NOT NULL DEFAULT '',
@@ -63,14 +64,7 @@ class Activator {
 				KEY created_at (created_at),
 				KEY status_type (status,type)
 			) $charset_collate;",
-			"CREATE TABLE {$wpdb->prefix}span_checker_forms (
-				id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-				form_id varchar(191) NOT NULL DEFAULT '',
-				fields longtext NULL,
-				PRIMARY KEY  (id),
-				KEY form_id (form_id(100))
-			) $charset_collate;",
-			"CREATE TABLE {$wpdb->prefix}span_checker_api_keys (
+			"CREATE TABLE {$wpdb->prefix}vms_span_checker_api_keys (
 				id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 				key_name varchar(100) NOT NULL DEFAULT '',
 				api_key text NOT NULL,
@@ -78,18 +72,7 @@ class Activator {
 				created_at datetime NOT NULL,
 				PRIMARY KEY  (id)
 			) $charset_collate;",
-			"CREATE TABLE {$wpdb->prefix}span_checker_ai_post_summary (
-				id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-				post_id bigint(20) unsigned NOT NULL,
-				summary longtext NULL,
-				status varchar(20) NOT NULL DEFAULT 'pending',
-				last_error text NULL,
-				updated_at datetime NOT NULL,
-				PRIMARY KEY  (id),
-				UNIQUE KEY post_id (post_id),
-				KEY status (status)
-			) $charset_collate;",
-			"CREATE TABLE {$wpdb->prefix}span_checker_comment_enforcement (
+			"CREATE TABLE {$wpdb->prefix}vms_span_checker_comment_enforcement (
 				id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 				actor_key varchar(191) NOT NULL,
 				actor_label varchar(191) NOT NULL DEFAULT '',
@@ -120,8 +103,8 @@ class Activator {
 		self::maybe_seed_disposable_domains();
 		self::maybe_seed_whitelist_domains();
 
-		update_option( 'wp_span_checker_db_version', WP_SPAN_CHECKER_VERSION );
-		update_option( 'wp_span_checker_schema_version', '7' );
+		update_option( 'vms_span_checker_db_version', VMS_SPAN_CHECKER_VERSION );
+		update_option( 'vms_span_checker_schema_version', '10' );
 	}
 
 	/**
@@ -130,40 +113,40 @@ class Activator {
 	public static function maybe_upgrade_schema(): void {
 		global $wpdb;
 
-		$current = (string) get_option( 'wp_span_checker_schema_version', '1' );
+		$current = (string) get_option( 'vms_span_checker_schema_version', '1' );
 
 		if ( version_compare( $current, '2', '<' ) ) {
-			$table = $wpdb->prefix . 'span_checker_form_settings';
+			$table = $wpdb->prefix . 'vms_span_checker_form_settings';
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name uses trusted prefix.
 			$exists = $wpdb->get_var( "SHOW TABLES LIKE '{$table}'" );
 			if ( $exists ) {
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name uses trusted prefix.
 				$wpdb->query( "ALTER TABLE {$table} MODIFY COLUMN page_id text NOT NULL" );
 			}
-			update_option( 'wp_span_checker_schema_version', '2' );
+			update_option( 'vms_span_checker_schema_version', '2' );
 			$current = '2';
 		}
 
 		if ( version_compare( $current, '3', '<' ) ) {
 			self::install_ai_tables();
-			update_option( 'wp_span_checker_schema_version', '3' );
+			update_option( 'vms_span_checker_schema_version', '3' );
 			$current = '3';
 		}
 
 		if ( version_compare( $current, '4', '<' ) ) {
-			$table = $wpdb->prefix . 'span_checker_comment_enforcement';
+			$table = $wpdb->prefix . 'vms_span_checker_comment_enforcement';
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name uses trusted prefix.
 			$exists = $wpdb->get_var( "SHOW TABLES LIKE '{$table}'" );
 			if ( $exists ) {
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name uses trusted prefix.
 				$wpdb->query( "ALTER TABLE {$table} MODIFY COLUMN actor_key varchar(191) NOT NULL" );
 			}
-			update_option( 'wp_span_checker_schema_version', '4' );
+			update_option( 'vms_span_checker_schema_version', '4' );
 			$current = '4';
 		}
 
 		if ( version_compare( $current, '5', '<' ) ) {
-			$table = $wpdb->prefix . 'span_checker_comment_enforcement';
+			$table = $wpdb->prefix . 'vms_span_checker_comment_enforcement';
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name uses trusted prefix.
 			$exists = $wpdb->get_var( "SHOW TABLES LIKE '{$table}'" );
 			if ( $exists ) {
@@ -180,12 +163,12 @@ class Activator {
 					$wpdb->query( "ALTER TABLE {$table} ADD COLUMN last_ip varchar(45) NOT NULL DEFAULT '' AFTER site_banned" );
 				}
 			}
-			update_option( 'wp_span_checker_schema_version', '5' );
+			update_option( 'vms_span_checker_schema_version', '5' );
 			$current = '5';
 		}
 
 		if ( version_compare( $current, '6', '<' ) ) {
-			$table = $wpdb->prefix . 'span_checker_form_settings';
+			$table = $wpdb->prefix . 'vms_span_checker_form_settings';
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name uses trusted prefix.
 			$exists = $wpdb->get_var( "SHOW TABLES LIKE '{$table}'" );
 			if ( $exists ) {
@@ -196,12 +179,12 @@ class Activator {
 					$wpdb->query( "ALTER TABLE {$table} ADD COLUMN submit_selector varchar(500) NOT NULL DEFAULT '' AFTER form_class" );
 				}
 			}
-			update_option( 'wp_span_checker_schema_version', '6' );
+			update_option( 'vms_span_checker_schema_version', '6' );
 			$current = '6';
 		}
 
 		if ( version_compare( $current, '7', '<' ) ) {
-			$table = $wpdb->prefix . 'span_checker_form_settings';
+			$table = $wpdb->prefix . 'vms_span_checker_form_settings';
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name uses trusted prefix.
 			$exists = $wpdb->get_var( "SHOW TABLES LIKE '{$table}'" );
 			if ( $exists ) {
@@ -218,12 +201,12 @@ class Activator {
 					$wpdb->query( "ALTER TABLE {$table} ADD COLUMN auto_rules longtext NULL AFTER auto_validation" );
 				}
 			}
-			update_option( 'wp_span_checker_schema_version', '7' );
+			update_option( 'vms_span_checker_schema_version', '7' );
 			$current = '7';
 		}
 
 		if ( version_compare( $current, '8', '<' ) ) {
-			$table = $wpdb->prefix . 'span_checker_form_settings';
+			$table = $wpdb->prefix . 'vms_span_checker_form_settings';
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name uses trusted prefix.
 			$exists = $wpdb->get_var( "SHOW TABLES LIKE '{$table}'" );
 			if ( $exists ) {
@@ -234,12 +217,12 @@ class Activator {
 					$wpdb->query( "ALTER TABLE {$table} ADD COLUMN enable_recaptcha tinyint(1) NOT NULL DEFAULT 0 AFTER auto_rules" );
 				}
 			}
-			update_option( 'wp_span_checker_schema_version', '8' );
+			update_option( 'vms_span_checker_schema_version', '8' );
 			$current = '8';
 		}
 
 		if ( version_compare( $current, '9', '<' ) ) {
-			$table = $wpdb->prefix . 'span_checker_comment_enforcement';
+			$table = $wpdb->prefix . 'vms_span_checker_comment_enforcement';
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name uses trusted prefix.
 			$exists = $wpdb->get_var( "SHOW TABLES LIKE '{$table}'" );
 			if ( $exists ) {
@@ -279,12 +262,25 @@ class Activator {
 					$wpdb->query( "ALTER TABLE {$table} ADD INDEX user_id (user_id)" );
 				}
 			}
-			update_option( 'wp_span_checker_schema_version', '9' );
+			update_option( 'vms_span_checker_schema_version', '9' );
+			$current = '9';
+		}
+
+		if ( version_compare( $current, '10', '<' ) ) {
+			// Free/Pro split bump. Pre-existing Pro-owned tables
+			// (vms_span_checker_form_settings, vms_span_checker_forms,
+			// vms_span_checker_ai_post_summary) are intentionally NOT dropped
+			// — the Pro plugin's activator will dbDelta them when installed.
+			update_option( 'vms_span_checker_schema_version', '10' );
 		}
 	}
 
 	/**
-	 * AI / comment moderation tables (upgrade path).
+	 * Free-only AI moderation tables.
+	 *
+	 * The `ai_post_summary` table now lives in the Pro plugin's activator
+	 * (it's only used by AI Post Summaries, a Pro feature). We still ensure
+	 * `comment_enforcement` is present here since Comment Guard (free) needs it.
 	 */
 	public static function install_ai_tables(): void {
 		global $wpdb;
@@ -294,18 +290,7 @@ class Activator {
 		$charset_collate = $wpdb->get_charset_collate();
 
 		$sql = array(
-			"CREATE TABLE {$wpdb->prefix}span_checker_ai_post_summary (
-				id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-				post_id bigint(20) unsigned NOT NULL,
-				summary longtext NULL,
-				status varchar(20) NOT NULL DEFAULT 'pending',
-				last_error text NULL,
-				updated_at datetime NOT NULL,
-				PRIMARY KEY  (id),
-				UNIQUE KEY post_id (post_id),
-				KEY status (status)
-			) $charset_collate;",
-			"CREATE TABLE {$wpdb->prefix}span_checker_comment_enforcement (
+			"CREATE TABLE {$wpdb->prefix}vms_span_checker_comment_enforcement (
 				id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 				actor_key varchar(191) NOT NULL,
 				actor_label varchar(191) NOT NULL DEFAULT '',
@@ -346,7 +331,7 @@ class Activator {
 			return;
 		}
 
-		$file = WP_SPAN_CHECKER_DIR . 'includes/data/disposable-domains.php';
+		$file = VMS_SPAN_CHECKER_DIR . 'includes/data/disposable-domains.php';
 		if ( ! is_readable( $file ) ) {
 			return;
 		}
@@ -382,7 +367,7 @@ class Activator {
 			return;
 		}
 
-		$file = WP_SPAN_CHECKER_DIR . 'includes/data/whitelist.sql';
+		$file = VMS_SPAN_CHECKER_DIR . 'includes/data/whitelist.sql';
 		if ( ! is_readable( $file ) ) {
 			return;
 		}

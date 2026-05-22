@@ -1,4 +1,4 @@
-# WP Span Checker
+# VMS Span Checker
 
 **Ultimate Spam Protection & Email Validation for WordPress**
 
@@ -84,7 +84,7 @@ Protect your WordPress forms from spam submissions, fake emails, and malicious d
 ### From WordPress Admin
 
 1. Go to **Plugins > Add New**
-2. Search for "WP Span Checker"
+2. Search for "VMS Span Checker"
 3. Click **Install Now** and then **Activate**
 
 ### Manual Installation
@@ -98,7 +98,7 @@ Protect your WordPress forms from spam submissions, fake emails, and malicious d
 
 ```bash
 cd wp-content/plugins/
-git clone https://github.com/yourusername/wp-span-checker.git
+git clone https://github.com/yourusername/vms-span-checker.git
 ```
 
 Then activate from WordPress admin.
@@ -107,8 +107,8 @@ Then activate from WordPress admin.
 
 ## Quick Start
 
-1. **Activate the plugin** - Go to Plugins and activate WP Span Checker
-2. **Navigate to WP Span Checker** - Find it in your admin menu (shield icon)
+1. **Activate the plugin** - Go to Plugins and activate VMS Span Checker
+2. **Navigate to VMS Span Checker** - Find it in your admin menu (shield icon)
 3. **Add a Form Guard mapping** - Go to Form Guard and click "Add form guard mapping"
 4. **Configure your form** - Select form type, target pages, and validation options
 5. **Test your form** - Submit a test with a disposable email to verify protection
@@ -135,7 +135,7 @@ Form Guard is the main feature for protecting your forms.
 
 #### Adding a Form Mapping
 
-1. Go to **WP Span Checker > Form Guard**
+1. Go to **VMS Span Checker > Form Guard**
 2. Click **Add form guard mapping**
 3. Configure the following:
 
@@ -186,7 +186,7 @@ Form Guard is the main feature for protecting your forms.
 
 Always allow submissions from trusted domains.
 
-1. Go to **WP Span Checker > Whitelist Domains**
+1. Go to **VMS Span Checker > Whitelist Domains**
 2. Add domains one per line:
 
 ```
@@ -202,7 +202,7 @@ yourcompany.com
 
 Block known disposable/temporary email providers.
 
-1. Go to **WP Span Checker > Disposable Domains**
+1. Go to **VMS Span Checker > Disposable Domains**
 2. The plugin includes 10,000+ pre-loaded disposable domains
 3. Add custom domains to block:
 
@@ -222,13 +222,13 @@ Configure third-party security APIs for enhanced protection.
 2. Create a new project or select existing
 3. Enable the **Web Risk API**
 4. Create an API key
-5. Enter the key in **WP Span Checker > API Settings > Google Web Risk**
+5. Enter the key in **VMS Span Checker > API Settings > Google Web Risk**
 
 #### VirusTotal API
 
 1. Create a free account at [VirusTotal](https://www.virustotal.com/)
 2. Go to your profile and copy your API key
-3. Add the key in **WP Span Checker > API Settings > VirusTotal**
+3. Add the key in **VMS Span Checker > API Settings > VirusTotal**
 4. Configure thresholds:
    - **Max Malicious** - Block if malicious detections exceed this (default: 0)
    - **Max Suspicious** - Block if suspicious detections exceed this (optional)
@@ -241,7 +241,7 @@ Configure third-party security APIs for enhanced protection.
 2. Choose v2 ("I'm not a robot") or v3 (invisible)
 3. Add your domain
 4. Copy Site Key and Secret Key
-5. Enter in **WP Span Checker > API Settings > reCAPTCHA**
+5. Enter in **VMS Span Checker > API Settings > reCAPTCHA**
 
 ### AI Span Settings
 
@@ -258,8 +258,8 @@ Configure AI-powered spam detection and content generation.
 
 #### Setup
 
-1. Go to **WP Span Checker > AI Span Settings**
-2. Enable AI Span Checker
+1. Go to **VMS Span Checker > AI Span Settings**
+2. Enable AI VMS Span Checker
 3. Select your preferred provider
 4. Enter your API key
 5. Choose the model
@@ -277,7 +277,7 @@ Configure AI-powered spam detection and content generation.
 
 Protect WordPress user registration.
 
-1. Go to **WP Span Checker > Registration Guard**
+1. Go to **VMS Span Checker > Registration Guard**
 2. Enable the guard
 3. Configure validation options
 4. Customize error messages
@@ -286,7 +286,7 @@ Protect WordPress user registration.
 
 Add validation to WordPress login.
 
-1. Go to **WP Span Checker > Login Guard**
+1. Go to **VMS Span Checker > Login Guard**
 2. Enable protection
 3. Configure rate limiting (optional)
 
@@ -294,7 +294,7 @@ Add validation to WordPress login.
 
 Protect contact forms with frontend validation.
 
-1. Go to **WP Span Checker > Contact Guard**
+1. Go to **VMS Span Checker > Contact Guard**
 2. Enable the guard
 3. Configure which forms to protect
 4. Set validation rules
@@ -303,7 +303,7 @@ Protect contact forms with frontend validation.
 
 Protect newsletter subscription forms.
 
-1. Go to **WP Span Checker > Subscribe Guard**
+1. Go to **VMS Span Checker > Subscribe Guard**
 2. Enable protection
 3. Map to your subscription forms
 4. Compatible with Newsletter Plugin, Mailchimp, etc.
@@ -312,7 +312,7 @@ Protect newsletter subscription forms.
 
 Advanced comment spam protection.
 
-1. Go to **WP Span Checker > Comment Guard**
+1. Go to **VMS Span Checker > Comment Guard**
 2. Enable spam rules
 3. Configure:
    - Minimum comment length
@@ -324,7 +324,7 @@ Advanced comment spam protection.
 
 Protect WooCommerce product reviews.
 
-1. Go to **WP Span Checker > Product Review Guard**
+1. Go to **VMS Span Checker > Product Review Guard**
 2. Enable protection
 3. Configure validation for review forms
 
@@ -332,7 +332,7 @@ Protect WooCommerce product reviews.
 
 ## Supported Forms
 
-WP Span Checker works with any HTML form. Pre-tested compatibility:
+VMS Span Checker works with any HTML form. Pre-tested compatibility:
 
 | Plugin/Form | Compatibility |
 |-------------|---------------|
@@ -486,16 +486,16 @@ Go to **Disposable Domains** and add the domain to the custom list.
 
 ## Support
 
-- **Documentation:** [https://vmsuniverse.com/docs/wp-span-checker](https://vmsuniverse.com/docs/wp-span-checker)
-- **Support Forum:** [WordPress.org Support](https://wordpress.org/support/plugin/wp-span-checker/)
+- **Documentation:** [https://vmsuniverse.com/docs/vms-span-checker](https://vmsuniverse.com/docs/vms-span-checker)
+- **Support Forum:** [WordPress.org Support](https://wordpress.org/support/plugin/vms-span-checker/)
 - **Email:** support@vmsuniverse.com
-- **GitHub Issues:** [Report a bug](https://github.com/vmsuniverse/wp-span-checker/issues)
+- **GitHub Issues:** [Report a bug](https://github.com/vmsuniverse/vms-span-checker/issues)
 
 ---
 
 ## License
 
-WP Span Checker is licensed under the GPL-2.0-or-later license. See [LICENSE](https://www.gnu.org/licenses/gpl-2.0.html) for details.
+VMS Span Checker is licensed under the GPL-2.0-or-later license. See [LICENSE](https://www.gnu.org/licenses/gpl-2.0.html) for details.
 
 ---
 

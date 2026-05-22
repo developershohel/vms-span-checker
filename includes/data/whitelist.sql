@@ -1,4 +1,4 @@
--- WP Span Checker bundled whitelist seed.
+-- VMS Span Checker bundled whitelist seed.
 -- These statements are parsed by the plugin and imported with INSERT IGNORE semantics.
 -- Comprehensive list of trusted email providers.
 

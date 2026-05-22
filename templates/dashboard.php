@@ -1,12 +1,19 @@
 <?php
 /**
- * Admin dashboard template — WP Span Checker home.
+ * Admin dashboard template — VMS Span Checker home.
  *
- * @package WP_Span_Checker
+ * The DB lookups read aggregated counts from the plugin-owned
+ * `{$wpdb->prefix}vms_span_checker_logs` custom table; identifiers are hardcoded.
+ *
+ * @package VMS_Span_Checker
+ *
+ * phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
+ * phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
+ * phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound
  */
 
-use WP_Span_Checker\AI_Span_Config;
-use WP_Span_Checker\Dashboard;
+use VMS_Span_Checker\AI_Span_Config;
+use VMS_Span_Checker\Dashboard;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -21,7 +28,7 @@ $ai_cfg            = AI_Span_Config::get();
 $ai_blocked_guests = 0;
 if ( ! empty( $ai_cfg['ai_enabled'] ) ) {
 	global $wpdb;
-	$ai_blocked_guests = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}span_checker_comment_enforcement WHERE blocked = 1" );
+	$ai_blocked_guests = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}vms_span_checker_comment_enforcement WHERE blocked = 1" );
 }
 
 $pass_rate = 0;
@@ -46,21 +53,21 @@ foreach ( (array) $analysis['top_failed_messages'] as $m_row ) {
 
 $insights = array();
 if ( 0 === (int) $summary['form_mappings'] ) {
-	$insights[] = __( 'No form mappings yet—add one under Form Guard to start logging checks.', 'wp-span-checker' );
+	$insights[] = __( 'No form mappings yet—add one under Form Guard to start logging checks.', 'vms-span-checker' );
 }
 if ( 0 === (int) $summary['total_logs'] ) {
-	$insights[] = __( 'No validation events recorded yet. Traffic will appear here once forms are mapped and submitted.', 'wp-span-checker' );
+	$insights[] = __( 'No validation events recorded yet. Traffic will appear here once forms are mapped and submitted.', 'vms-span-checker' );
 } else {
 	$failed_n  = (int) $summary['failed_validations'];
 	$success_n = (int) $summary['success_logs'];
 	if ( $failed_n > 0 && $success_n > 0 && $failed_n > ( $success_n * 2 ) ) {
-		$insights[] = __( 'Blocks are outpacing passes—review disposable rules and the top failing domains below.', 'wp-span-checker' );
+		$insights[] = __( 'Blocks are outpacing passes—review disposable rules and the top failing domains below.', 'vms-span-checker' );
 	} elseif ( $pass_rate >= 90 ) {
-		$insights[] = __( 'Strong pass rate. Monitor API quotas and keep disposable lists current.', 'wp-span-checker' );
+		$insights[] = __( 'Strong pass rate. Monitor API quotas and keep disposable lists current.', 'vms-span-checker' );
 	}
 }
 if ( empty( $insights ) ) {
-	$insights[] = __( 'Dashboard is live—use the breakdowns below to spot patterns in validation traffic.', 'wp-span-checker' );
+	$insights[] = __( 'Dashboard is live—use the breakdowns below to spot patterns in validation traffic.', 'vms-span-checker' );
 }
 
 $google_on = ! empty( $summary['google_api_ready'] );
@@ -68,40 +75,40 @@ $vt_n      = (int) $summary['virustotal_keys'];
 
 $quick_links = array(
 	array(
-		'url'   => admin_url( 'admin.php?page=wp-span-checker-whitelist' ),
+		'url'   => admin_url( 'admin.php?page=vms-span-checker-whitelist' ),
 		'icon'  => '✓',
-		'title' => __( 'Whitelist domains', 'wp-span-checker' ),
-		'desc'  => __( 'Trusted domains that always pass', 'wp-span-checker' ),
+		'title' => __( 'Whitelist domains', 'vms-span-checker' ),
+		'desc'  => __( 'Trusted domains that always pass', 'vms-span-checker' ),
 	),
 	array(
-		'url'   => admin_url( 'admin.php?page=wp-span-checker-disposable' ),
+		'url'   => admin_url( 'admin.php?page=vms-span-checker-disposable' ),
 		'icon'  => '⛔',
-		'title' => __( 'Disposable list', 'wp-span-checker' ),
-		'desc'  => __( 'Block throwaway email hosts', 'wp-span-checker' ),
+		'title' => __( 'Disposable list', 'vms-span-checker' ),
+		'desc'  => __( 'Block throwaway email hosts', 'vms-span-checker' ),
 	),
 	array(
-		'url'   => admin_url( 'admin.php?page=wp-span-checker-form-settings' ),
+		'url'   => admin_url( 'admin.php?page=vms-span-checker-form-settings' ),
 		'icon'  => '⚡',
-		'title' => __( 'Form Guard', 'wp-span-checker' ),
-		'desc'  => __( 'Map forms to validation & API scans', 'wp-span-checker' ),
+		'title' => __( 'Form Guard', 'vms-span-checker' ),
+		'desc'  => __( 'Map forms to validation & API scans', 'vms-span-checker' ),
 	),
 	array(
-		'url'   => admin_url( 'admin.php?page=wp-span-checker-api' ),
+		'url'   => admin_url( 'admin.php?page=vms-span-checker-api' ),
 		'icon'  => '🔐',
-		'title' => __( 'API settings', 'wp-span-checker' ),
-		'desc'  => __( 'Web Risk & VirusTotal keys', 'wp-span-checker' ),
+		'title' => __( 'API settings', 'vms-span-checker' ),
+		'desc'  => __( 'Web Risk & VirusTotal keys', 'vms-span-checker' ),
 	),
 	array(
-		'url'   => admin_url( 'admin.php?page=wp-span-checker-ai-settings' ),
+		'url'   => admin_url( 'admin.php?page=vms-span-checker-ai-settings' ),
 		'icon'  => '🤖',
-		'title' => __( 'AI Span Checker', 'wp-span-checker' ),
-		'desc'  => __( 'OpenAI, Anthropic, Gemini, DeepSeek, or Bedrock', 'wp-span-checker' ),
+		'title' => __( 'AI VMS Span Checker', 'vms-span-checker' ),
+		'desc'  => __( 'OpenAI, Anthropic, Gemini, DeepSeek, or Bedrock', 'vms-span-checker' ),
 	),
 	array(
-		'url'   => admin_url( 'admin.php?page=wp-span-checker-registration' ),
+		'url'   => admin_url( 'admin.php?page=vms-span-checker-registration' ),
 		'icon'  => '🛡',
-		'title' => __( 'Registration guard', 'wp-span-checker' ),
-		'desc'  => __( 'MX + reputation on new signups', 'wp-span-checker' ),
+		'title' => __( 'Registration guard', 'vms-span-checker' ),
+		'desc'  => __( 'MX + reputation on new signups', 'vms-span-checker' ),
 	),
 );
 ?>
@@ -109,14 +116,14 @@ $quick_links = array(
 <div class="wrap wsc-admin">
 <div class="wsc-dash">
 	<?php
-	wp_span_checker_admin_page_header(
-		__( 'Dashboard', 'wp-span-checker' ),
-		__( 'Monitor domain checks, list coverage, and API readiness in one place—built for calm, fast triage.', 'wp-span-checker' )
+	vms_span_checker_admin_page_header(
+		__( 'Dashboard', 'vms-span-checker' ),
+		__( 'Monitor domain checks, list coverage, and API readiness in one place—built for calm, fast triage.', 'vms-span-checker' )
 	);
 	?>
-	<div class="wsc-dash__badge-row" role="group" aria-label="<?php esc_attr_e( 'API and pass-rate summary', 'wp-span-checker' ); ?>">
+	<div class="wsc-dash__badge-row" role="group" aria-label="<?php esc_attr_e( 'API and pass-rate summary', 'vms-span-checker' ); ?>">
 		<span class="wsc-dash__badge <?php echo $google_on ? 'wsc-dash__badge--ok' : 'wsc-dash__badge--warn'; ?>">
-			<?php echo $google_on ? esc_html__( 'Google Web Risk: key set', 'wp-span-checker' ) : esc_html__( 'Google Web Risk: add key', 'wp-span-checker' ); ?>
+			<?php echo $google_on ? esc_html__( 'Google Web Risk: key set', 'vms-span-checker' ) : esc_html__( 'Google Web Risk: add key', 'vms-span-checker' ); ?>
 		</span>
 		<span class="wsc-dash__badge <?php echo $vt_n > 0 ? 'wsc-dash__badge--ok' : 'wsc-dash__badge--warn'; ?>">
 			<?php
@@ -124,12 +131,12 @@ $quick_links = array(
 				echo esc_html(
 					sprintf(
 						/* translators: %d: number of VirusTotal keys */
-						_n( 'VirusTotal: %d key', 'VirusTotal: %d keys', $vt_n, 'wp-span-checker' ),
+						_n( 'VirusTotal: %d key', 'VirusTotal: %d keys', $vt_n, 'vms-span-checker' ),
 						$vt_n
 					)
 				);
 			} else {
-				esc_html_e( 'VirusTotal: no keys', 'wp-span-checker' );
+				esc_html_e( 'VirusTotal: no keys', 'vms-span-checker' );
 			}
 			?>
 		</span>
@@ -138,7 +145,7 @@ $quick_links = array(
 			echo esc_html(
 				sprintf(
 					/* translators: %d: percentage of successful validations */
-					__( 'Pass rate: %d%%', 'wp-span-checker' ),
+					__( 'Pass rate: %d%%', 'vms-span-checker' ),
 					$pass_rate
 				)
 			);
@@ -150,7 +157,7 @@ $quick_links = array(
 				echo esc_html(
 					sprintf(
 						/* translators: 1: max strikes before block, 2: number of blocked commenters */
-						__( 'AI comments: max %1$d strikes · %2$d blocked', 'wp-span-checker' ),
+						__( 'AI comments: max %1$d strikes · %2$d blocked', 'vms-span-checker' ),
 						(int) $ai_cfg['comment_max_strikes'],
 						$ai_blocked_guests
 					)
@@ -162,49 +169,49 @@ $quick_links = array(
 
 	<div class="wsc-dash__grid">
 		<div class="wsc-dash__card">
-			<p class="wsc-dash__card-label"><?php esc_html_e( 'Total checks logged', 'wp-span-checker' ); ?></p>
+			<p class="wsc-dash__card-label"><?php esc_html_e( 'Total checks logged', 'vms-span-checker' ); ?></p>
 			<p class="wsc-dash__card-value"><?php echo esc_html( (string) (int) $summary['total_logs'] ); ?></p>
-			<p class="wsc-dash__card-note"><?php esc_html_e( 'All validation events recorded by WP Span Checker.', 'wp-span-checker' ); ?></p>
+			<p class="wsc-dash__card-note"><?php esc_html_e( 'All validation events recorded by VMS Span Checker.', 'vms-span-checker' ); ?></p>
 		</div>
 		<div class="wsc-dash__card">
-			<p class="wsc-dash__card-label"><?php esc_html_e( 'Passed', 'wp-span-checker' ); ?></p>
+			<p class="wsc-dash__card-label"><?php esc_html_e( 'Passed', 'vms-span-checker' ); ?></p>
 			<p class="wsc-dash__card-value"><?php echo esc_html( (string) (int) $summary['success_logs'] ); ?></p>
-			<p class="wsc-dash__card-note"><?php esc_html_e( 'Domains that cleared your rules and optional APIs.', 'wp-span-checker' ); ?></p>
+			<p class="wsc-dash__card-note"><?php esc_html_e( 'Domains that cleared your rules and optional APIs.', 'vms-span-checker' ); ?></p>
 		</div>
 		<div class="wsc-dash__card">
-			<p class="wsc-dash__card-label"><?php esc_html_e( 'Blocked / failed', 'wp-span-checker' ); ?></p>
+			<p class="wsc-dash__card-label"><?php esc_html_e( 'Blocked / failed', 'vms-span-checker' ); ?></p>
 			<p class="wsc-dash__card-value"><?php echo esc_html( (string) (int) $summary['failed_validations'] ); ?></p>
-			<p class="wsc-dash__card-note"><?php esc_html_e( 'Disposable list, HTTPS, or reputation blocks.', 'wp-span-checker' ); ?></p>
+			<p class="wsc-dash__card-note"><?php esc_html_e( 'Disposable list, HTTPS, or reputation blocks.', 'vms-span-checker' ); ?></p>
 		</div>
 		<div class="wsc-dash__card">
-			<p class="wsc-dash__card-label"><?php esc_html_e( 'Whitelist entries', 'wp-span-checker' ); ?></p>
+			<p class="wsc-dash__card-label"><?php esc_html_e( 'Whitelist entries', 'vms-span-checker' ); ?></p>
 			<p class="wsc-dash__card-value"><?php echo esc_html( (string) (int) $summary['whitelist_count'] ); ?></p>
 		</div>
 		<div class="wsc-dash__card">
-			<p class="wsc-dash__card-label"><?php esc_html_e( 'Disposable domains', 'wp-span-checker' ); ?></p>
+			<p class="wsc-dash__card-label"><?php esc_html_e( 'Disposable domains', 'vms-span-checker' ); ?></p>
 			<p class="wsc-dash__card-value"><?php echo esc_html( (string) (int) $summary['disposable_count'] ); ?></p>
 		</div>
 		<div class="wsc-dash__card">
-			<p class="wsc-dash__card-label"><?php esc_html_e( 'Form mappings', 'wp-span-checker' ); ?></p>
+			<p class="wsc-dash__card-label"><?php esc_html_e( 'Form mappings', 'vms-span-checker' ); ?></p>
 			<p class="wsc-dash__card-value"><?php echo esc_html( (string) (int) $summary['form_mappings'] ); ?></p>
-			<p class="wsc-dash__card-note"><?php esc_html_e( 'Active form ↔ validation profiles.', 'wp-span-checker' ); ?></p>
+			<p class="wsc-dash__card-note"><?php esc_html_e( 'Active form ↔ validation profiles.', 'vms-span-checker' ); ?></p>
 		</div>
 		<div class="wsc-dash__card">
-			<p class="wsc-dash__card-label"><?php esc_html_e( 'Login events', 'wp-span-checker' ); ?></p>
+			<p class="wsc-dash__card-label"><?php esc_html_e( 'Login events', 'vms-span-checker' ); ?></p>
 			<p class="wsc-dash__card-value"><?php echo esc_html( (string) (int) $summary['login_attempts'] ); ?></p>
 		</div>
 		<div class="wsc-dash__card">
-			<p class="wsc-dash__card-label"><?php esc_html_e( 'Registration events', 'wp-span-checker' ); ?></p>
+			<p class="wsc-dash__card-label"><?php esc_html_e( 'Registration events', 'vms-span-checker' ); ?></p>
 			<p class="wsc-dash__card-value"><?php echo esc_html( (string) (int) $summary['registration_attempts'] ); ?></p>
 		</div>
 	</div>
 
-	<h2 class="wsc-dash__section-title"><?php esc_html_e( 'Analysis & insights', 'wp-span-checker' ); ?></h2>
+	<h2 class="wsc-dash__section-title"><?php esc_html_e( 'Analysis & insights', 'vms-span-checker' ); ?></h2>
 	<div class="wsc-dash__analysis">
 		<div class="wsc-dash__panel wsc-dash__panel--wide">
-			<h3 class="wsc-dash__panel-title"><?php esc_html_e( 'Events by type', 'wp-span-checker' ); ?></h3>
+			<h3 class="wsc-dash__panel-title"><?php esc_html_e( 'Events by type', 'vms-span-checker' ); ?></h3>
 			<?php if ( empty( $analysis['events_by_type'] ) ) : ?>
-				<p class="wsc-dash__muted"><?php esc_html_e( 'No log data to chart yet.', 'wp-span-checker' ); ?></p>
+				<p class="wsc-dash__muted"><?php esc_html_e( 'No log data to chart yet.', 'vms-span-checker' ); ?></p>
 			<?php else : ?>
 				<ul class="wsc-dash__bars" role="list">
 					<?php foreach ( $analysis['events_by_type'] as $et ) : ?>
@@ -214,7 +221,7 @@ $quick_links = array(
 						$log_type_name = (string) $et['type'];
 						?>
 						<li class="wsc-dash__bar-row">
-							<span class="wsc-dash__bar-label"><?php echo esc_html( '' !== $log_type_name ? $log_type_name : __( '(empty)', 'wp-span-checker' ) ); ?></span>
+							<span class="wsc-dash__bar-label"><?php echo esc_html( '' !== $log_type_name ? $log_type_name : __( '(empty)', 'vms-span-checker' ) ); ?></span>
 							<span class="wsc-dash__bar-track" aria-hidden="true">
 								<span class="wsc-dash__bar-fill" style="width: <?php echo esc_attr( (string) $pct ); ?>%;"></span>
 							</span>
@@ -225,7 +232,7 @@ $quick_links = array(
 			<?php endif; ?>
 		</div>
 		<div class="wsc-dash__panel">
-			<h3 class="wsc-dash__panel-title"><?php esc_html_e( 'Signals', 'wp-span-checker' ); ?></h3>
+			<h3 class="wsc-dash__panel-title"><?php esc_html_e( 'Signals', 'vms-span-checker' ); ?></h3>
 			<ul class="wsc-dash__insight-list">
 				<?php foreach ( $insights as $line ) : ?>
 					<li><?php echo esc_html( $line ); ?></li>
@@ -236,9 +243,9 @@ $quick_links = array(
 
 	<div class="wsc-dash__analysis wsc-dash__analysis--split">
 		<div class="wsc-dash__panel">
-			<h3 class="wsc-dash__panel-title"><?php esc_html_e( 'Top blocked domains', 'wp-span-checker' ); ?></h3>
+			<h3 class="wsc-dash__panel-title"><?php esc_html_e( 'Top blocked domains', 'vms-span-checker' ); ?></h3>
 			<?php if ( empty( $analysis['top_failed_domains'] ) ) : ?>
-				<p class="wsc-dash__muted"><?php esc_html_e( 'No failed domain counts yet.', 'wp-span-checker' ); ?></p>
+				<p class="wsc-dash__muted"><?php esc_html_e( 'No failed domain counts yet.', 'vms-span-checker' ); ?></p>
 			<?php else : ?>
 				<ul class="wsc-dash__mini-bars" role="list">
 					<?php foreach ( $analysis['top_failed_domains'] as $d ) : ?>
@@ -257,9 +264,9 @@ $quick_links = array(
 			<?php endif; ?>
 		</div>
 		<div class="wsc-dash__panel">
-			<h3 class="wsc-dash__panel-title"><?php esc_html_e( 'Top failure messages', 'wp-span-checker' ); ?></h3>
+			<h3 class="wsc-dash__panel-title"><?php esc_html_e( 'Top failure messages', 'vms-span-checker' ); ?></h3>
 			<?php if ( empty( $analysis['top_failed_messages'] ) ) : ?>
-				<p class="wsc-dash__muted"><?php esc_html_e( 'No failure messages grouped yet.', 'wp-span-checker' ); ?></p>
+				<p class="wsc-dash__muted"><?php esc_html_e( 'No failure messages grouped yet.', 'vms-span-checker' ); ?></p>
 			<?php else : ?>
 				<ul class="wsc-dash__mini-bars" role="list">
 					<?php foreach ( $analysis['top_failed_messages'] as $fail_msg_row ) : ?>
@@ -279,7 +286,7 @@ $quick_links = array(
 		</div>
 	</div>
 
-	<h2 class="wsc-dash__section-title"><?php esc_html_e( 'Quick actions', 'wp-span-checker' ); ?></h2>
+	<h2 class="wsc-dash__section-title"><?php esc_html_e( 'Quick actions', 'vms-span-checker' ); ?></h2>
 	<div class="wsc-dash__actions">
 		<?php foreach ( $quick_links as $quick_item ) : ?>
 			<a class="wsc-dash__action" href="<?php echo esc_url( $quick_item['url'] ); ?>">
@@ -292,24 +299,24 @@ $quick_links = array(
 		<?php endforeach; ?>
 	</div>
 
-	<h2 class="wsc-dash__section-title"><?php esc_html_e( 'Recent blocked activity', 'wp-span-checker' ); ?></h2>
+	<h2 class="wsc-dash__section-title"><?php esc_html_e( 'Recent blocked activity', 'vms-span-checker' ); ?></h2>
 	<div class="wsc-dash__table-wrap">
 		<table class="wsc-dash__table widefat">
 			<thead>
 				<tr>
-					<th><?php esc_html_e( 'ID', 'wp-span-checker' ); ?></th>
-					<th><?php esc_html_e( 'Type', 'wp-span-checker' ); ?></th>
-					<th><?php esc_html_e( 'IP', 'wp-span-checker' ); ?></th>
-					<th><?php esc_html_e( 'Domain', 'wp-span-checker' ); ?></th>
-					<th><?php esc_html_e( 'Status', 'wp-span-checker' ); ?></th>
-					<th><?php esc_html_e( 'Message', 'wp-span-checker' ); ?></th>
-					<th><?php esc_html_e( 'Date', 'wp-span-checker' ); ?></th>
+					<th><?php esc_html_e( 'ID', 'vms-span-checker' ); ?></th>
+					<th><?php esc_html_e( 'Type', 'vms-span-checker' ); ?></th>
+					<th><?php esc_html_e( 'IP', 'vms-span-checker' ); ?></th>
+					<th><?php esc_html_e( 'Domain', 'vms-span-checker' ); ?></th>
+					<th><?php esc_html_e( 'Status', 'vms-span-checker' ); ?></th>
+					<th><?php esc_html_e( 'Message', 'vms-span-checker' ); ?></th>
+					<th><?php esc_html_e( 'Date', 'vms-span-checker' ); ?></th>
 				</tr>
 			</thead>
 			<tbody>
 			<?php if ( empty( $spam_logs ) ) : ?>
 				<tr>
-					<td colspan="7"><?php esc_html_e( 'No failed validations yet—your traffic looks quiet.', 'wp-span-checker' ); ?></td>
+					<td colspan="7"><?php esc_html_e( 'No failed validations yet—your traffic looks quiet.', 'vms-span-checker' ); ?></td>
 				</tr>
 			<?php else : ?>
 				<?php foreach ( $spam_logs as $log ) : ?>
@@ -334,13 +341,13 @@ $quick_links = array(
 			echo wp_kses_post(
 				sprintf(
 					/* translators: %s: linked "VMS Universe" */
-					__( 'Powered by %s', 'wp-span-checker' ),
+					__( 'Powered by %s', 'vms-span-checker' ),
 					'<a href="https://vmsuniverse.com" target="_blank" rel="noopener noreferrer">VMS Universe</a>'
 				)
 			);
 			?>
 		</span>
-		<span><?php esc_html_e( 'WP Span Checker — domain intelligence for WordPress forms.', 'wp-span-checker' ); ?></span>
+		<span><?php esc_html_e( 'VMS Span Checker — domain intelligence for WordPress forms.', 'vms-span-checker' ); ?></span>
 	</div>
 </div>
 </div>

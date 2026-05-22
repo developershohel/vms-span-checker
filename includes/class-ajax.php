@@ -2,14 +2,24 @@
 /**
  * AJAX handlers.
  *
- * @package WP_Span_Checker
+ * All direct `$wpdb` calls below target plugin-owned custom tables (mappings,
+ * form settings, comment moderation tables, etc.). Table identifiers are
+ * always `{$wpdb->prefix}` + a hardcoded suffix; values are prepared via
+ * `$wpdb->prepare()` or insert / update / delete helpers.
+ *
+ * @package VMS_Span_Checker
+ *
+ * phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
+ * phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
+ * phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+ * phpcs:disable WordPress.DB.PreparedSQL.NotPrepared
+ * phpcs:disable PluginCheck.Security.DirectDB.UnescapedDBParameter
  */
 
-namespace WP_Span_Checker;
+namespace VMS_Span_Checker;
 
 use Exception;
-use WP_Span_Checker\Services\Domain_Validator;
-use WP_Span_Checker\AI_Span_Summary;
+use VMS_Span_Checker\Services\Domain_Validator;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -37,9 +47,7 @@ class Ajax {
 		add_action( 'wp_ajax_get_domains', array( $this, 'ajax_get_domains' ) );
 		add_action( 'wp_ajax_add_domain', array( $this, 'ajax_add_domain' ) );
 		add_action( 'wp_ajax_delete_domain', array( $this, 'ajax_delete_domain' ) );
-		add_action( 'wp_ajax_get_form_settings', array( $this, 'ajax_get_form_settings' ) );
-		add_action( 'wp_ajax_add_form_settings', array( $this, 'ajax_add_form_settings' ) );
-		add_action( 'wp_ajax_delete_form_setting', array( $this, 'ajax_delete_form_setting' ) );
+		// Form Guard CRUD endpoints moved to vms-span-checker-pro (Pro_Ajax).
 		add_action( 'wp_ajax_validateDomainName', array( $this, 'ajax_validate_domain_name' ) );
 		add_action( 'wp_ajax_nopriv_validateDomainName', array( $this, 'ajax_validate_domain_name' ) );
 		add_action( 'wp_ajax_validateFormGuardField', array( $this, 'ajax_validate_form_guard_field' ) );
@@ -48,48 +56,196 @@ class Ajax {
 		add_action( 'wp_ajax_nopriv_validateAutoField', array( $this, 'ajax_validate_auto_field' ) );
 		add_action( 'wp_ajax_validateAllFields', array( $this, 'ajax_validate_all_fields' ) );
 		add_action( 'wp_ajax_nopriv_validateAllFields', array( $this, 'ajax_validate_all_fields' ) );
-		add_action( 'wp_ajax_wsc_ai_regenerate_summary', array( $this, 'ajax_ai_regenerate_summary' ) );
+		// AI summary regeneration is a Pro feature (Pro_Ajax handles it).
 		add_action( 'wp_ajax_import_whitelist_seed', array( $this, 'ajax_import_whitelist_seed' ) );
 		add_action( 'wp_ajax_wsc_search_pages', array( $this, 'ajax_search_pages' ) );
 		add_action( 'wp_ajax_wsc_search_posts', array( $this, 'ajax_search_posts' ) );
-		add_action( 'wp_ajax_wsc_validate_subscribe', array( $this, 'ajax_validate_subscribe' ) );
-		add_action( 'wp_ajax_nopriv_wsc_validate_subscribe', array( $this, 'ajax_validate_subscribe' ) );
-		add_action( 'wp_ajax_wsc_validate_contact', array( $this, 'ajax_validate_contact' ) );
-		add_action( 'wp_ajax_nopriv_wsc_validate_contact', array( $this, 'ajax_validate_contact' ) );
+		// Subscribe Guard and Contact Guard validation moved to Pro_Ajax.
 		add_action( 'wp_ajax_wsc_validate_registration', array( $this, 'ajax_validate_registration' ) );
 		add_action( 'wp_ajax_nopriv_wsc_validate_registration', array( $this, 'ajax_validate_registration' ) );
+		add_action( 'wp_ajax_wsc_lookup_user', array( $this, 'ajax_lookup_user' ) );
+		add_action( 'wp_ajax_wsc_manual_block_user', array( $this, 'ajax_manual_block_user' ) );
+		add_action( 'wp_ajax_wsc_edit_block_scope', array( $this, 'ajax_edit_block_scope' ) );
+		add_action( 'wp_ajax_wsc_unblock_user', array( $this, 'ajax_unblock_user' ) );
+	}
+
+	/**
+	 * AJAX: unblock a user by user ID (clears strikes + all scope flags).
+	 */
+	public function ajax_unblock_user() {
+		check_ajax_referer( 'vms_span_checker_nonce', 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'vms-span-checker' ) ) );
+		}
+
+		$user_id = isset( $_POST['user_id'] ) ? absint( wp_unslash( $_POST['user_id'] ) ) : 0;
+		if ( $user_id <= 0 ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid user ID.', 'vms-span-checker' ) ) );
+		}
+
+		$actor_key = 'u:' . $user_id;
+		if ( ! AI_Span_Comments::admin_unblock( $actor_key ) ) {
+			wp_send_json_error( array( 'message' => __( 'Could not unblock that user.', 'vms-span-checker' ) ) );
+		}
+
+		wp_send_json_success(
+			array(
+				'message'   => __( 'User unblocked.', 'vms-span-checker' ),
+				'actor_key' => $actor_key,
+			)
+		);
+	}
+
+	/**
+	 * AJAX: resolve a user by ID, username, or email; return summary card data.
+	 */
+	public function ajax_lookup_user() {
+		check_ajax_referer( 'vms_span_checker_nonce', 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'vms-span-checker' ) ) );
+		}
+
+		$query = isset( $_POST['query'] ) ? sanitize_text_field( wp_unslash( (string) $_POST['query'] ) ) : '';
+		if ( '' === $query ) {
+			wp_send_json_error( array( 'message' => __( 'Enter an ID, username, or email.', 'vms-span-checker' ) ) );
+		}
+
+		$user = AI_Span_Comments::find_user_by_input( $query );
+		if ( ! $user instanceof \WP_User ) {
+			wp_send_json_error( array( 'message' => __( 'No user matches that input.', 'vms-span-checker' ) ) );
+		}
+
+		$actor_key   = 'u:' . (int) $user->ID;
+		$existing    = $this->wpdb->get_row(
+			$this->wpdb->prepare(
+				"SELECT actor_key, strikes, blocked, site_banned, login_blocked, last_reason FROM {$this->wpdb->prefix}vms_span_checker_comment_enforcement WHERE actor_key = %s",
+				$actor_key
+			),
+			ARRAY_A
+		);
+		$is_blocked  = is_array( $existing ) && (
+			! empty( $existing['blocked'] ) ||
+			! empty( $existing['site_banned'] ) ||
+			! empty( $existing['login_blocked'] )
+		);
+
+		$avatar_url = get_avatar_url( $user->ID, array( 'size' => 64 ) );
+
+		wp_send_json_success(
+			array(
+				'user'    => array(
+					'id'           => (int) $user->ID,
+					'login'        => $user->user_login,
+					'email'        => $user->user_email,
+					'display_name' => $user->display_name,
+					'roles'        => array_values( (array) $user->roles ),
+					'avatar'       => $avatar_url ? (string) $avatar_url : '',
+					'edit_url'     => current_user_can( 'edit_user', $user->ID )
+						? get_edit_user_link( $user->ID )
+						: '',
+				),
+				'block'   => array(
+					'is_blocked'    => $is_blocked,
+					'strikes'       => is_array( $existing ) ? (int) ( $existing['strikes'] ?? 0 ) : 0,
+					'form'          => is_array( $existing ) ? ! empty( $existing['blocked'] ) : false,
+					'login'         => is_array( $existing ) ? ! empty( $existing['login_blocked'] ) : false,
+					'site'          => is_array( $existing ) ? ! empty( $existing['site_banned'] ) : false,
+					'last_reason'   => is_array( $existing ) ? (string) ( $existing['last_reason'] ?? '' ) : '',
+					'actor_key'     => $actor_key,
+				),
+			)
+		);
+	}
+
+	/**
+	 * AJAX: manually block a user by ID (after lookup).
+	 */
+	public function ajax_manual_block_user() {
+		check_ajax_referer( 'vms_span_checker_nonce', 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'vms-span-checker' ) ) );
+		}
+
+		$user_id = isset( $_POST['user_id'] ) ? absint( wp_unslash( $_POST['user_id'] ) ) : 0;
+		if ( $user_id <= 0 ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid user ID.', 'vms-span-checker' ) ) );
+		}
+
+		$scope_raw = isset( $_POST['scope'] )
+			? map_deep( (array) wp_unslash( $_POST['scope'] ), 'sanitize_key' )
+			: array();
+		$scope = array();
+		foreach ( $scope_raw as $s ) {
+			$s = (string) $s;
+			if ( in_array( $s, array( 'form', 'login', 'site' ), true ) ) {
+				$scope[] = $s;
+			}
+		}
+
+		$reason      = isset( $_POST['reason'] ) ? sanitize_textarea_field( wp_unslash( (string) $_POST['reason'] ) ) : '';
+		$expiry_days = isset( $_POST['expiry_days'] ) ? absint( wp_unslash( $_POST['expiry_days'] ) ) : 0;
+
+		$result = AI_Span_Comments::admin_manual_block(
+			$user_id,
+			array(
+				'scope'       => $scope,
+				'reason'      => $reason,
+				'expiry_days' => $expiry_days,
+			)
+		);
+
+		if ( empty( $result['success'] ) ) {
+			wp_send_json_error( array( 'message' => $result['message'] ) );
+		}
+
+		wp_send_json_success( $result );
+	}
+
+	/**
+	 * AJAX: update block scope flags on an existing enforcement row.
+	 */
+	public function ajax_edit_block_scope() {
+		check_ajax_referer( 'vms_span_checker_nonce', 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'vms-span-checker' ) ) );
+		}
+
+		$actor_key = isset( $_POST['actor_key'] ) ? sanitize_text_field( wp_unslash( (string) $_POST['actor_key'] ) ) : '';
+		if ( '' === $actor_key ) {
+			wp_send_json_error( array( 'message' => __( 'Missing actor key.', 'vms-span-checker' ) ) );
+		}
+
+		$scope_raw = isset( $_POST['scope'] )
+			? map_deep( (array) wp_unslash( $_POST['scope'] ), 'sanitize_key' )
+			: array();
+		$scope = array();
+		foreach ( $scope_raw as $s ) {
+			$s = (string) $s;
+			if ( in_array( $s, array( 'form', 'login', 'site' ), true ) ) {
+				$scope[] = $s;
+			}
+		}
+
+		$ok = AI_Span_Comments::admin_edit_block_scope( $actor_key, $scope );
+		if ( ! $ok ) {
+			wp_send_json_error( array( 'message' => __( 'Could not update block scope.', 'vms-span-checker' ) ) );
+		}
+
+		wp_send_json_success( array( 'message' => __( 'Block scope updated.', 'vms-span-checker' ) ) );
 	}
 
 	/**
 	 * AJAX: generate or refresh AI summary for one post.
 	 */
-	public function ajax_ai_regenerate_summary() {
-		check_ajax_referer( 'wp_span_checker_nonce', 'nonce' );
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'You do not have permission to perform this action.', 'wp-span-checker' ) ) );
-		}
-
-		$post_id = isset( $_POST['post_id'] ) ? absint( $_POST['post_id'] ) : 0;
-		if ( ! $post_id || ! current_user_can( 'edit_post', $post_id ) ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid post.', 'wp-span-checker' ) ) );
-		}
-
-		$runner = new AI_Span_Summary();
-		$ok     = $runner->generate_for_post( $post_id, array( 'force' => true ) );
-		if ( ! $ok ) {
-			wp_send_json_error( array( 'message' => __( 'Summary generation failed. Check AI settings and the post status.', 'wp-span-checker' ) ) );
-		}
-
-		wp_send_json_success( array( 'message' => __( 'Summary saved.', 'wp-span-checker' ) ) );
-	}
+	// ajax_ai_regenerate_summary moved to vms-span-checker-pro (Pro_Ajax).
 
 	/**
 	 * AJAX: list whitelist or disposable domains.
 	 */
 	public function ajax_get_domains() {
-		check_ajax_referer( 'wp_span_checker_nonce', 'nonce' );
+		check_ajax_referer( 'vms_span_checker_nonce', 'nonce' );
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'You do not have permission to perform this action.', 'wp-span-checker' ) ) );
+			wp_send_json_error( array( 'message' => __( 'You do not have permission to perform this action.', 'vms-span-checker' ) ) );
 		}
 
 		$type = isset( $_POST['domain_type'] ) ? sanitize_text_field( wp_unslash( $_POST['domain_type'] ) ) : 'whitelist';
@@ -111,161 +267,16 @@ class Ajax {
 		);
 	}
 
-	/**
-	 * AJAX: list form validation mappings.
-	 */
-	public function ajax_get_form_settings() {
-		check_ajax_referer( 'wp_span_checker_nonce', 'nonce' );
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'You do not have permission to perform this action.', 'wp-span-checker' ) ) );
-		}
-
-		$table         = $this->wpdb->prefix . 'span_checker_form_settings';
-		$form_settings = $this->wpdb->get_results( "SELECT * FROM {$table} ORDER BY id ASC", ARRAY_A );
-
-		wp_send_json_success(
-			array(
-				'formSettings' => $form_settings,
-			)
-		);
-	}
-
-	/**
-	 * AJAX: save form validation mapping.
-	 */
-	public function ajax_add_form_settings() {
-		check_ajax_referer( 'wp_span_checker_nonce', 'nonce' );
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'You do not have permission to perform this action.', 'wp-span-checker' ) ) );
-		}
-
-		$id            = isset( $_POST['id'] ) ? absint( $_POST['id'] ) : 0;
-		$form_type     = isset( $_POST['formType'] ) ? sanitize_text_field( wp_unslash( $_POST['formType'] ) ) : '';
-		$page_id = wp_span_checker_sanitize_page_targets_param(
-			isset( $_POST['pageId'] ) ? wp_unslash( $_POST['pageId'] ) : ''
-		);
-		$form_id          = isset( $_POST['formId'] ) ? sanitize_text_field( wp_unslash( $_POST['formId'] ) ) : '';
-		$form_class       = isset( $_POST['formClass'] ) ? sanitize_text_field( wp_unslash( $_POST['formClass'] ) ) : '';
-		$submit_selector  = isset( $_POST['submitSelector'] ) ? sanitize_text_field( wp_unslash( $_POST['submitSelector'] ) ) : '';
-		$auto_validation  = isset( $_POST['autoValidation'] ) ? absint( $_POST['autoValidation'] ) : 1;
-		$auto_rules_raw   = isset( $_POST['autoRules'] ) ? wp_unslash( $_POST['autoRules'] ) : '{}';
-		$auto_rules       = is_string( $auto_rules_raw ) ? $auto_rules_raw : wp_json_encode( $auto_rules_raw );
-		$enable_recaptcha = isset( $_POST['enableRecaptcha'] ) ? absint( $_POST['enableRecaptcha'] ) : 0;
-		$form_settings    = isset( $_POST['formSettings'] ) ? wp_unslash( $_POST['formSettings'] ) : array();
-		$is_webrisk_post  = isset( $_POST['is_webrisk'] ) ? absint( $_POST['is_webrisk'] ) : null;
-		$is_virustotal_post = isset( $_POST['is_virustotal'] ) ? absint( $_POST['is_virustotal'] ) : null;
-
-		$sanitized_array = array();
-		if ( ! $auto_validation && is_array( $form_settings ) ) {
-			$sanitized_array = map_deep( $form_settings, 'sanitize_text_field' );
-			foreach ( $sanitized_array as $idx => $f_item ) {
-				if ( ! is_array( $f_item ) ) {
-					continue;
-				}
-				$ft = isset( $f_item['field'] ) ? sanitize_text_field( (string) $f_item['field'] ) : 'text';
-				$sanitized_array[ $idx ] = Form_Guard_Conditional::normalize_field_config( $ft, $f_item );
-			}
-		}
-
-		$table = $this->wpdb->prefix . 'span_checker_form_settings';
-
-		$row_wr = 0;
-		$row_vt = 0;
-		
-		if ( $auto_validation ) {
-			$parsed_rules = json_decode( $auto_rules, true );
-			if ( is_array( $parsed_rules ) ) {
-				if ( ! empty( $parsed_rules['email']['webrisk'] ) || ! empty( $parsed_rules['url']['webrisk'] ) ) {
-					$row_wr = 1;
-				}
-				if ( ! empty( $parsed_rules['email']['virustotal'] ) || ! empty( $parsed_rules['url']['virustotal'] ) ) {
-					$row_vt = 1;
-				}
-			}
-		} else {
-			foreach ( $sanitized_array as $f_item ) {
-				if ( is_array( $f_item ) ) {
-					if ( ! empty( $f_item['is_webrisk'] ) && '0' !== (string) $f_item['is_webrisk'] ) {
-						$row_wr = 1;
-					}
-					if ( ! empty( $f_item['is_virustotal'] ) && '0' !== (string) $f_item['is_virustotal'] ) {
-						$row_vt = 1;
-					}
-				}
-			}
-		}
-		
-		if ( null !== $is_webrisk_post ) {
-			$row_wr = max( $row_wr, $is_webrisk_post );
-		}
-		if ( null !== $is_virustotal_post ) {
-			$row_vt = max( $row_vt, $is_virustotal_post );
-		}
-
-		$row = array(
-			'form_type'        => $form_type,
-			'page_id'          => $page_id,
-			'form_id'          => $form_id,
-			'form_class'       => $form_class,
-			'submit_selector'  => $submit_selector,
-			'auto_validation'  => $auto_validation,
-			'auto_rules'       => $auto_rules,
-			'enable_recaptcha' => $enable_recaptcha,
-			'settings'         => wp_json_encode( $sanitized_array ),
-			'is_webrisk'       => $row_wr,
-			'is_virustotal'    => $row_vt,
-		);
-
-		try {
-			if ( $id > 0 ) {
-				$updated = $this->wpdb->update(
-					$table,
-					$row,
-					array( 'id' => $id )
-				);
-				if ( false === $updated ) {
-					wp_send_json_error( array( 'message' => __( 'Could not update Form Guard mapping.', 'wp-span-checker' ) ) );
-				}
-			} else {
-				$inserted = $this->wpdb->insert( $table, $row );
-				if ( ! $inserted ) {
-					wp_send_json_error( array( 'message' => __( 'Could not save Form Guard mapping.', 'wp-span-checker' ) ) );
-				}
-			}
-
-			wp_send_json_success();
-		} catch ( Exception $e ) {
-			wp_send_json_error( array( 'message' => $e->getMessage() ) );
-		}
-	}
-
-	/**
-	 * AJAX: delete form mapping row.
-	 */
-	public function ajax_delete_form_setting() {
-		check_ajax_referer( 'wp_span_checker_nonce', 'nonce' );
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'You do not have permission to perform this action.', 'wp-span-checker' ) ) );
-		}
-
-		$id = isset( $_POST['id'] ) ? (int) $_POST['id'] : 0;
-		if ( ! $id ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid ID.', 'wp-span-checker' ) ) );
-		}
-
-		$table = $this->wpdb->prefix . 'span_checker_form_settings';
-		$this->wpdb->delete( $table, array( 'id' => $id ) );
-
-		wp_send_json_success();
-	}
+	// Form Guard CRUD handlers (ajax_get_form_settings, ajax_add_form_settings,
+	// ajax_delete_form_setting) have been moved to vms-span-checker-pro (Pro_Ajax).
 
 	/**
 	 * AJAX: add domain to whitelist or disposable list.
 	 */
 	public function ajax_add_domain() {
-		check_ajax_referer( 'wp_span_checker_nonce', 'nonce' );
+		check_ajax_referer( 'vms_span_checker_nonce', 'nonce' );
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'You do not have permission to perform this action.', 'wp-span-checker' ) ) );
+			wp_send_json_error( array( 'message' => __( 'You do not have permission to perform this action.', 'vms-span-checker' ) ) );
 		}
 
 		$type   = isset( $_POST['domain_type'] ) ? sanitize_text_field( wp_unslash( $_POST['domain_type'] ) ) : 'whitelist';
@@ -276,7 +287,7 @@ class Ajax {
 		}
 
 		if ( '' === $domain ) {
-			wp_send_json_error( array( 'message' => __( 'Domain is required.', 'wp-span-checker' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Domain is required.', 'vms-span-checker' ) ) );
 		}
 
 		$table = ( 'disposable' === $type )
@@ -292,9 +303,9 @@ class Ajax {
 	 * AJAX: remove domain row.
 	 */
 	public function ajax_delete_domain() {
-		check_ajax_referer( 'wp_span_checker_nonce', 'nonce' );
+		check_ajax_referer( 'vms_span_checker_nonce', 'nonce' );
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'You do not have permission to perform this action.', 'wp-span-checker' ) ) );
+			wp_send_json_error( array( 'message' => __( 'You do not have permission to perform this action.', 'vms-span-checker' ) ) );
 		}
 
 		$type = isset( $_POST['domain_type'] ) ? sanitize_text_field( wp_unslash( $_POST['domain_type'] ) ) : 'whitelist';
@@ -305,7 +316,7 @@ class Ajax {
 		}
 
 		if ( ! $id ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid ID.', 'wp-span-checker' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Invalid ID.', 'vms-span-checker' ) ) );
 		}
 
 		$table = ( 'disposable' === $type )
@@ -321,23 +332,24 @@ class Ajax {
 	 * AJAX: validate domain (public + admin).
 	 */
 	public function ajax_validate_domain_name() {
-		check_ajax_referer( 'wp_span_checker_nonce', 'nonce' );
+		check_ajax_referer( 'vms_span_checker_nonce', 'nonce' );
 
-		$raw    = isset( $_POST['domain'] ) ? wp_unslash( $_POST['domain'] ) : '';
-		$domain = wp_span_checker_normalize_domain_input( $raw );
+		// Raw domain value is normalized + lowercased by the helper below.
+		$raw    = isset( $_POST['domain'] ) ? wp_unslash( $_POST['domain'] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitized by normalizer.
+		$domain = vms_span_checker_normalize_domain_input( $raw );
 
 		if ( '' === $domain ) {
 			wp_send_json_error(
 				array(
-					'message' => __( 'Domain is required.', 'wp-span-checker' ),
+					'message' => __( 'Domain is required.', 'vms-span-checker' ),
 					'status'  => false,
 				)
 			);
 		}
 
 		$type     = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : 'unknown';
-		$ip       = wp_span_checker_get_user_ip();
-		$settings = wp_span_checker_parse_validation_settings( wp_unslash( $_POST ) );
+		$ip       = vms_span_checker_get_user_ip();
+		$settings = vms_span_checker_parse_validation_settings( wp_unslash( $_POST ) );
 
 		$domain_validation = new Domain_Validator();
 
@@ -358,33 +370,42 @@ class Ajax {
 	 * AJAX: run Form Guard checks for one mapped field (public).
 	 */
 	public function ajax_validate_form_guard_field() {
-		check_ajax_referer( 'wp_span_checker_nonce', 'nonce' );
+		check_ajax_referer( 'vms_span_checker_nonce', 'nonce' );
 
 		$mapping_id  = isset( $_POST['mappingId'] ) ? absint( $_POST['mappingId'] ) : 0;
 		$field_index = isset( $_POST['fieldIndex'] ) ? absint( $_POST['fieldIndex'] ) : 0;
-		$value_raw   = isset( $_POST['value'] ) ? wp_unslash( $_POST['value'] ) : '';
+		// Field value is passed through the field-specific validator, which
+		// handles type-specific sanitization for text, email, url, etc.
+		$value_raw   = isset( $_POST['value'] ) ? wp_unslash( $_POST['value'] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Validated by validator.
 		$value       = is_string( $value_raw ) ? $value_raw : '';
 
 		if ( ! $mapping_id ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid mapping.', 'wp-span-checker' ), 'status' => false ) );
+			wp_send_json_error( array( 'message' => __( 'Invalid mapping.', 'vms-span-checker' ), 'status' => false ) );
 		}
 
-		$table = $this->wpdb->prefix . 'span_checker_form_settings';
+		$table = $this->wpdb->prefix . 'vms_span_checker_form_settings';
 		$row   = $this->wpdb->get_row( $this->wpdb->prepare( "SELECT * FROM {$table} WHERE id = %d", $mapping_id ), ARRAY_A );
 
 		if ( ! $row || empty( $row['settings'] ) ) {
-			wp_send_json_error( array( 'message' => __( 'Mapping not found.', 'wp-span-checker' ), 'status' => false ) );
+			wp_send_json_error( array( 'message' => __( 'Mapping not found.', 'vms-span-checker' ), 'status' => false ) );
 		}
 
 		$fields = json_decode( $row['settings'], true );
 		if ( ! is_array( $fields ) || ! isset( $fields[ $field_index ] ) || ! is_array( $fields[ $field_index ] ) ) {
-			wp_send_json_error( array( 'message' => __( 'Field configuration not found.', 'wp-span-checker' ), 'status' => false ) );
+			wp_send_json_error( array( 'message' => __( 'Field configuration not found.', 'vms-span-checker' ), 'status' => false ) );
 		}
 
 		$field = $fields[ $field_index ];
 		$type  = isset( $field['field'] ) ? sanitize_text_field( (string) $field['field'] ) : 'text';
 
-		$result = Form_Guard_Conditional::validate_field_value( $type, $field, $value, $row );
+		// Form Guard validation is a Pro feature. Without it, the only safe
+		// answer is to accept the value (no rules configured); Pro overrides
+		// this endpoint when active.
+		if ( ! class_exists( '\\VMS_Span_Checker\\Form_Guard_Conditional' ) ) {
+			wp_send_json_success( array( 'success' => true, 'message' => '' ) );
+		}
+
+		$result = \VMS_Span_Checker\Form_Guard_Conditional::validate_field_value( $type, $field, $value, $row );
 		wp_send_json_success( $result );
 	}
 
@@ -392,17 +413,19 @@ class Ajax {
 	 * AJAX: validate auto-detected field (public).
 	 */
 	public function ajax_validate_auto_field() {
-		check_ajax_referer( 'wp_span_checker_nonce', 'nonce' );
+		check_ajax_referer( 'vms_span_checker_nonce', 'nonce' );
 
 		$mapping_id  = isset( $_POST['mappingId'] ) ? absint( $_POST['mappingId'] ) : 0;
 		$field_type  = isset( $_POST['fieldType'] ) ? sanitize_text_field( wp_unslash( $_POST['fieldType'] ) ) : '';
 		$field_name  = isset( $_POST['fieldName'] ) ? sanitize_text_field( wp_unslash( $_POST['fieldName'] ) ) : '';
-		$value_raw   = isset( $_POST['value'] ) ? wp_unslash( $_POST['value'] ) : '';
+		// Field value is passed through the field-specific validator.
+		$value_raw   = isset( $_POST['value'] ) ? wp_unslash( $_POST['value'] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Validated by validator.
 		$value       = is_string( $value_raw ) ? $value_raw : '';
-		$rules_raw   = isset( $_POST['rules'] ) ? wp_unslash( $_POST['rules'] ) : '{}';
+		// Raw JSON rules are decoded below; text sanitization is not appropriate.
+		$rules_raw   = isset( $_POST['rules'] ) ? wp_unslash( $_POST['rules'] ) : '{}'; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- JSON string sanitized by decoder.
 
 		if ( ! $mapping_id ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid mapping.', 'wp-span-checker' ), 'status' => false ) );
+			wp_send_json_error( array( 'message' => __( 'Invalid mapping.', 'vms-span-checker' ), 'status' => false ) );
 		}
 
 		$rules = json_decode( $rules_raw, true );
@@ -410,11 +433,11 @@ class Ajax {
 			$rules = array();
 		}
 
-		$table = $this->wpdb->prefix . 'span_checker_form_settings';
+		$table = $this->wpdb->prefix . 'vms_span_checker_form_settings';
 		$row   = $this->wpdb->get_row( $this->wpdb->prepare( "SELECT * FROM {$table} WHERE id = %d", $mapping_id ), ARRAY_A );
 
 		if ( ! $row ) {
-			wp_send_json_error( array( 'message' => __( 'Mapping not found.', 'wp-span-checker' ), 'status' => false ) );
+			wp_send_json_error( array( 'message' => __( 'Mapping not found.', 'vms-span-checker' ), 'status' => false ) );
 		}
 
 		$result = array( 'status' => true );
@@ -431,23 +454,23 @@ class Ajax {
 					// Check MX record first (required before webrisk/virustotal for email)
 					$mx_valid = false;
 					if ( $domain ) {
-						$mx_valid = wp_span_checker_check_mx_record( $domain );
+						$mx_valid = vms_span_checker_check_mx_record( $domain );
 					}
 
 					if ( ! empty( $rules['mx'] ) && $domain && ! $mx_valid ) {
 						$result = array(
 							'status'  => false,
-							'message' => wp_span_checker_get_error_message( 'email_mx_failed' ),
+							'message' => vms_span_checker_get_error_message( 'email_mx_failed' ),
 						);
 						break;
 					}
 
 					if ( ! empty( $rules['disposable'] ) && $domain ) {
-						$is_disposable = wp_span_checker_is_disposable_domain( $domain );
+						$is_disposable = vms_span_checker_is_disposable_domain( $domain );
 						if ( $is_disposable ) {
 							$result = array(
 								'status'  => false,
-								'message' => wp_span_checker_get_error_message( 'email_disposable' ),
+								'message' => vms_span_checker_get_error_message( 'email_disposable' ),
 							);
 							break;
 						}
@@ -460,22 +483,22 @@ class Ajax {
 					}
 
 					if ( ! empty( $rules['webrisk'] ) && $domain ) {
-						$webrisk_result = wp_span_checker_check_webrisk( $domain );
+						$webrisk_result = vms_span_checker_check_webrisk( $domain );
 						if ( $webrisk_result && isset( $webrisk_result['threat'] ) && $webrisk_result['threat'] ) {
 							$result = array(
 								'status'  => false,
-								'message' => wp_span_checker_get_error_message( 'email_webrisk_flagged' ),
+								'message' => vms_span_checker_get_error_message( 'email_webrisk_flagged' ),
 							);
 							break;
 						}
 					}
 
 					if ( ! empty( $rules['virustotal'] ) && $domain ) {
-						$vt_result = wp_span_checker_check_virustotal( $domain );
+						$vt_result = vms_span_checker_check_virustotal( $domain );
 						if ( $vt_result && isset( $vt_result['malicious'] ) && $vt_result['malicious'] > 0 ) {
 							$result = array(
 								'status'  => false,
-								'message' => wp_span_checker_get_error_message( 'email_virustotal_flagged' ),
+								'message' => vms_span_checker_get_error_message( 'email_virustotal_flagged' ),
 							);
 							break;
 						}
@@ -485,37 +508,37 @@ class Ajax {
 
 			case 'url':
 				if ( ! empty( $rules['webrisk'] ) || ! empty( $rules['virustotal'] ) ) {
-					$domain = wp_span_checker_normalize_domain_input( $value );
+					$domain = vms_span_checker_normalize_domain_input( $value );
 					
 					// Check domain DNS (A record) first before external API checks
 					if ( $domain ) {
-						$domain_exists = wp_span_checker_check_domain_dns( $domain );
+						$domain_exists = vms_span_checker_check_domain_dns( $domain );
 						if ( ! $domain_exists ) {
 							$result = array(
 								'status'  => false,
-								'message' => wp_span_checker_get_error_message( 'url_dns_failed' ),
+								'message' => vms_span_checker_get_error_message( 'url_dns_failed' ),
 							);
 							break;
 						}
 					}
 					
 					if ( ! empty( $rules['webrisk'] ) && $domain ) {
-						$webrisk_result = wp_span_checker_check_webrisk( $domain );
+						$webrisk_result = vms_span_checker_check_webrisk( $domain );
 						if ( $webrisk_result && isset( $webrisk_result['threat'] ) && $webrisk_result['threat'] ) {
 							$result = array(
 								'status'  => false,
-								'message' => wp_span_checker_get_error_message( 'url_webrisk_flagged' ),
+								'message' => vms_span_checker_get_error_message( 'url_webrisk_flagged' ),
 							);
 							break;
 						}
 					}
 
 					if ( ! empty( $rules['virustotal'] ) && $domain ) {
-						$vt_result = wp_span_checker_check_virustotal( $domain );
+						$vt_result = vms_span_checker_check_virustotal( $domain );
 						if ( $vt_result && isset( $vt_result['malicious'] ) && $vt_result['malicious'] > 0 ) {
 							$result = array(
 								'status'  => false,
-								'message' => wp_span_checker_get_error_message( 'url_virustotal_flagged' ),
+								'message' => vms_span_checker_get_error_message( 'url_virustotal_flagged' ),
 							);
 							break;
 						}
@@ -537,17 +560,17 @@ class Ajax {
 					}
 					
 					$ai_context = array(
-						'form_name'  => $form_name ? $form_name : __( 'Contact Form', 'wp-span-checker' ),
+						'form_name'  => $form_name ? $form_name : __( 'Contact Form', 'vms-span-checker' ),
 						'field_type' => 'textarea',
 						'field_name' => $field_name ? $field_name : 'message',
 						'page_title' => $page_title,
 					);
 					
-					$spam_result = wp_span_checker_check_ai_spam( $value, $ai_context );
+					$spam_result = vms_span_checker_check_ai_spam( $value, $ai_context );
 					if ( $spam_result && isset( $spam_result['is_spam'] ) && $spam_result['is_spam'] ) {
 						$result = array(
 							'status'  => false,
-							'message' => wp_span_checker_get_error_message( 'spam_detected' ),
+							'message' => vms_span_checker_get_error_message( 'spam_detected' ),
 						);
 					}
 				}
@@ -559,7 +582,7 @@ class Ajax {
 					if ( $user ) {
 						$result = array(
 							'status'  => false,
-							'message' => wp_span_checker_get_error_message( 'username_taken' ),
+							'message' => vms_span_checker_get_error_message( 'username_taken' ),
 						);
 					}
 				}
@@ -573,22 +596,16 @@ class Ajax {
 	 * AJAX: validate ALL fields in a single request.
 	 */
 	public function ajax_validate_all_fields() {
-		// Enable error reporting for debugging
-		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-			error_reporting( E_ALL );
-			ini_set( 'display_errors', 0 );
-		}
-
 		try {
-			check_ajax_referer( 'wp_span_checker_nonce', 'nonce' );
+			check_ajax_referer( 'vms_span_checker_nonce', 'nonce' );
 
 			// Check if user is already blocked (skip for admins)
-			$cfg = \WP_Span_Checker\AI_Span_Config::get();
+			$cfg = \VMS_Span_Checker\AI_Span_Config::get();
 			$is_admin_exempt = ! empty( $cfg['block_user_exempt_admins'] ) && current_user_can( 'manage_options' );
 			
 			if ( ! $is_admin_exempt && ! empty( $cfg['block_user_enabled'] ) ) {
 				$user_id = is_user_logged_in() ? get_current_user_id() : 0;
-				$strike_count = wp_span_checker_get_strike_count( $user_id );
+				$strike_count = vms_span_checker_get_strike_count( $user_id );
 				$max_strikes = (int) ( $cfg['block_user_max_strikes'] ?? 5 );
 				
 				if ( $strike_count >= $max_strikes ) {
@@ -598,7 +615,7 @@ class Ajax {
 						'errors'  => array(
 						array(
 							'fieldName' => 'form',
-							'message'   => wp_span_checker_get_error_message( 'user_blocked' ),
+							'message'   => vms_span_checker_get_error_message( 'user_blocked' ),
 						),
 						),
 					) );
@@ -624,7 +641,9 @@ class Ajax {
 				}
 			}
 
-			$fields_raw = isset( $_POST['fields'] ) ? wp_unslash( $_POST['fields'] ) : '[]';
+			// `fields` is a JSON-encoded array decoded immediately below;
+			// each field is sanitized per-key inside the validation loop.
+			$fields_raw = isset( $_POST['fields'] ) ? wp_unslash( $_POST['fields'] ) : '[]'; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- JSON string sanitized by decoder.
 			$fields     = json_decode( $fields_raw, true );
 			
 			if ( ! is_array( $fields ) || empty( $fields ) ) {
@@ -633,7 +652,7 @@ class Ajax {
 			}
 
 			$errors = array();
-			$table  = $this->wpdb->prefix . 'span_checker_form_settings';
+			$table  = $this->wpdb->prefix . 'vms_span_checker_form_settings';
 
 			foreach ( $fields as $field ) {
 				$field_type  = isset( $field['fieldType'] ) ? sanitize_text_field( $field['fieldType'] ) : '';
@@ -665,7 +684,7 @@ class Ajax {
 						}
 
 						if ( empty( $domain ) ) {
-							$error = __( 'Invalid email address format.', 'wp-span-checker' );
+							$error = __( 'Invalid email address format.', 'vms-span-checker' );
 							break;
 						}
 
@@ -673,48 +692,48 @@ class Ajax {
 						$needs_api_checks = ! empty( $rules['webrisk'] ) || ! empty( $rules['virustotal'] );
 
 						// Check DNS A record (domain exists) - mandatory if API checks enabled
-						$dns_valid = wp_span_checker_check_domain_dns( $domain );
+						$dns_valid = vms_span_checker_check_domain_dns( $domain );
 						if ( $needs_api_checks && ! $dns_valid ) {
-							$error = __( 'Email domain does not exist (no DNS A record found).', 'wp-span-checker' );
+							$error = __( 'Email domain does not exist (no DNS A record found).', 'vms-span-checker' );
 							break;
 						}
 
 						// Check MX record
-						$mx_valid = wp_span_checker_check_mx_record( $domain );
+						$mx_valid = vms_span_checker_check_mx_record( $domain );
 
 						// If MX rule explicitly enabled OR API checks need MX as prerequisite
 						if ( ( ! empty( $rules['mx'] ) || $needs_api_checks ) && ! $mx_valid ) {
-							$error = wp_span_checker_get_error_message( 'email_mx_failed' );
+							$error = vms_span_checker_get_error_message( 'email_mx_failed' );
 							break;
 						}
 
 						if ( ! empty( $rules['disposable'] ) ) {
-							if ( wp_span_checker_is_disposable_domain( $domain ) ) {
-								$error = wp_span_checker_get_error_message( 'email_disposable' );
+							if ( vms_span_checker_is_disposable_domain( $domain ) ) {
+								$error = vms_span_checker_get_error_message( 'email_disposable' );
 								break;
 							}
 						}
 
 						// Run API checks only if domain is verified live (DNS + MX passed)
 						if ( ! empty( $rules['webrisk'] ) ) {
-							$webrisk_result = wp_span_checker_check_webrisk( $domain );
+							$webrisk_result = vms_span_checker_check_webrisk( $domain );
 							if ( $webrisk_result && isset( $webrisk_result['threat'] ) && $webrisk_result['threat'] ) {
-								$error = wp_span_checker_get_error_message( 'email_webrisk_flagged' );
+								$error = vms_span_checker_get_error_message( 'email_webrisk_flagged' );
 								break;
 							}
 						}
 
 						if ( ! empty( $rules['virustotal'] ) ) {
-							$vt_result = wp_span_checker_check_virustotal( $domain );
+							$vt_result = vms_span_checker_check_virustotal( $domain );
 							if ( $vt_result && isset( $vt_result['malicious'] ) && $vt_result['malicious'] > 0 ) {
-								$error = wp_span_checker_get_error_message( 'email_virustotal_flagged' );
+								$error = vms_span_checker_get_error_message( 'email_virustotal_flagged' );
 								break;
 							}
 						}
 						break;
 
 					case 'url':
-						$domain = wp_span_checker_normalize_domain_input( $value );
+						$domain = vms_span_checker_normalize_domain_input( $value );
 						
 						if ( empty( $domain ) ) {
 							break; // No domain to check
@@ -724,25 +743,25 @@ class Ajax {
 						$needs_api_checks = ! empty( $rules['webrisk'] ) || ! empty( $rules['virustotal'] );
 						
 						// Check domain DNS - mandatory before API checks
-						$domain_exists = wp_span_checker_check_domain_dns( $domain );
+						$domain_exists = vms_span_checker_check_domain_dns( $domain );
 						if ( $needs_api_checks && ! $domain_exists ) {
-							$error = wp_span_checker_get_error_message( 'url_dns_failed' );
+							$error = vms_span_checker_get_error_message( 'url_dns_failed' );
 							break;
 						}
 						
 						// Run API checks only if domain exists
 						if ( ! empty( $rules['webrisk'] ) ) {
-							$webrisk_result = wp_span_checker_check_webrisk( $domain );
+							$webrisk_result = vms_span_checker_check_webrisk( $domain );
 							if ( $webrisk_result && isset( $webrisk_result['threat'] ) && $webrisk_result['threat'] ) {
-								$error = wp_span_checker_get_error_message( 'url_webrisk_flagged' );
+								$error = vms_span_checker_get_error_message( 'url_webrisk_flagged' );
 								break;
 							}
 						}
 
 						if ( ! empty( $rules['virustotal'] ) ) {
-							$vt_result = wp_span_checker_check_virustotal( $domain );
+							$vt_result = vms_span_checker_check_virustotal( $domain );
 							if ( $vt_result && isset( $vt_result['malicious'] ) && $vt_result['malicious'] > 0 ) {
-								$error = wp_span_checker_get_error_message( 'url_virustotal_flagged' );
+								$error = vms_span_checker_get_error_message( 'url_virustotal_flagged' );
 								break;
 							}
 						}
@@ -762,15 +781,15 @@ class Ajax {
 							}
 							
 							$ai_context = array(
-								'form_name'  => $form_name ? $form_name : __( 'Contact Form', 'wp-span-checker' ),
+								'form_name'  => $form_name ? $form_name : __( 'Contact Form', 'vms-span-checker' ),
 								'field_type' => 'textarea',
 								'field_name' => $field_name ? $field_name : 'message',
 								'page_title' => $page_title,
 							);
 							
-							$spam_result = wp_span_checker_check_ai_spam( $value, $ai_context );
+							$spam_result = vms_span_checker_check_ai_spam( $value, $ai_context );
 							if ( $spam_result && isset( $spam_result['is_spam'] ) && $spam_result['is_spam'] ) {
-								$error = __( 'Your message appears to be spam.', 'wp-span-checker' );
+								$error = __( 'Your message appears to be spam.', 'vms-span-checker' );
 							}
 						}
 						break;
@@ -779,7 +798,7 @@ class Ajax {
 						if ( ! empty( $rules['check_exists'] ) ) {
 							$user = get_user_by( 'login', $value );
 							if ( $user ) {
-								$error = __( 'This username is already taken.', 'wp-span-checker' );
+								$error = __( 'This username is already taken.', 'vms-span-checker' );
 							}
 						}
 						break;
@@ -816,7 +835,7 @@ class Ajax {
 					}
 				}
 				
-				$strike_result = wp_span_checker_record_strike( $reason, 'form_guard', 0, $guest_email );
+				$strike_result = vms_span_checker_record_strike( $reason, 'form_guard', 0, $guest_email );
 
 				$response = array(
 					'status' => false,
@@ -826,7 +845,7 @@ class Ajax {
 				// Add strike info to response
 				if ( $strike_result['blocked'] ) {
 					$response['blocked'] = true;
-					$response['strike_message'] = wp_span_checker_get_error_message( 'user_blocked' );
+					$response['strike_message'] = vms_span_checker_get_error_message( 'user_blocked' );
 				}
 
 				wp_send_json_success( $response );
@@ -852,19 +871,19 @@ class Ajax {
 	 * AJAX: import bundled whitelist SQL domains with INSERT IGNORE behavior.
 	 */
 	public function ajax_import_whitelist_seed() {
-		check_ajax_referer( 'wp_span_checker_nonce', 'nonce' );
+		check_ajax_referer( 'vms_span_checker_nonce', 'nonce' );
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'You do not have permission to perform this action.', 'wp-span-checker' ) ) );
+			wp_send_json_error( array( 'message' => __( 'You do not have permission to perform this action.', 'vms-span-checker' ) ) );
 		}
 
-		$file = WP_SPAN_CHECKER_DIR . 'includes/data/whitelist.sql';
+		$file = VMS_SPAN_CHECKER_DIR . 'includes/data/whitelist.sql';
 		if ( ! is_readable( $file ) ) {
-			wp_send_json_error( array( 'message' => __( 'Whitelist SQL file not found.', 'wp-span-checker' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Whitelist SQL file not found.', 'vms-span-checker' ) ) );
 		}
 
 		$sql = file_get_contents( $file );
 		if ( ! is_string( $sql ) || '' === trim( $sql ) ) {
-			wp_send_json_error( array( 'message' => __( 'Whitelist SQL file is empty.', 'wp-span-checker' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Whitelist SQL file is empty.', 'vms-span-checker' ) ) );
 		}
 
 		preg_match_all( "/VALUES\\s*\\(\\s*'([^']+)'\\s*\\)/i", $sql, $matches );
@@ -883,7 +902,7 @@ class Ajax {
 		);
 
 		if ( empty( $domains ) ) {
-			wp_send_json_error( array( 'message' => __( 'No domains found in whitelist SQL.', 'wp-span-checker' ) ) );
+			wp_send_json_error( array( 'message' => __( 'No domains found in whitelist SQL.', 'vms-span-checker' ) ) );
 		}
 
 		$table    = $this->wpdb->prefix . 'span_whitelist_domains';
@@ -911,7 +930,7 @@ class Ajax {
 			array(
 				'message'  => sprintf(
 					/* translators: 1: inserted count, 2: skipped duplicates */
-					__( 'Whitelist import complete: %1$d inserted, %2$d already existed.', 'wp-span-checker' ),
+					__( 'Whitelist import complete: %1$d inserted, %2$d already existed.', 'vms-span-checker' ),
 					$inserted,
 					$skipped
 				),
@@ -925,9 +944,9 @@ class Ajax {
  * AJAX: search pages by title with pagination.
  */
 public function ajax_search_pages() {
-	check_ajax_referer( 'wp_span_checker_nonce', 'nonce' );
+	check_ajax_referer( 'vms_span_checker_nonce', 'nonce' );
 	if ( ! current_user_can( 'manage_options' ) ) {
-		wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-span-checker' ) ) );
+		wp_send_json_error( array( 'message' => __( 'Permission denied.', 'vms-span-checker' ) ) );
 	}
 
 	$search   = isset( $_POST['search'] ) ? sanitize_text_field( wp_unslash( $_POST['search'] ) ) : '';
@@ -983,9 +1002,9 @@ public function ajax_search_pages() {
  * AJAX: search posts by title with pagination.
  */
 public function ajax_search_posts() {
-	check_ajax_referer( 'wp_span_checker_nonce', 'nonce' );
+	check_ajax_referer( 'vms_span_checker_nonce', 'nonce' );
 	if ( ! current_user_can( 'manage_options' ) ) {
-		wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-span-checker' ) ) );
+		wp_send_json_error( array( 'message' => __( 'Permission denied.', 'vms-span-checker' ) ) );
 	}
 
 	$search   = isset( $_POST['search'] ) ? sanitize_text_field( wp_unslash( $_POST['search'] ) ) : '';
@@ -1047,7 +1066,7 @@ public function ajax_search_posts() {
 		if ( empty( $token ) ) {
 			return array(
 				'success' => false,
-				'message' => wp_span_checker_get_error_message( 'recaptcha_required' ),
+				'message' => vms_span_checker_get_error_message( 'recaptcha_required' ),
 			);
 		}
 
@@ -1077,7 +1096,7 @@ public function ajax_search_posts() {
 		if ( is_wp_error( $response ) ) {
 			return array(
 				'success' => false,
-				'message' => wp_span_checker_get_error_message( 'recaptcha_failed' ),
+				'message' => vms_span_checker_get_error_message( 'recaptcha_failed' ),
 			);
 		}
 
@@ -1088,7 +1107,7 @@ public function ajax_search_posts() {
 			$error_codes = isset( $data['error-codes'] ) ? implode( ', ', $data['error-codes'] ) : 'unknown';
 			return array(
 				'success' => false,
-				'message' => wp_span_checker_get_error_message( 'recaptcha_failed' ),
+				'message' => vms_span_checker_get_error_message( 'recaptcha_failed' ),
 			);
 		}
 
@@ -1100,7 +1119,7 @@ public function ajax_search_posts() {
 			if ( $score < 0.5 ) {
 				return array(
 					'success' => false,
-					'message' => wp_span_checker_get_error_message( 'recaptcha_failed' ),
+					'message' => vms_span_checker_get_error_message( 'recaptcha_failed' ),
 					'score'   => $score,
 				);
 			}
@@ -1113,276 +1132,44 @@ public function ajax_search_posts() {
 		);
 	}
 
-	/**
-	 * AJAX: Validate subscribe/newsletter email.
-	 */
-	public function ajax_validate_subscribe() {
-		check_ajax_referer( 'wp_span_checker_nonce', 'nonce' );
-
-		$email = isset( $_POST['email'] ) ? sanitize_email( wp_unslash( $_POST['email'] ) ) : '';
-		
-		if ( empty( $email ) || ! is_email( $email ) ) {
-			$msg = wp_span_checker_get_error_message( 'email_invalid_format' );
-			wp_span_checker_record_strike( $msg, 'subscribe_guard', 0, $email );
-			wp_send_json_success( array(
-				'status'  => false,
-				'message' => $msg,
-			) );
-			return;
-		}
-
-		// Get subscribe guard settings
-		$cfg = \WP_Span_Checker\AI_Span_Config::get();
-		
-		// Extract domain from email
-		$parts  = explode( '@', $email );
-		$domain = end( $parts );
-
-		if ( empty( $domain ) ) {
-			$msg = wp_span_checker_get_error_message( 'email_invalid_format' );
-			wp_span_checker_record_strike( $msg, 'subscribe_guard', 0, $email );
-			wp_send_json_success( array(
-				'status'  => false,
-				'message' => $msg,
-			) );
-			return;
-		}
-
-		// Check if Web Risk or VirusTotal is enabled - DNS and MX become mandatory prerequisites
-		$needs_api_checks = ! empty( $cfg['subscribe_guard_webrisk'] ) || ! empty( $cfg['subscribe_guard_virustotal'] );
-
-		// Check DNS A record (domain exists) - mandatory if API checks enabled OR if explicitly enabled
-		if ( ! empty( $cfg['subscribe_guard_check_dns'] ) || $needs_api_checks ) {
-			$has_dns = wp_span_checker_check_domain_dns( $domain );
-			if ( ! $has_dns ) {
-				$msg = wp_span_checker_get_error_message( 'email_dns_failed' );
-				wp_span_checker_record_strike( $msg, 'subscribe_guard', 0, $email );
-				wp_send_json_success( array(
-					'status'  => false,
-					'message' => $msg,
-				) );
-				return;
-			}
-		}
-
-		// Check MX record (can receive email) - mandatory if API checks enabled OR if explicitly enabled
-		if ( ! empty( $cfg['subscribe_guard_check_mx'] ) || $needs_api_checks ) {
-			$has_mx = wp_span_checker_check_mx_record( $domain );
-			if ( ! $has_mx ) {
-				$msg = wp_span_checker_get_error_message( 'email_mx_failed' );
-				wp_span_checker_record_strike( $msg, 'subscribe_guard', 0, $email );
-				wp_send_json_success( array(
-					'status'  => false,
-					'message' => $msg,
-				) );
-				return;
-			}
-		}
-
-		// Check disposable domains
-		if ( ! empty( $cfg['subscribe_guard_check_disposable'] ) ) {
-			$is_disposable = wp_span_checker_is_disposable_domain( $domain );
-			if ( $is_disposable ) {
-				$msg = wp_span_checker_get_error_message( 'email_disposable' );
-				wp_span_checker_record_strike( $msg, 'subscribe_guard', 0, $email );
-				wp_send_json_success( array(
-					'status'  => false,
-					'message' => $msg,
-				) );
-				return;
-			}
-		}
-
-		// Check Web Risk (only if domain is live - verified above)
-		if ( ! empty( $cfg['subscribe_guard_webrisk'] ) ) {
-			$webrisk_result = wp_span_checker_check_webrisk( $domain );
-			if ( $webrisk_result && ! empty( $webrisk_result['threat'] ) ) {
-				$msg = wp_span_checker_get_error_message( 'email_webrisk_flagged' );
-				wp_span_checker_record_strike( $msg, 'subscribe_guard', 0, $email );
-				wp_send_json_success( array(
-					'status'  => false,
-					'message' => $msg,
-				) );
-				return;
-			}
-		}
-
-		// Check VirusTotal (only if domain is live - verified above)
-		if ( ! empty( $cfg['subscribe_guard_virustotal'] ) ) {
-			$vt_result = wp_span_checker_check_virustotal( $domain );
-			if ( $vt_result && isset( $vt_result['malicious'] ) && $vt_result['malicious'] > 0 ) {
-				$msg = wp_span_checker_get_error_message( 'email_virustotal_flagged' );
-				wp_span_checker_record_strike( $msg, 'subscribe_guard', 0, $email );
-				wp_send_json_success( array(
-					'status'  => false,
-					'message' => $msg,
-				) );
-				return;
-			}
-		}
-
-		// All checks passed
-		wp_send_json_success( array(
-			'status'  => true,
-			'message' => '',
-		) );
-	}
-
-	/**
-	 * AJAX: Validate contact form (email + message).
-	 */
-	public function ajax_validate_contact() {
-		check_ajax_referer( 'wp_span_checker_nonce', 'nonce' );
-
-		$email   = isset( $_POST['email'] ) ? sanitize_email( wp_unslash( $_POST['email'] ) ) : '';
-		$message = isset( $_POST['message'] ) ? sanitize_textarea_field( wp_unslash( $_POST['message'] ) ) : '';
-		
-		$errors = array();
-
-		// Get contact guard settings
-		$cfg = \WP_Span_Checker\AI_Span_Config::get();
-
-		// Validate email
-		if ( ! empty( $email ) ) {
-			if ( ! is_email( $email ) ) {
-				$errors[] = array(
-					'field'   => 'email',
-					'message' => wp_span_checker_get_error_message( 'email_invalid_format' ),
-				);
-			} else {
-				$parts  = explode( '@', $email );
-				$domain = end( $parts );
-
-				// Check if Web Risk or VirusTotal is enabled - DNS and MX become mandatory prerequisites
-				$needs_api_checks = ! empty( $cfg['contact_guard_webrisk'] ) || ! empty( $cfg['contact_guard_virustotal'] );
-
-				// Check DNS - mandatory if API checks enabled OR if explicitly enabled
-				if ( ( ! empty( $cfg['contact_guard_check_dns'] ) || $needs_api_checks ) && ! empty( $domain ) ) {
-					$has_dns = wp_span_checker_check_domain_dns( $domain );
-					if ( ! $has_dns ) {
-						$errors[] = array(
-							'field'   => 'email',
-							'message' => wp_span_checker_get_error_message( 'email_dns_failed' ),
-						);
-					}
-				}
-
-				// Check MX - mandatory if API checks enabled OR if explicitly enabled
-				if ( empty( $errors ) && ( ! empty( $cfg['contact_guard_check_mx'] ) || $needs_api_checks ) && ! empty( $domain ) ) {
-					$has_mx = wp_span_checker_check_mx_record( $domain );
-					if ( ! $has_mx ) {
-						$errors[] = array(
-							'field'   => 'email',
-							'message' => wp_span_checker_get_error_message( 'email_mx_failed' ),
-						);
-					}
-				}
-
-				// Check disposable
-				if ( empty( $errors ) && ! empty( $cfg['contact_guard_check_disposable'] ) && ! empty( $domain ) ) {
-					$is_disposable = wp_span_checker_is_disposable_domain( $domain );
-					if ( $is_disposable ) {
-						$errors[] = array(
-							'field'   => 'email',
-							'message' => wp_span_checker_get_error_message( 'email_disposable' ),
-						);
-					}
-				}
-
-				// Check Web Risk (only if domain is live - verified above)
-				if ( empty( $errors ) && ! empty( $cfg['contact_guard_webrisk'] ) && ! empty( $domain ) ) {
-					$webrisk_result = wp_span_checker_check_webrisk( $domain );
-					if ( $webrisk_result && ! empty( $webrisk_result['threat'] ) ) {
-						$errors[] = array(
-							'field'   => 'email',
-							'message' => wp_span_checker_get_error_message( 'email_webrisk_flagged' ),
-						);
-					}
-				}
-
-				// Check VirusTotal (only if domain is live - verified above)
-				if ( empty( $errors ) && ! empty( $cfg['contact_guard_virustotal'] ) && ! empty( $domain ) ) {
-					$vt_result = wp_span_checker_check_virustotal( $domain );
-					if ( $vt_result && isset( $vt_result['malicious'] ) && $vt_result['malicious'] > 0 ) {
-						$errors[] = array(
-							'field'   => 'email',
-							'message' => wp_span_checker_get_error_message( 'email_virustotal_flagged' ),
-						);
-					}
-				}
-			}
-		}
-
-		// Validate message with AI spam check
-		if ( ! empty( $message ) && ! empty( $cfg['contact_guard_ai_spam'] ) ) {
-			$ai_context = array(
-				'form_name'  => __( 'Contact Form', 'wp-span-checker' ),
-				'field_type' => 'textarea',
-				'field_name' => 'message',
-				'page_title' => '',
-			);
-
-			$spam_result = wp_span_checker_check_ai_spam( $message, $ai_context );
-			if ( $spam_result && isset( $spam_result['is_spam'] ) && $spam_result['is_spam'] ) {
-				$errors[] = array(
-					'field'   => 'message',
-					'message' => wp_span_checker_get_error_message( 'spam_detected' ),
-				);
-			}
-		}
-
-		// Record strike if errors
-		if ( ! empty( $errors ) ) {
-			$reasons = array_map( function( $e ) { return $e['message']; }, $errors );
-			wp_span_checker_record_strike( implode( '; ', $reasons ), 'contact_guard', 0, $email );
-
-			wp_send_json_success( array(
-				'status' => false,
-				'errors' => $errors,
-			) );
-			return;
-		}
-
-		// All checks passed
-		wp_send_json_success( array(
-			'status' => true,
-		) );
-	}
+	// ajax_validate_subscribe / ajax_validate_contact handlers have been moved
+	// to vms-span-checker-pro (Pro_Ajax). The free plugin no longer exposes
+	// Contact Guard or Subscribe Guard validation endpoints.
 
 	/**
 	 * AJAX: Validate registration email (frontend validation).
 	 * Validates email and stores a validation token for backend verification.
 	 */
 	public function ajax_validate_registration() {
-		check_ajax_referer( 'wp_span_checker_nonce', 'nonce' );
+		check_ajax_referer( 'vms_span_checker_nonce', 'nonce' );
 
 		$email = isset( $_POST['email'] ) ? sanitize_email( wp_unslash( $_POST['email'] ) ) : '';
 		
 		if ( empty( $email ) || ! is_email( $email ) ) {
 			wp_send_json_success( array(
 				'status'  => false,
-				'message' => wp_span_checker_get_error_message( 'email_invalid_format' ),
+				'message' => vms_span_checker_get_error_message( 'email_invalid_format' ),
 			) );
 			return;
 		}
 
 		// Check reCAPTCHA if provided
 		$recaptcha_token = isset( $_POST['recaptcha_token'] ) ? sanitize_text_field( wp_unslash( $_POST['recaptcha_token'] ) ) : '';
-		$ai_cfg          = \WP_Span_Checker\AI_Span_Config::get();
+		$ai_cfg          = \VMS_Span_Checker\AI_Span_Config::get();
 		
 		if ( ! empty( $ai_cfg['registration_guard_recaptcha'] ) && ! empty( $recaptcha_token ) ) {
 			$recaptcha_result = $this->verify_recaptcha( $recaptcha_token );
 			if ( ! $recaptcha_result['success'] ) {
 				wp_send_json_success( array(
 					'status'  => false,
-					'message' => wp_span_checker_get_error_message( 'recaptcha_failed' ),
+					'message' => vms_span_checker_get_error_message( 'recaptcha_failed' ),
 				) );
 				return;
 			}
 		}
 
 		// Use the Registration Guard validation logic
-		$rejection_msg = \WP_Span_Checker\Registration_Guard::rejection_message_for_registration_email( $email );
+		$rejection_msg = \VMS_Span_Checker\Registration_Guard::rejection_message_for_registration_email( $email );
 		
 		if ( $rejection_msg !== null ) {
 			wp_send_json_success( array(
@@ -1393,7 +1180,7 @@ public function ajax_search_posts() {
 		}
 
 		// Generate validation token (IP-based)
-		$ip         = function_exists( 'wp_span_checker_get_user_ip' ) ? wp_span_checker_get_user_ip() : '';
+		$ip         = function_exists( 'vms_span_checker_get_user_ip' ) ? vms_span_checker_get_user_ip() : '';
 		$token      = wp_generate_password( 32, false, false );
 		$token_key  = 'wsc_reg_token_' . md5( $ip . $email );
 		

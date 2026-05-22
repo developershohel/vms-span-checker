@@ -1,5 +1,5 @@
 /* =========================
-   Admin palette (scoped — matches WP Span Checker dashboard tokens)
+   Admin palette (scoped — matches VMS Span Checker dashboard tokens)
 ========================= */
 body.wsc-plugin-admin {
   --white: #fff !important;
@@ -334,23 +334,23 @@ body.wsc-plugin-admin {
   cursor: not-allowed !important;
 }
 
-#wp-span-checker-wrap {
+#vms-span-checker-wrap {
   /* Flex container for buttons and search */
   /* Buttons tight together */
   /* Reduce search input width */
 }
-#wp-span-checker-wrap .dt-top {
+#vms-span-checker-wrap .dt-top {
   display: flex !important;
   justify-content: space-between !important; /* search on right */
   align-items: center !important;
   margin-bottom: 10px !important;
 }
-#wp-span-checker-wrap .dt-buttons .dt-btn-small {
+#vms-span-checker-wrap .dt-buttons .dt-btn-small {
   margin: 0 2px !important;
   padding: 4px 8px !important;
   font-size: 12px !important;
 }
-#wp-span-checker-wrap .dt-search input {
+#vms-span-checker-wrap .dt-search input {
   width: 200px !important;
   margin-left: 10px !important;
   display: inline-block !important;
@@ -3006,4 +3006,4 @@ body.wsc-plugin-admin .wsc-switch-control .wsc-switch-option.wsc-check {
   opacity: 0.9;
 }
 
-/*# sourceMappingURL=wp-span-checker.css.map */
+/*# sourceMappingURL=vms-span-checker.css.map */

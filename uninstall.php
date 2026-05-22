@@ -2,7 +2,18 @@
 /**
  * Uninstall: drop custom tables and plugin options.
  *
- * @package WP_Span_Checker
+ * Direct database calls (DROP TABLE) are required during uninstall to remove
+ * plugin-owned custom tables; identifiers are built from `$wpdb->prefix` and
+ * a hardcoded list, so they are safe and intentional.
+ *
+ * @package VMS_Span_Checker
+ *
+ * phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
+ * phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
+ * phpcs:disable WordPress.DB.DirectDatabaseQuery.SchemaChange
+ * phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+ * phpcs:disable PluginCheck.Security.DirectDB.UnescapedDBParameter
+ * phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound
  */
 
 if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
@@ -11,15 +22,15 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 
 global $wpdb;
 
+// Free-owned tables only. Pro tables (`vms_span_checker_form_settings`,
+// `vms_span_checker_forms`, `vms_span_checker_ai_post_summary`) are dropped by
+// the Pro plugin's own uninstall.php.
 $tables = array(
 	'span_whitelist_domains',
 	'span_disposable_domains',
-	'span_checker_form_settings',
-	'span_checker_logs',
-	'span_checker_forms',
-	'span_checker_api_keys',
-	'span_checker_ai_post_summary',
-	'span_checker_comment_enforcement',
+	'vms_span_checker_logs',
+	'vms_span_checker_api_keys',
+	'vms_span_checker_comment_enforcement',
 );
 
 $options = array(
@@ -27,8 +38,8 @@ $options = array(
 	'wsc-virustotal-config',
 	'wsc-ai-span-config',
 	'wsc-registration-guard',
-	'wp_span_checker_db_version',
-	'wp_span_checker_schema_version',
+	'vms_span_checker_db_version',
+	'vms_span_checker_schema_version',
 );
 
 /**

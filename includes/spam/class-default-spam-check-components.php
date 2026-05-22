@@ -2,14 +2,20 @@
 /**
  * Built-in Spam_Check_Component implementations (no AI required).
  *
- * @package WP_Span_Checker
+ * The lookup uses the core comments table via `$wpdb->comments` (a core
+ * identifier) with all dynamic values prepared via `$wpdb->prepare()`.
+ *
+ * @package VMS_Span_Checker
+ *
+ * phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
+ * phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
  */
 
-namespace WP_Span_Checker\Spam;
+namespace VMS_Span_Checker\Spam;
 
 use WP_Error;
-use WP_Span_Checker\Disposable;
-use WP_Span_Checker\Whitelist;
+use VMS_Span_Checker\Disposable;
+use VMS_Span_Checker\Whitelist;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -20,7 +26,7 @@ final class Trackback_Spam_Component implements Spam_Check_Component {
 		return 'trackback';
 	}
 	public function get_label(): string {
-		return __( 'Block trackbacks & pingbacks', 'wp-span-checker' );
+		return __( 'Block trackbacks & pingbacks', 'vms-span-checker' );
 	}
 	public function evaluate( array $commentdata, array $config ) {
 		if ( empty( $config['comment_block_trackbacks'] ) ) {
@@ -30,7 +36,7 @@ final class Trackback_Spam_Component implements Spam_Check_Component {
 		if ( in_array( $type, array( 'trackback', 'pingback' ), true ) ) {
 			return new WP_Error(
 				'wsc_spam_trackback',
-				__( 'Trackbacks and pingbacks are disabled.', 'wp-span-checker' )
+				__( 'Trackbacks and pingbacks are disabled.', 'vms-span-checker' )
 			);
 		}
 		return true;
@@ -42,7 +48,7 @@ final class Rate_Limit_Spam_Component implements Spam_Check_Component {
 		return 'rate_limit';
 	}
 	public function get_label(): string {
-		return __( 'IP flood limit', 'wp-span-checker' );
+		return __( 'IP flood limit', 'vms-span-checker' );
 	}
 	public function evaluate( array $commentdata, array $config ) {
 		$post_id = isset( $commentdata['comment_post_ID'] ) ? (int) $commentdata['comment_post_ID'] : 0;
@@ -61,7 +67,7 @@ final class Rate_Limit_Spam_Component implements Spam_Check_Component {
 		if ( $n >= $max ) {
 			return new WP_Error(
 				'wsc_spam_ratelimit',
-				__( 'You are submitting comments too quickly. Please wait and try again.', 'wp-span-checker' )
+				__( 'You are submitting comments too quickly. Please wait and try again.', 'vms-span-checker' )
 			);
 		}
 		set_transient( $key, $n + 1, $window * MINUTE_IN_SECONDS );
@@ -74,7 +80,7 @@ final class Duplicate_Spam_Component implements Spam_Check_Component {
 		return 'duplicate';
 	}
 	public function get_label(): string {
-		return __( 'Duplicate comment body', 'wp-span-checker' );
+		return __( 'Duplicate comment body', 'vms-span-checker' );
 	}
 	public function evaluate( array $commentdata, array $config ) {
 		if ( empty( $config['comment_block_duplicate'] ) ) {
@@ -94,7 +100,7 @@ final class Duplicate_Spam_Component implements Spam_Check_Component {
 		if ( $found ) {
 			return new WP_Error(
 				'wsc_spam_duplicate',
-				__( 'This comment was already submitted on this post.', 'wp-span-checker' )
+				__( 'This comment was already submitted on this post.', 'vms-span-checker' )
 			);
 		}
 		return true;
@@ -106,7 +112,7 @@ final class Length_Spam_Component implements Spam_Check_Component {
 		return 'length';
 	}
 	public function get_label(): string {
-		return __( 'Min / max length', 'wp-span-checker' );
+		return __( 'Min / max length', 'vms-span-checker' );
 	}
 	public function evaluate( array $commentdata, array $config ) {
 		$content = isset( $commentdata['comment_content'] ) ? (string) $commentdata['comment_content'] : '';
@@ -114,10 +120,10 @@ final class Length_Spam_Component implements Spam_Check_Component {
 		$max     = (int) ( $config['comment_max_length'] ?? 0 );
 		$len     = Spam_Check_Helpers::str_len( $content );
 		if ( $min > 0 && $len < $min ) {
-			return new WP_Error( 'wsc_spam_short', __( 'Comment is too short.', 'wp-span-checker' ) );
+			return new WP_Error( 'wsc_spam_short', __( 'Comment is too short.', 'vms-span-checker' ) );
 		}
 		if ( $max > 0 && $len > $max ) {
-			return new WP_Error( 'wsc_spam_long', __( 'Comment is too long.', 'wp-span-checker' ) );
+			return new WP_Error( 'wsc_spam_long', __( 'Comment is too long.', 'vms-span-checker' ) );
 		}
 		return true;
 	}
@@ -128,7 +134,7 @@ final class Disposable_Email_Spam_Component implements Spam_Check_Component {
 		return 'disposable_email';
 	}
 	public function get_label(): string {
-		return __( 'Disposable email list', 'wp-span-checker' );
+		return __( 'Disposable email list', 'vms-span-checker' );
 	}
 	public function evaluate( array $commentdata, array $config ) {
 		if ( empty( $config['comment_block_disposable_email'] ) ) {
@@ -149,7 +155,7 @@ final class Disposable_Email_Spam_Component implements Spam_Check_Component {
 		if ( $d->email_domain_is_disposable( $domain ) ) {
 			return new WP_Error(
 				'wsc_spam_disposable',
-				__( 'Disposable or throwaway email addresses are not allowed.', 'wp-span-checker' )
+				__( 'Disposable or throwaway email addresses are not allowed.', 'vms-span-checker' )
 			);
 		}
 		return true;
@@ -161,7 +167,7 @@ final class Email_Domain_Blocklist_Spam_Component implements Spam_Check_Componen
 		return 'email_domain_blocklist';
 	}
 	public function get_label(): string {
-		return __( 'Blocked email domains', 'wp-span-checker' );
+		return __( 'Blocked email domains', 'vms-span-checker' );
 	}
 	public function evaluate( array $commentdata, array $config ) {
 		$raw   = isset( $config['comment_block_email_domains'] ) ? (string) $config['comment_block_email_domains'] : '';
@@ -180,7 +186,7 @@ final class Email_Domain_Blocklist_Spam_Component implements Spam_Check_Componen
 			if ( $domain === $blocked || $is_suffix ) {
 				return new WP_Error(
 					'wsc_spam_email_domain',
-					__( 'This email domain is not allowed.', 'wp-span-checker' )
+					__( 'This email domain is not allowed.', 'vms-span-checker' )
 				);
 			}
 		}
@@ -193,7 +199,7 @@ final class Punycode_Spam_Component implements Spam_Check_Component {
 		return 'punycode';
 	}
 	public function get_label(): string {
-		return __( 'Punycode / IDN abuse', 'wp-span-checker' );
+		return __( 'Punycode / IDN abuse', 'vms-span-checker' );
 	}
 	public function evaluate( array $commentdata, array $config ) {
 		if ( empty( $config['comment_block_punycode_abuse'] ) ) {
@@ -204,21 +210,21 @@ final class Punycode_Spam_Component implements Spam_Check_Component {
 		if ( $domain !== '' && strpos( $domain, 'xn--' ) !== false ) {
 			return new WP_Error(
 				'wsc_spam_punycode',
-				__( 'Internationalized (punycode) email domains are not allowed here.', 'wp-span-checker' )
+				__( 'Internationalized (punycode) email domains are not allowed here.', 'vms-span-checker' )
 			);
 		}
 		$url = isset( $commentdata['comment_author_url'] ) ? strtolower( (string) $commentdata['comment_author_url'] ) : '';
 		if ( strpos( $url, 'xn--' ) !== false ) {
 			return new WP_Error(
 				'wsc_spam_punycode',
-				__( 'Internationalized (punycode) URLs are not allowed in the website field.', 'wp-span-checker' )
+				__( 'Internationalized (punycode) URLs are not allowed in the website field.', 'vms-span-checker' )
 			);
 		}
 		$content = isset( $commentdata['comment_content'] ) ? (string) $commentdata['comment_content'] : '';
 		if ( strpos( strtolower( $content ), 'xn--' ) !== false ) {
 			return new WP_Error(
 				'wsc_spam_punycode',
-				__( 'Comments cannot contain punycode / IDN homograph URLs.', 'wp-span-checker' )
+				__( 'Comments cannot contain punycode / IDN homograph URLs.', 'vms-span-checker' )
 			);
 		}
 		return true;
@@ -230,7 +236,7 @@ final class Keyword_Spam_Component implements Spam_Check_Component {
 		return 'keywords';
 	}
 	public function get_label(): string {
-		return __( 'Custom blocked phrases', 'wp-span-checker' );
+		return __( 'Custom blocked phrases', 'vms-span-checker' );
 	}
 	public function evaluate( array $commentdata, array $config ) {
 		$raw   = isset( $config['comment_block_keywords'] ) ? (string) $config['comment_block_keywords'] : '';
@@ -245,7 +251,7 @@ final class Keyword_Spam_Component implements Spam_Check_Component {
 			if ( $word !== '' && strpos( $lower, $word ) !== false ) {
 				return new WP_Error(
 					'wsc_spam_keyword',
-					__( 'Comment blocked: matched blocked phrase or pattern.', 'wp-span-checker' )
+					__( 'Comment blocked: matched blocked phrase or pattern.', 'vms-span-checker' )
 				);
 			}
 		}
@@ -258,13 +264,13 @@ final class Builtin_Phrases_Spam_Component implements Spam_Check_Component {
 		return 'builtin_phrases';
 	}
 	public function get_label(): string {
-		return __( 'Bundled spam phrase list', 'wp-span-checker' );
+		return __( 'Bundled spam phrase list', 'vms-span-checker' );
 	}
 	public function evaluate( array $commentdata, array $config ) {
 		if ( empty( $config['comment_builtin_bad_phrases'] ) ) {
 			return true;
 		}
-		$file = WP_SPAN_CHECKER_DIR . 'includes/data/comment-spam-phrases.php';
+		$file = VMS_SPAN_CHECKER_DIR . 'includes/data/comment-spam-phrases.php';
 		if ( ! is_readable( $file ) ) {
 			return true;
 		}
@@ -280,7 +286,7 @@ final class Builtin_Phrases_Spam_Component implements Spam_Check_Component {
 			if ( $p !== '' && strpos( $lower, $p ) !== false ) {
 				return new WP_Error(
 					'wsc_spam_catalog',
-					__( 'Comment blocked: promotional or spam-like content.', 'wp-span-checker' )
+					__( 'Comment blocked: promotional or spam-like content.', 'vms-span-checker' )
 				);
 			}
 		}
@@ -293,7 +299,7 @@ final class Guest_Website_Spam_Component implements Spam_Check_Component {
 		return 'guest_website';
 	}
 	public function get_label(): string {
-		return __( 'Guest website field', 'wp-span-checker' );
+		return __( 'Guest website field', 'vms-span-checker' );
 	}
 	public function evaluate( array $commentdata, array $config ) {
 		if ( empty( $config['comment_disallow_guest_website'] ) ) {
@@ -307,7 +313,7 @@ final class Guest_Website_Spam_Component implements Spam_Check_Component {
 		if ( $url !== '' ) {
 			return new WP_Error(
 				'wsc_spam_guest_url',
-				__( 'Please leave the website field empty when commenting as a guest.', 'wp-span-checker' )
+				__( 'Please leave the website field empty when commenting as a guest.', 'vms-span-checker' )
 			);
 		}
 		return true;
@@ -319,7 +325,7 @@ final class Author_Url_Http_Spam_Component implements Spam_Check_Component {
 		return 'author_url_http';
 	}
 	public function get_label(): string {
-		return __( 'HTTP(S) in website field', 'wp-span-checker' );
+		return __( 'HTTP(S) in website field', 'vms-span-checker' );
 	}
 	public function evaluate( array $commentdata, array $config ) {
 		if ( empty( $config['comment_block_http_author_url'] ) ) {
@@ -332,7 +338,7 @@ final class Author_Url_Http_Spam_Component implements Spam_Check_Component {
 		if ( preg_match( '#https?://#i', $url ) ) {
 			return new WP_Error(
 				'wsc_spam_author_url',
-				__( 'Please remove the http(s) link from the website field.', 'wp-span-checker' )
+				__( 'Please remove the http(s) link from the website field.', 'vms-span-checker' )
 			);
 		}
 		return true;
@@ -344,7 +350,7 @@ final class Bbcode_Spam_Component implements Spam_Check_Component {
 		return 'bbcode';
 	}
 	public function get_label(): string {
-		return __( 'BBCode links', 'wp-span-checker' );
+		return __( 'BBCode links', 'vms-span-checker' );
 	}
 	public function evaluate( array $commentdata, array $config ) {
 		if ( empty( $config['comment_block_bbcode'] ) ) {
@@ -354,7 +360,7 @@ final class Bbcode_Spam_Component implements Spam_Check_Component {
 		if ( preg_match( '/\[(url|link|img)\s*=/i', $content ) ) {
 			return new WP_Error(
 				'wsc_spam_bbcode',
-				__( 'BBCode-style links are not allowed in comments.', 'wp-span-checker' )
+				__( 'BBCode-style links are not allowed in comments.', 'vms-span-checker' )
 			);
 		}
 		return true;
@@ -366,7 +372,7 @@ final class Dangerous_Markup_Spam_Component implements Spam_Check_Component {
 		return 'dangerous_markup';
 	}
 	public function get_label(): string {
-		return __( 'Script / iframe injection', 'wp-span-checker' );
+		return __( 'Script / iframe injection', 'vms-span-checker' );
 	}
 	public function evaluate( array $commentdata, array $config ) {
 		if ( empty( $config['comment_block_dangerous_markup'] ) ) {
@@ -380,7 +386,7 @@ final class Dangerous_Markup_Spam_Component implements Spam_Check_Component {
 			|| preg_match( '/<iframe[\s>]/i', $content ) ) {
 			return new WP_Error(
 				'wsc_spam_markup',
-				__( 'Comments cannot contain scripts, iframes, or javascript URLs.', 'wp-span-checker' )
+				__( 'Comments cannot contain scripts, iframes, or javascript URLs.', 'vms-span-checker' )
 			);
 		}
 		return true;
@@ -392,7 +398,7 @@ final class Caps_Ratio_Spam_Component implements Spam_Check_Component {
 		return 'caps_ratio';
 	}
 	public function get_label(): string {
-		return __( 'ALL CAPS ratio', 'wp-span-checker' );
+		return __( 'ALL CAPS ratio', 'vms-span-checker' );
 	}
 	public function evaluate( array $commentdata, array $config ) {
 		$ratio = (float) ( $config['comment_max_caps_ratio'] ?? 0 );
@@ -414,7 +420,7 @@ final class Caps_Ratio_Spam_Component implements Spam_Check_Component {
 		if ( ( $upper / $letters ) > $ratio ) {
 			return new WP_Error(
 				'wsc_spam_caps',
-				__( 'Too many capital letters — looks like shout/spam.', 'wp-span-checker' )
+				__( 'Too many capital letters — looks like shout/spam.', 'vms-span-checker' )
 			);
 		}
 		return true;
@@ -426,7 +432,7 @@ final class Repeated_Chars_Spam_Component implements Spam_Check_Component {
 		return 'repeated_chars';
 	}
 	public function get_label(): string {
-		return __( 'Repeated character spam', 'wp-span-checker' );
+		return __( 'Repeated character spam', 'vms-span-checker' );
 	}
 	public function evaluate( array $commentdata, array $config ) {
 		if ( empty( $config['comment_block_excessive_repeats'] ) ) {
@@ -436,7 +442,7 @@ final class Repeated_Chars_Spam_Component implements Spam_Check_Component {
 		if ( preg_match( '/(.)\1{14,}/us', $content ) ) {
 			return new WP_Error(
 				'wsc_spam_repeat',
-				__( 'Comment contains excessive repeated characters.', 'wp-span-checker' )
+				__( 'Comment contains excessive repeated characters.', 'vms-span-checker' )
 			);
 		}
 		return true;
@@ -448,7 +454,7 @@ final class Emoji_Flood_Spam_Component implements Spam_Check_Component {
 		return 'emoji_flood';
 	}
 	public function get_label(): string {
-		return __( 'Emoji / pictograph flood', 'wp-span-checker' );
+		return __( 'Emoji / pictograph flood', 'vms-span-checker' );
 	}
 	public function evaluate( array $commentdata, array $config ) {
 		$max = (int) ( $config['comment_emoji_flood_max'] ?? 0 );
@@ -464,7 +470,7 @@ final class Emoji_Flood_Spam_Component implements Spam_Check_Component {
 		if ( $n > $max ) {
 			return new WP_Error(
 				'wsc_spam_emoji',
-				__( 'Too many emoji or symbols in this comment.', 'wp-span-checker' )
+				__( 'Too many emoji or symbols in this comment.', 'vms-span-checker' )
 			);
 		}
 		return true;
@@ -476,20 +482,20 @@ final class Link_Policy_Spam_Component implements Spam_Check_Component {
 		return 'link_policy';
 	}
 	public function get_label(): string {
-		return __( 'Link count & allow links', 'wp-span-checker' );
+		return __( 'Link count & allow links', 'vms-span-checker' );
 	}
 	public function evaluate( array $commentdata, array $config ) {
 		$content = isset( $commentdata['comment_content'] ) ? (string) $commentdata['comment_content'] : '';
 		$allow   = ! empty( $config['comment_allow_links'] );
 		$count   = Spam_Check_Helpers::count_links_in_text( $content );
 		if ( ! $allow && $count > 0 ) {
-			return new WP_Error( 'wsc_no_links', __( 'Comments with links are not allowed.', 'wp-span-checker' ) );
+			return new WP_Error( 'wsc_no_links', __( 'Comments with links are not allowed.', 'vms-span-checker' ) );
 		}
 		$max = (int) ( $config['comment_max_links'] ?? 0 );
 		if ( $allow && $max > 0 && $count > $max ) {
 			return new WP_Error(
 				'wsc_spam_many_links',
-				__( 'Too many links in this comment.', 'wp-span-checker' )
+				__( 'Too many links in this comment.', 'vms-span-checker' )
 			);
 		}
 		return true;

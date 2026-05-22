@@ -1,5 +1,5 @@
 /**
- * WP Span Checker - Auth Forms JavaScript
+ * VMS Span Checker - Auth Forms JavaScript
  */
 
 (function($) {
@@ -424,12 +424,15 @@
 			e.preventDefault();
 			var $link = $(this);
 			var email = $link.data('email');
-			var $messageArea = $link.closest('form').find('.wsc-auth-message-area');
+			var $form = $link.closest('form');
+			var $messageArea = $form.find('.wsc-auth-message-area');
+			var nonce = $form.find('[name="wsc_auth_nonce"]').val();
 
 			$link.text(WSCAuthForms.config.i18n.sendingOTP || 'Sending...');
 
 			$.post(WSCAuthForms.config.ajaxUrl, {
 				action: 'wsc_auth_resend_otp',
+				wsc_auth_nonce: nonce,
 				email: email
 			}, function(response) {
 				$link.text(WSCAuthForms.config.i18n.resendOTP || 'Resend');

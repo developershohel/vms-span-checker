@@ -2,10 +2,19 @@
 /**
  * Shared strike storage and blocked-comment redirect for Comment Guard and Product Review Guard.
  *
- * @package WP_Span_Checker
+ * Queries target the plugin-owned
+ * `{$wpdb->prefix}vms_span_checker_comment_enforcement` custom table; identifiers
+ * are hardcoded and values pass through `$wpdb->prepare()` or insert helpers.
+ *
+ * @package VMS_Span_Checker
+ *
+ * phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
+ * phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
+ * phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+ * phpcs:disable PluginCheck.Security.DirectDB.UnescapedDBParameter
  */
 
-namespace WP_Span_Checker;
+namespace VMS_Span_Checker;
 
 use WP_Error;
 
@@ -14,7 +23,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Enforcement helpers (table: span_checker_comment_enforcement).
+ * Enforcement helpers (table: vms_span_checker_comment_enforcement).
  */
 final class Comment_Enforcement {
 
@@ -22,8 +31,8 @@ final class Comment_Enforcement {
 	 * Visitor IP for enforcement rows.
 	 */
 	public static function get_ip(): string {
-		if ( function_exists( 'wp_span_checker_get_user_ip' ) ) {
-			return wp_span_checker_get_user_ip();
+		if ( function_exists( 'vms_span_checker_get_user_ip' ) ) {
+			return vms_span_checker_get_user_ip();
 		}
 		return isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( (string) $_SERVER['REMOTE_ADDR'] ) ) : '';
 	}
@@ -57,7 +66,7 @@ final class Comment_Enforcement {
 	 */
 	public static function get_row( string $actor_key ): ?array {
 		global $wpdb;
-		$table = $wpdb->prefix . 'span_checker_comment_enforcement';
+		$table = $wpdb->prefix . 'vms_span_checker_comment_enforcement';
 		$row   = $wpdb->get_row(
 			$wpdb->prepare( "SELECT * FROM {$table} WHERE actor_key = %s", $actor_key ),
 			ARRAY_A
@@ -72,7 +81,7 @@ final class Comment_Enforcement {
 	 */
 	public static function register_strike( array $actor, string $reason, array $config, string $source = 'comment' ): void {
 		global $wpdb;
-		$table       = $wpdb->prefix . 'span_checker_comment_enforcement';
+		$table       = $wpdb->prefix . 'vms_span_checker_comment_enforcement';
 		$max_comment = (int) ( $config['comment_max_strikes'] ?? 5 );
 		$ban_enabled = ! empty( $config['comment_site_ban_enabled'] );
 		$ban_at      = (int) ( $config['comment_site_ban_strikes'] ?? 10 );
@@ -148,6 +157,7 @@ final class Comment_Enforcement {
 			$url = home_url( '/' );
 		}
 
+		// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Established hook name; renaming would break BC for existing filter consumers.
 		$fragment = (string) apply_filters( 'wsc_comment_block_redirect_fragment', $fragment, $commentdata, $error );
 
 		$token = function_exists( 'wp_generate_password' )
@@ -155,7 +165,7 @@ final class Comment_Enforcement {
 			: bin2hex( random_bytes( 8 ) );
 		$title = ( null !== $notice_title && '' !== trim( $notice_title ) )
 			? $notice_title
-			: __( 'Comment blocked', 'wp-span-checker' );
+			: __( 'Comment blocked', 'vms-span-checker' );
 
 		set_transient(
 			'wsc_cerr_' . $token,

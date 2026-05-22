@@ -1,6 +1,18 @@
 <?php
+/**
+ * API key storage for plugin-managed integrations.
+ *
+ * Queries target the plugin-owned `{$wpdb->prefix}vms_span_checker_api_keys`
+ * custom table; the identifier is hardcoded.
+ *
+ * @package VMS_Span_Checker
+ *
+ * phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
+ * phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
+ * phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+ */
 
-namespace WP_Span_Checker;
+namespace VMS_Span_Checker;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -13,7 +25,7 @@ class API_Settings {
 	public function __construct() {
 		global $wpdb;
 		$this->wpdb  = $wpdb;
-		$this->table = $this->wpdb->prefix . 'span_checker_api_keys';
+		$this->table = $this->wpdb->prefix . 'vms_span_checker_api_keys';
 	}
 
 	public function get_all(): array {

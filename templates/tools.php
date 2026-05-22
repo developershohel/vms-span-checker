@@ -2,12 +2,14 @@
 /**
  * Manual Web Risk / VirusTotal tests and activity log console.
  *
- * @package WP_Span_Checker
+ * @package VMS_Span_Checker
+ *
+ * phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound
  */
 
-use WP_Span_Checker\Logger;
-use WP_Span_Checker\Services\GoogleWebRisk;
-use WP_Span_Checker\Services\VirusTotal;
+use VMS_Span_Checker\Logger;
+use VMS_Span_Checker\Services\GoogleWebRisk;
+use VMS_Span_Checker\Services\VirusTotal;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -15,15 +17,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 $logger       = new Logger();
 $test_results = array();
-$ip           = function_exists( 'wp_span_checker_get_user_ip' ) ? wp_span_checker_get_user_ip() : '';
+$ip           = function_exists( 'vms_span_checker_get_user_ip' ) ? vms_span_checker_get_user_ip() : '';
 
 // phpcs:disable WordPress.Security.NonceVerification.Missing
 if ( isset( $_SERVER['REQUEST_METHOD'] ) && 'POST' === $_SERVER['REQUEST_METHOD'] ) {
 	if ( ! isset( $_POST['wsc_tools_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['wsc_tools_nonce'] ) ), 'wsc_tools_manual_test' ) ) {
-		wp_die( esc_html__( 'Security check failed.', 'wp-span-checker' ) );
+		wp_die( esc_html__( 'Security check failed.', 'vms-span-checker' ) );
 	}
 	if ( ! current_user_can( 'manage_options' ) ) {
-		wp_die( esc_html__( 'You do not have permission to run tools.', 'wp-span-checker' ) );
+		wp_die( esc_html__( 'You do not have permission to run tools.', 'vms-span-checker' ) );
 	}
 
 	$raw_email = isset( $_POST['wsc_tools_email'] ) ? sanitize_email( wp_unslash( $_POST['wsc_tools_email'] ) ) : '';
@@ -33,11 +35,11 @@ if ( isset( $_SERVER['REQUEST_METHOD'] ) && 'POST' === $_SERVER['REQUEST_METHOD'
 	if ( ! is_email( $raw_email ) ) {
 		$test_results[] = array(
 			'ok'      => false,
-			'title'   => __( 'Invalid email', 'wp-span-checker' ),
-			'detail'  => __( 'Enter a valid email address to extract the domain for API checks.', 'wp-span-checker' ),
+			'title'   => __( 'Invalid email', 'vms-span-checker' ),
+			'detail'  => __( 'Enter a valid email address to extract the domain for API checks.', 'vms-span-checker' ),
 			'service' => '',
 		);
-		$logger->log( 'manual_tool', $ip, '', 'failed', __( 'Invalid email in manual test form.', 'wp-span-checker' ) );
+		$logger->log( 'manual_tool', $ip, '', 'failed', __( 'Invalid email in manual test form.', 'vms-span-checker' ) );
 	} else {
 		$domain = strtolower( substr( strrchr( $raw_email, '@' ), 1 ) );
 
@@ -47,7 +49,7 @@ if ( isset( $_SERVER['REQUEST_METHOD'] ) && 'POST' === $_SERVER['REQUEST_METHOD'
 			$logger->log( 'manual_webrisk', $ip, $domain, $ok ? 'success' : 'failed', (string) ( $wr['message'] ?? '' ) );
 			$test_results[] = array(
 				'ok'      => $ok,
-				'title'   => __( 'Google Web Risk', 'wp-span-checker' ),
+				'title'   => __( 'Google Web Risk', 'vms-span-checker' ),
 				'detail'  => (string) ( $wr['message'] ?? '' ),
 				'service' => 'webrisk',
 			);
@@ -59,7 +61,7 @@ if ( isset( $_SERVER['REQUEST_METHOD'] ) && 'POST' === $_SERVER['REQUEST_METHOD'
 			$logger->log( 'manual_virustotal', $ip, $domain, $ok ? 'success' : 'failed', (string) ( $vt['message'] ?? '' ) );
 			$test_results[] = array(
 				'ok'      => $ok,
-				'title'   => __( 'VirusTotal', 'wp-span-checker' ),
+				'title'   => __( 'VirusTotal', 'vms-span-checker' ),
 				'detail'  => (string) ( $vt['message'] ?? '' ),
 				'service' => 'virustotal',
 			);
@@ -68,8 +70,8 @@ if ( isset( $_SERVER['REQUEST_METHOD'] ) && 'POST' === $_SERVER['REQUEST_METHOD'
 		if ( ! $do_wr && ! $do_vt ) {
 			$test_results[] = array(
 				'ok'      => false,
-				'title'   => __( 'Nothing selected', 'wp-span-checker' ),
-				'detail'  => __( 'Choose at least one API to run.', 'wp-span-checker' ),
+				'title'   => __( 'Nothing selected', 'vms-span-checker' ),
+				'detail'  => __( 'Choose at least one API to run.', 'vms-span-checker' ),
 				'service' => '',
 			);
 		}
@@ -114,47 +116,47 @@ $log_rows = $logger->get_logs( 50 );
 
 <div class="wrap wsc-admin wsc-tools-layout">
 	<?php
-	wp_span_checker_admin_page_header(
-		__( 'Tools & log', 'wp-span-checker' ),
-		__( 'Run Web Risk and VirusTotal against an email’s domain, and review the latest 50 entries: successful and failed sign-ins, registration/domain checks, form validation, and manual tests.', 'wp-span-checker' )
+	vms_span_checker_admin_page_header(
+		__( 'Tools & log', 'vms-span-checker' ),
+		__( 'Run Web Risk and VirusTotal against an email’s domain, and review the latest 50 entries: successful and failed sign-ins, registration/domain checks, form validation, and manual tests.', 'vms-span-checker' )
 	);
 	?>
 
 	<div class="wsc-tools-card">
-		<h2 style="margin-top:0;"><?php esc_html_e( 'Manual API test', 'wp-span-checker' ); ?></h2>
+		<h2 style="margin-top:0;"><?php esc_html_e( 'Manual API test', 'vms-span-checker' ); ?></h2>
 		<form method="post" class="wsc-tools-form">
 			<?php wp_nonce_field( 'wsc_tools_manual_test', 'wsc_tools_nonce' ); ?>
 			<table class="form-table" role="presentation">
 				<tr>
-					<th scope="row"><label for="wsc_tools_email"><?php esc_html_e( 'Email address', 'wp-span-checker' ); ?></label></th>
+					<th scope="row"><label for="wsc_tools_email"><?php esc_html_e( 'Email address', 'vms-span-checker' ); ?></label></th>
 					<td>
 						<input name="wsc_tools_email" id="wsc_tools_email" type="email" class="regular-text" required
 							placeholder="user@example.com"
 							value="<?php echo isset( $_POST['wsc_tools_email'] ) ? esc_attr( sanitize_email( wp_unslash( $_POST['wsc_tools_email'] ) ) ) : ''; ?>">
-						<p class="description"><?php esc_html_e( 'The domain after @ is sent to the selected APIs (same as live form validation).', 'wp-span-checker' ); ?></p>
+						<p class="description"><?php esc_html_e( 'The domain after @ is sent to the selected APIs (same as live form validation).', 'vms-span-checker' ); ?></p>
 					</td>
 				</tr>
 				<tr>
-					<th scope="row"><?php esc_html_e( 'Run', 'wp-span-checker' ); ?></th>
+					<th scope="row"><?php esc_html_e( 'Run', 'vms-span-checker' ); ?></th>
 					<td>
 						<label style="display:block;margin-bottom:8px;">
 							<input type="checkbox" name="wsc_tools_webrisk" value="1" checked>
-							<?php esc_html_e( 'Google Web Risk (https://domain)', 'wp-span-checker' ); ?>
+							<?php esc_html_e( 'Google Web Risk (https://domain)', 'vms-span-checker' ); ?>
 						</label>
 						<label style="display:block;">
 							<input type="checkbox" name="wsc_tools_virustotal" value="1" checked>
-							<?php esc_html_e( 'VirusTotal domain report', 'wp-span-checker' ); ?>
+							<?php esc_html_e( 'VirusTotal domain report', 'vms-span-checker' ); ?>
 						</label>
 					</td>
 				</tr>
 			</table>
 			<p class="submit">
-				<button type="submit" class="button button-primary"><?php esc_html_e( 'Run tests', 'wp-span-checker' ); ?></button>
+				<button type="submit" class="button button-primary"><?php esc_html_e( 'Run tests', 'vms-span-checker' ); ?></button>
 			</p>
 		</form>
 
 		<?php if ( ! empty( $test_results ) ) : ?>
-			<h3><?php esc_html_e( 'Results', 'wp-span-checker' ); ?></h3>
+			<h3><?php esc_html_e( 'Results', 'vms-span-checker' ); ?></h3>
 			<?php foreach ( $test_results as $row ) : ?>
 				<div class="wsc-tools-result <?php echo ! empty( $row['ok'] ) ? 'is-ok' : 'is-fail'; ?>">
 					<strong><?php echo esc_html( $row['title'] ); ?></strong>
@@ -164,17 +166,17 @@ $log_rows = $logger->get_logs( 50 );
 		<?php endif; ?>
 
 		<p class="wsc-tools-hint">
-			<?php esc_html_e( 'API keys and thresholds are configured under API Settings.', 'wp-span-checker' ); ?>
+			<?php esc_html_e( 'API keys and thresholds are configured under API Settings.', 'vms-span-checker' ); ?>
 		</p>
 	</div>
 
 	<div class="wsc-tools-card wsc-tools-console-wrap">
-		<h2><?php esc_html_e( 'Activity log (last 50)', 'wp-span-checker' ); ?></h2>
-		<p class="description"><?php esc_html_e( 'Includes wp-login success/failure, registration guard, front-end domain checks, and manual tests from this screen.', 'wp-span-checker' ); ?></p>
+		<h2><?php esc_html_e( 'Activity log (last 50)', 'vms-span-checker' ); ?></h2>
+		<p class="description"><?php esc_html_e( 'Includes wp-login success/failure, registration guard, front-end domain checks, and manual tests from this screen.', 'vms-span-checker' ); ?></p>
 		<?php if ( empty( $log_rows ) ) : ?>
-			<p><?php esc_html_e( 'No log entries yet.', 'wp-span-checker' ); ?></p>
+			<p><?php esc_html_e( 'No log entries yet.', 'vms-span-checker' ); ?></p>
 		<?php else : ?>
-			<div class="wsc-tools-console" role="log" aria-label="<?php esc_attr_e( 'Activity log', 'wp-span-checker' ); ?>">
+			<div class="wsc-tools-console" role="log" aria-label="<?php esc_attr_e( 'Activity log', 'vms-span-checker' ); ?>">
 				<?php
 				foreach ( $log_rows as $row ) {
 					$status = isset( $row['status'] ) ? (string) $row['status'] : '';

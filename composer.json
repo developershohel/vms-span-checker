@@ -1,6 +1,6 @@
 {
-	"name": "wp-span-checker/wp-span-checker",
-	"description": "WP Span Checker WordPress plugin",
+	"name": "vms-span-checker/vms-span-checker",
+	"description": "VMS Span Checker WordPress plugin",
 	"type": "wordpress-plugin",
 	"license": "GPL-2.0-or-later",
 	"require": {

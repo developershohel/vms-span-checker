@@ -901,7 +901,7 @@ jQuery(document).ready(function ($) {
             '<div class="wsc-form-attr wsc-mt-4 wsc-fg-opt-textarea">' +
             '<p class="wsc-form-label">' + wscT('textareaAiSpam', 'AI spam check') + '</p>' +
             '<div class="wsc-switch-control">' + rad('fg_tai_' + ix, 1, tai) + rad('fg_tai_' + ix, 0, tai) + '</div>' +
-            '<span class="wsc-form-info-message wsc-text-info">' + wscT('textareaAiSpamHint', 'Uses AI settings from WP Span Checker → AI. Runs on the server when validation is enabled.') + '</span></div>' +
+            '<span class="wsc-form-info-message wsc-text-info">' + wscT('textareaAiSpamHint', 'Uses AI settings from VMS Span Checker → AI. Runs on the server when validation is enabled.') + '</span></div>' +
             '<div class="wsc-form-attr wsc-mt-4 wsc-fg-opt-other">' +
             '<p class="wsc-form-info-message wsc-text-info wsc-mb-0">' + wscT('securityMethodsOtherHint', 'Extra reputation toggles appear for Email/URL. Use “Validation rules” above for required / server validation / regex.') + '</p></div>' +
             '</fieldset>' +

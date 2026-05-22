@@ -2,10 +2,10 @@
 /**
  * Google Web Risk API client.
  *
- * @package WP_Span_Checker
+ * @package VMS_Span_Checker
  */
 
-namespace WP_Span_Checker\Services;
+namespace VMS_Span_Checker\Services;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -42,7 +42,7 @@ class GoogleWebRisk {
 		if ( empty( $this->api_key ) ) {
 			return array(
 				'status'  => false,
-				'message' => __( 'Google API key is required.', 'wp-span-checker' ),
+				'message' => __( 'Google API key is required.', 'vms-span-checker' ),
 			);
 		}
 
@@ -67,7 +67,7 @@ class GoogleWebRisk {
 			return array(
 				'status'  => false,
 				/* translators: %s: WordPress error message */
-				'message' => sprintf( __( 'Web Risk API request failed: %s', 'wp-span-checker' ), $response->get_error_message() ),
+				'message' => sprintf( __( 'Web Risk API request failed: %s', 'vms-span-checker' ), $response->get_error_message() ),
 			);
 		}
 
@@ -75,7 +75,7 @@ class GoogleWebRisk {
 		if ( ! $body ) {
 			return array(
 				'status'  => false,
-				'message' => __( 'Web Risk API returned an empty response.', 'wp-span-checker' ),
+				'message' => __( 'Web Risk API returned an empty response.', 'vms-span-checker' ),
 			);
 		}
 
@@ -84,13 +84,13 @@ class GoogleWebRisk {
 		if ( isset( $data['threat'] ) ) {
 			return array(
 				'status'  => false,
-				'message' => __( 'Threat detected.', 'wp-span-checker' ),
+				'message' => __( 'Threat detected.', 'vms-span-checker' ),
 			);
 		}
 
 		return array(
 			'status'  => true,
-			'message' => __( 'No threats detected.', 'wp-span-checker' ),
+			'message' => __( 'No threats detected.', 'vms-span-checker' ),
 		);
 	}
 }

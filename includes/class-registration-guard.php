@@ -19,7 +19,7 @@
  * {@see Registration_Guard::rejection_message_for_registration_email()} from custom PHP that runs *before*
  * their `wp_insert_user` call, if they provide such a hook.
  *
- * @package WP_Span_Checker
+ * @package VMS_Span_Checker
  *
  * Debug file logging: set {@see WP_DEBUG_LOG} to true in wp-config.php, or define
  * `WSC_REGISTRATION_GUARD_LOG` as true to log hook/outcome lines without full WP_DEBUG.
@@ -33,10 +33,10 @@
  * `if ( is_wp_error( $data ) ) { return $data; }`
  */
 
-namespace WP_Span_Checker;
+namespace VMS_Span_Checker;
 
 use WP_Error;
-use WP_Span_Checker\Services\Domain_Validator;
+use VMS_Span_Checker\Services\Domain_Validator;
 
 if (! defined('ABSPATH')) {
 	exit;
@@ -228,7 +228,7 @@ class Registration_Guard
 		}
 
 		$domain = self::email_registrant_domain($user_email);
-		$ip     = function_exists('wp_span_checker_get_user_ip') ? wp_span_checker_get_user_ip() : '';
+		$ip     = function_exists('vms_span_checker_get_user_ip') ? vms_span_checker_get_user_ip() : '';
 
 		if (! empty($cfg['rate_limit_enabled'])) {
 			$rl_msg = self::rate_limit_message_if_blocked($cfg, $ip);
@@ -290,8 +290,8 @@ class Registration_Guard
 				)
 			);
 			
-			if (function_exists('wp_span_checker_record_strike')) {
-				wp_span_checker_record_strike((string) $result['message'], 'registration', 0, $user_email);
+			if (function_exists('vms_span_checker_record_strike')) {
+				vms_span_checker_record_strike((string) $result['message'], 'registration', 0, $user_email);
 			}
 			
 			self::maybe_redirect_registration_error($msg, $hook_source);
@@ -311,7 +311,7 @@ class Registration_Guard
 		$state   = self::get_rate_state($ip);
 		$current = (int) ($state['day_fails'] ?? 0);
 		$max     = max(1, (int) ($cfg['rate_limit_max_per_day'] ?? 10));
-		return wp_span_checker_get_error_message('reg_rate_limit_count', array($current, $max));
+		return vms_span_checker_get_error_message('reg_rate_limit_count', array($current, $max));
 	}
 
 	/**
@@ -321,19 +321,19 @@ class Registration_Guard
 	{
 		$r = strtolower($reason);
 		if (false !== strpos($r, 'does not resolve in dns')) {
-			return wp_span_checker_get_error_message('reg_dns_failed');
+			return vms_span_checker_get_error_message('reg_dns_failed');
 		}
 		if (false !== strpos($r, 'no mx')) {
-			return wp_span_checker_get_error_message('reg_mx_failed');
+			return vms_span_checker_get_error_message('reg_mx_failed');
 		}
 		if (false !== strpos($r, 'disposable')) {
-			return wp_span_checker_get_error_message('reg_disposable');
+			return vms_span_checker_get_error_message('reg_disposable');
 		}
 		if (false !== strpos($r, 'too many failed registration attempts')
 			|| false !== strpos($r, 'daily registration attempt limit reached')) {
-			return wp_span_checker_get_error_message('reg_rate_limit');
+			return vms_span_checker_get_error_message('reg_rate_limit');
 		}
-		return wp_span_checker_get_error_message('reg_reputation_failed');
+		return vms_span_checker_get_error_message('reg_reputation_failed');
 	}
 
 	/**
@@ -342,12 +342,12 @@ class Registration_Guard
 	private static function brand_registration_block_message(string $reason, string $attempt_line = ''): string
 	{
 		$parts   = array();
-		$parts[] = wp_span_checker_get_error_message('reg_blocked_intro');
+		$parts[] = vms_span_checker_get_error_message('reg_blocked_intro');
 		$parts[] = self::registration_failed_check_line($reason);
 		if ('' !== $attempt_line) {
 			$parts[] = $attempt_line;
 		}
-		$parts[] = wp_span_checker_get_error_message('reg_contact_admin');
+		$parts[] = vms_span_checker_get_error_message('reg_contact_admin');
 		return implode(' ', $parts);
 	}
 
@@ -362,13 +362,13 @@ class Registration_Guard
 		if (headers_sent() || wp_doing_ajax() || (defined('REST_REQUEST') && REST_REQUEST)) {
 			return;
 		}
-		if (! isset($_SERVER['REQUEST_METHOD']) || 'POST' !== strtoupper((string) $_SERVER['REQUEST_METHOD'])) {
+		if (! isset($_SERVER['REQUEST_METHOD']) || 'POST' !== strtoupper(sanitize_text_field(wp_unslash((string) $_SERVER['REQUEST_METHOD'])))) {
 			return;
 		}
 
 		$target = wp_get_referer();
 		if (! is_string($target) || '' === $target) {
-			$script = isset($_SERVER['SCRIPT_NAME']) ? basename((string) $_SERVER['SCRIPT_NAME']) : '';
+			$script = isset($_SERVER['SCRIPT_NAME']) ? basename(sanitize_text_field(wp_unslash((string) $_SERVER['SCRIPT_NAME']))) : '';
 			if ('wp-login.php' === $script) {
 				$target = wp_login_url() . '?action=register';
 			} else {
@@ -383,7 +383,7 @@ class Registration_Guard
 		set_transient(
 			'wsc_rerr_' . $token,
 			array(
-				'title'   => wp_span_checker_get_error_message('reg_blocked_title'),
+				'title'   => vms_span_checker_get_error_message('reg_blocked_title'),
 				'message' => $message,
 				'hook'    => $hook_source,
 			),
@@ -400,9 +400,13 @@ class Registration_Guard
 	 */
 	public function consume_registration_error_query(): void
 	{
+		// One-time token consumed from URL; the token itself is bound to a
+		// transient created server-side, so no nonce is required.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Validated against server-stored transient below.
 		if (is_admin() || empty($_GET['wsc_reg_err'])) {
 			return;
 		}
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Validated against server-stored transient below.
 		$token = sanitize_text_field(wp_unslash((string) $_GET['wsc_reg_err']));
 		if (strlen($token) !== 16 || ! ctype_alnum($token)) {
 			return;
@@ -413,7 +417,7 @@ class Registration_Guard
 			return;
 		}
 		self::$frontend_registration_notice = array(
-			'title'   => isset($data['title']) ? (string) $data['title'] : wp_span_checker_get_error_message('reg_blocked_title'),
+			'title'   => isset($data['title']) ? (string) $data['title'] : vms_span_checker_get_error_message('reg_blocked_title'),
 			'message' => (string) $data['message'],
 		);
 	}
@@ -460,22 +464,22 @@ class Registration_Guard
 		}
 		wp_enqueue_style(
 			'wsc-public-sweetalert',
-			WP_Span_Checker_ASSETS_URL . 'plugins/sweetalert2/sweetalert2.min.css',
+			VMS_Span_Checker_ASSETS_URL . 'plugins/sweetalert2/sweetalert2.min.css',
 			array(),
-			WP_Span_Checker_VERSION
+			VMS_Span_Checker_VERSION
 		);
 		wp_enqueue_script(
 			'wsc-public-sweetalert',
-			WP_Span_Checker_ASSETS_URL . 'plugins/sweetalert2/sweetalert2.all.min.js',
+			VMS_Span_Checker_ASSETS_URL . 'plugins/sweetalert2/sweetalert2.all.min.js',
 			array(),
-			WP_Span_Checker_VERSION,
+			VMS_Span_Checker_VERSION,
 			true
 		);
 		$payload = wp_json_encode(
 			array(
 				'title'   => self::$frontend_registration_notice['title'],
 				'message' => self::$frontend_registration_notice['message'],
-				'ok'      => __('OK', 'wp-span-checker'),
+				'ok'      => __('OK', 'vms-span-checker'),
 			)
 		);
 		wp_add_inline_script(
@@ -532,7 +536,7 @@ class Registration_Guard
 			$context
 		);
 
-		$ip     = function_exists('wp_span_checker_get_user_ip') ? wp_span_checker_get_user_ip() : '';
+		$ip     = function_exists('vms_span_checker_get_user_ip') ? vms_span_checker_get_user_ip() : '';
 		$domain = isset($context['domain']) ? (string) $context['domain'] : '';
 		$status = 'success';
 		if (0 === strpos($outcome, 'blocked') || false !== strpos($outcome, 'removed') || false !== strpos($outcome, 'cancelled')) {
@@ -550,7 +554,7 @@ class Registration_Guard
 
 		if (self::is_registration_guard_file_log_enabled()) {
 			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-			error_log('[WP Span Checker] ' . wp_json_encode($row, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
+			error_log('[VMS Span Checker] ' . wp_json_encode($row, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
 		}
 	}
 
@@ -577,7 +581,7 @@ class Registration_Guard
 			$eta = human_time_diff($now, (int) $state['locked_until']);
 			return sprintf(
 				/* translators: 1: time until retry, 2: support reference id */
-				__('Too many failed registration attempts from your network. Please try again in about %1$s. Reference: %2$s', 'wp-span-checker'),
+				__('Too many failed registration attempts from your network. Please try again in about %1$s. Reference: %2$s', 'vms-span-checker'),
 				$eta,
 				$ref
 			);
@@ -591,7 +595,7 @@ class Registration_Guard
 			$ref = self::rate_reference_id($ip);
 			return sprintf(
 				/* translators: %s: support reference id */
-				__('Daily registration attempt limit reached for your network. Please try again tomorrow. Reference: %s', 'wp-span-checker'),
+				__('Daily registration attempt limit reached for your network. Please try again tomorrow. Reference: %s', 'vms-span-checker'),
 				$ref
 			);
 		}
@@ -668,7 +672,7 @@ class Registration_Guard
 		$ref = self::rate_reference_id($ip);
 		return $message . ' ' . sprintf(
 			/* translators: %s: support reference id */
-			__('(Reference: %s)', 'wp-span-checker'),
+			__('(Reference: %s)', 'vms-span-checker'),
 			$ref
 		);
 	}

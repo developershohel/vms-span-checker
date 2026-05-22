@@ -2,10 +2,10 @@
 /**
  * Auth Forms - Custom authentication form templates with validation.
  *
- * @package WP_Span_Checker
+ * @package VMS_Span_Checker
  */
 
-namespace WP_Span_Checker;
+namespace VMS_Span_Checker;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -65,7 +65,7 @@ class Auth_Forms {
 		add_action( 'wp_ajax_nopriv_wsc_auth_activate', array( $this, 'ajax_handle_activation' ) );
 
 		// Load email templates
-		require_once WP_SPAN_CHECKER_DIR . 'templates/emails/wsc-email-template-functions.php';
+		require_once VMS_SPAN_CHECKER_DIR . 'templates/emails/wsc-email-template-functions.php';
 	}
 
 	/**
@@ -183,7 +183,7 @@ class Auth_Forms {
 	 */
 	public function render_login_form( $atts = array() ) {
 		if ( is_user_logged_in() ) {
-			return '<p class="wsc-auth-message">' . esc_html__( 'You are already logged in.', 'wp-span-checker' ) . '</p>';
+			return '<p class="wsc-auth-message">' . esc_html__( 'You are already logged in.', 'vms-span-checker' ) . '</p>';
 		}
 
 		$settings = self::get_settings();
@@ -194,28 +194,28 @@ class Auth_Forms {
 		?>
 		<div class="wsc-auth-form-wrap" data-form-type="login">
 			<form class="wsc-auth-form wsc-auth-login" id="wsc-login-form" method="post">
-				<h2 class="wsc-auth-title"><?php esc_html_e( 'Login', 'wp-span-checker' ); ?></h2>
+				<h2 class="wsc-auth-title"><?php esc_html_e( 'Login', 'vms-span-checker' ); ?></h2>
 				
 				<div class="wsc-auth-message-area"></div>
 
 				<div class="wsc-auth-field">
 					<?php if ( $settings['show_labels'] ) : ?>
-						<label for="wsc-login-user"><?php esc_html_e( 'Username or Email', 'wp-span-checker' ); ?></label>
+						<label for="wsc-login-user"><?php esc_html_e( 'Username or Email', 'vms-span-checker' ); ?></label>
 					<?php endif; ?>
 					<input type="text" id="wsc-login-user" name="user_login" 
-						<?php echo $settings['show_placeholders'] ? 'placeholder="' . esc_attr__( 'Username or Email', 'wp-span-checker' ) . '"' : ''; ?>
+						<?php echo $settings['show_placeholders'] ? 'placeholder="' . esc_attr__( 'Username or Email', 'vms-span-checker' ) . '"' : ''; ?>
 						required autocomplete="username">
 				</div>
 
 				<div class="wsc-auth-field">
 					<?php if ( $settings['show_labels'] ) : ?>
-						<label for="wsc-login-pass"><?php esc_html_e( 'Password', 'wp-span-checker' ); ?></label>
+						<label for="wsc-login-pass"><?php esc_html_e( 'Password', 'vms-span-checker' ); ?></label>
 					<?php endif; ?>
 					<div class="wsc-auth-password-wrap">
 						<input type="password" id="wsc-login-pass" name="user_password" 
-							<?php echo $settings['show_placeholders'] ? 'placeholder="' . esc_attr__( 'Password', 'wp-span-checker' ) . '"' : ''; ?>
+							<?php echo $settings['show_placeholders'] ? 'placeholder="' . esc_attr__( 'Password', 'vms-span-checker' ) . '"' : ''; ?>
 							required autocomplete="current-password">
-						<button type="button" class="wsc-auth-toggle-pass" aria-label="<?php esc_attr_e( 'Toggle password visibility', 'wp-span-checker' ); ?>">
+						<button type="button" class="wsc-auth-toggle-pass" aria-label="<?php esc_attr_e( 'Toggle password visibility', 'vms-span-checker' ); ?>">
 							<span class="dashicons dashicons-visibility"></span>
 						</button>
 					</div>
@@ -224,7 +224,7 @@ class Auth_Forms {
 				<div class="wsc-auth-field wsc-auth-remember">
 					<label>
 						<input type="checkbox" name="remember" value="1">
-						<?php esc_html_e( 'Remember me', 'wp-span-checker' ); ?>
+						<?php esc_html_e( 'Remember me', 'vms-span-checker' ); ?>
 					</label>
 				</div>
 
@@ -236,16 +236,16 @@ class Auth_Forms {
 				<?php wp_nonce_field( 'wsc_auth_login', 'wsc_auth_nonce' ); ?>
 
 				<button type="submit" class="wsc-auth-submit">
-					<span class="wsc-auth-submit-text"><?php esc_html_e( 'Login', 'wp-span-checker' ); ?></span>
+					<span class="wsc-auth-submit-text"><?php esc_html_e( 'Login', 'vms-span-checker' ); ?></span>
 					<span class="wsc-auth-spinner"></span>
 				</button>
 
 				<div class="wsc-auth-links">
 					<?php if ( $settings['forgot_page_id'] ) : ?>
-						<a href="<?php echo esc_url( get_permalink( $settings['forgot_page_id'] ) ); ?>"><?php esc_html_e( 'Forgot Password?', 'wp-span-checker' ); ?></a>
+						<a href="<?php echo esc_url( get_permalink( $settings['forgot_page_id'] ) ); ?>"><?php esc_html_e( 'Forgot Password?', 'vms-span-checker' ); ?></a>
 					<?php endif; ?>
 					<?php if ( $settings['register_page_id'] && get_option( 'users_can_register' ) ) : ?>
-						<a href="<?php echo esc_url( get_permalink( $settings['register_page_id'] ) ); ?>"><?php esc_html_e( 'Create an account', 'wp-span-checker' ); ?></a>
+						<a href="<?php echo esc_url( get_permalink( $settings['register_page_id'] ) ); ?>"><?php esc_html_e( 'Create an account', 'vms-span-checker' ); ?></a>
 					<?php endif; ?>
 				</div>
 			</form>
@@ -262,11 +262,11 @@ class Auth_Forms {
 	 */
 	public function render_register_form( $atts = array() ) {
 		if ( is_user_logged_in() ) {
-			return '<p class="wsc-auth-message">' . esc_html__( 'You are already logged in.', 'wp-span-checker' ) . '</p>';
+			return '<p class="wsc-auth-message">' . esc_html__( 'You are already logged in.', 'vms-span-checker' ) . '</p>';
 		}
 
 		if ( ! get_option( 'users_can_register' ) ) {
-			return '<p class="wsc-auth-message">' . esc_html__( 'Registration is currently disabled.', 'wp-span-checker' ) . '</p>';
+			return '<p class="wsc-auth-message">' . esc_html__( 'Registration is currently disabled.', 'vms-span-checker' ) . '</p>';
 		}
 
 		$settings = self::get_settings();
@@ -277,38 +277,38 @@ class Auth_Forms {
 		?>
 		<div class="wsc-auth-form-wrap" data-form-type="register">
 			<form class="wsc-auth-form wsc-auth-register" id="wsc-register-form" method="post">
-				<h2 class="wsc-auth-title"><?php esc_html_e( 'Create Account', 'wp-span-checker' ); ?></h2>
+				<h2 class="wsc-auth-title"><?php esc_html_e( 'Create Account', 'vms-span-checker' ); ?></h2>
 				
 				<div class="wsc-auth-message-area"></div>
 
 				<div class="wsc-auth-field">
 					<?php if ( $settings['show_labels'] ) : ?>
-						<label for="wsc-reg-user"><?php esc_html_e( 'Username', 'wp-span-checker' ); ?> <span class="required">*</span></label>
+						<label for="wsc-reg-user"><?php esc_html_e( 'Username', 'vms-span-checker' ); ?> <span class="required">*</span></label>
 					<?php endif; ?>
 					<input type="text" id="wsc-reg-user" name="user_login" 
-						<?php echo $settings['show_placeholders'] ? 'placeholder="' . esc_attr__( 'Username', 'wp-span-checker' ) . '"' : ''; ?>
+						<?php echo $settings['show_placeholders'] ? 'placeholder="' . esc_attr__( 'Username', 'vms-span-checker' ) . '"' : ''; ?>
 						required autocomplete="username">
 				</div>
 
 				<div class="wsc-auth-field">
 					<?php if ( $settings['show_labels'] ) : ?>
-						<label for="wsc-reg-email"><?php esc_html_e( 'Email', 'wp-span-checker' ); ?> <span class="required">*</span></label>
+						<label for="wsc-reg-email"><?php esc_html_e( 'Email', 'vms-span-checker' ); ?> <span class="required">*</span></label>
 					<?php endif; ?>
 					<input type="email" id="wsc-reg-email" name="user_email" 
-						<?php echo $settings['show_placeholders'] ? 'placeholder="' . esc_attr__( 'Email Address', 'wp-span-checker' ) . '"' : ''; ?>
+						<?php echo $settings['show_placeholders'] ? 'placeholder="' . esc_attr__( 'Email Address', 'vms-span-checker' ) . '"' : ''; ?>
 						required autocomplete="email">
 					<span class="wsc-auth-field-status"></span>
 				</div>
 
 				<div class="wsc-auth-field">
 					<?php if ( $settings['show_labels'] ) : ?>
-						<label for="wsc-reg-pass"><?php esc_html_e( 'Password', 'wp-span-checker' ); ?> <span class="required">*</span></label>
+						<label for="wsc-reg-pass"><?php esc_html_e( 'Password', 'vms-span-checker' ); ?> <span class="required">*</span></label>
 					<?php endif; ?>
 					<div class="wsc-auth-password-wrap">
 						<input type="password" id="wsc-reg-pass" name="user_password" 
-							<?php echo $settings['show_placeholders'] ? 'placeholder="' . esc_attr__( 'Password', 'wp-span-checker' ) . '"' : ''; ?>
+							<?php echo $settings['show_placeholders'] ? 'placeholder="' . esc_attr__( 'Password', 'vms-span-checker' ) . '"' : ''; ?>
 							required autocomplete="new-password">
-						<button type="button" class="wsc-auth-toggle-pass" aria-label="<?php esc_attr_e( 'Toggle password visibility', 'wp-span-checker' ); ?>">
+						<button type="button" class="wsc-auth-toggle-pass" aria-label="<?php esc_attr_e( 'Toggle password visibility', 'vms-span-checker' ); ?>">
 							<span class="dashicons dashicons-visibility"></span>
 						</button>
 					</div>
@@ -317,11 +317,11 @@ class Auth_Forms {
 
 				<div class="wsc-auth-field">
 					<?php if ( $settings['show_labels'] ) : ?>
-						<label for="wsc-reg-pass-confirm"><?php esc_html_e( 'Confirm Password', 'wp-span-checker' ); ?> <span class="required">*</span></label>
+						<label for="wsc-reg-pass-confirm"><?php esc_html_e( 'Confirm Password', 'vms-span-checker' ); ?> <span class="required">*</span></label>
 					<?php endif; ?>
 					<div class="wsc-auth-password-wrap">
 						<input type="password" id="wsc-reg-pass-confirm" name="user_password_confirm" 
-							<?php echo $settings['show_placeholders'] ? 'placeholder="' . esc_attr__( 'Confirm Password', 'wp-span-checker' ) . '"' : ''; ?>
+							<?php echo $settings['show_placeholders'] ? 'placeholder="' . esc_attr__( 'Confirm Password', 'vms-span-checker' ) . '"' : ''; ?>
 							required autocomplete="new-password">
 					</div>
 				</div>
@@ -335,13 +335,13 @@ class Auth_Forms {
 					<?php
 					$rules = array();
 					if ( ! empty( $settings['register_check_dns'] ) ) {
-						$rules[] = __( 'Valid domain', 'wp-span-checker' );
+						$rules[] = __( 'Valid domain', 'vms-span-checker' );
 					}
 					if ( ! empty( $settings['register_check_mx'] ) ) {
-						$rules[] = __( 'Email deliverable', 'wp-span-checker' );
+						$rules[] = __( 'Email deliverable', 'vms-span-checker' );
 					}
 					if ( ! empty( $settings['register_check_disposable'] ) ) {
-						$rules[] = __( 'No disposable emails', 'wp-span-checker' );
+						$rules[] = __( 'No disposable emails', 'vms-span-checker' );
 					}
 					if ( ! empty( $rules ) ) :
 					?>
@@ -356,13 +356,13 @@ class Auth_Forms {
 				<?php wp_nonce_field( 'wsc_auth_register', 'wsc_auth_nonce' ); ?>
 
 				<button type="submit" class="wsc-auth-submit">
-					<span class="wsc-auth-submit-text"><?php esc_html_e( 'Create Account', 'wp-span-checker' ); ?></span>
+					<span class="wsc-auth-submit-text"><?php esc_html_e( 'Create Account', 'vms-span-checker' ); ?></span>
 					<span class="wsc-auth-spinner"></span>
 				</button>
 
 				<div class="wsc-auth-links">
 					<?php if ( $settings['login_page_id'] ) : ?>
-						<a href="<?php echo esc_url( get_permalink( $settings['login_page_id'] ) ); ?>"><?php esc_html_e( 'Already have an account? Login', 'wp-span-checker' ); ?></a>
+						<a href="<?php echo esc_url( get_permalink( $settings['login_page_id'] ) ); ?>"><?php esc_html_e( 'Already have an account? Login', 'vms-span-checker' ); ?></a>
 					<?php endif; ?>
 				</div>
 			</form>
@@ -379,7 +379,7 @@ class Auth_Forms {
 	 */
 	public function render_forgot_password_form( $atts = array() ) {
 		if ( is_user_logged_in() ) {
-			return '<p class="wsc-auth-message">' . esc_html__( 'You are already logged in.', 'wp-span-checker' ) . '</p>';
+			return '<p class="wsc-auth-message">' . esc_html__( 'You are already logged in.', 'vms-span-checker' ) . '</p>';
 		}
 
 		$settings = self::get_settings();
@@ -389,17 +389,17 @@ class Auth_Forms {
 		?>
 		<div class="wsc-auth-form-wrap" data-form-type="forgot_password">
 			<form class="wsc-auth-form wsc-auth-forgot" id="wsc-forgot-form" method="post">
-				<h2 class="wsc-auth-title"><?php esc_html_e( 'Reset Password', 'wp-span-checker' ); ?></h2>
-				<p class="wsc-auth-subtitle"><?php esc_html_e( 'Enter your email address and we\'ll send you a link to reset your password.', 'wp-span-checker' ); ?></p>
+				<h2 class="wsc-auth-title"><?php esc_html_e( 'Reset Password', 'vms-span-checker' ); ?></h2>
+				<p class="wsc-auth-subtitle"><?php esc_html_e( 'Enter your email address and we\'ll send you a link to reset your password.', 'vms-span-checker' ); ?></p>
 				
 				<div class="wsc-auth-message-area"></div>
 
 				<div class="wsc-auth-field">
 					<?php if ( $settings['show_labels'] ) : ?>
-						<label for="wsc-forgot-email"><?php esc_html_e( 'Email Address', 'wp-span-checker' ); ?></label>
+						<label for="wsc-forgot-email"><?php esc_html_e( 'Email Address', 'vms-span-checker' ); ?></label>
 					<?php endif; ?>
 					<input type="email" id="wsc-forgot-email" name="user_email" 
-						<?php echo $settings['show_placeholders'] ? 'placeholder="' . esc_attr__( 'Email Address', 'wp-span-checker' ) . '"' : ''; ?>
+						<?php echo $settings['show_placeholders'] ? 'placeholder="' . esc_attr__( 'Email Address', 'vms-span-checker' ) . '"' : ''; ?>
 						required autocomplete="email">
 				</div>
 
@@ -407,13 +407,13 @@ class Auth_Forms {
 				<?php wp_nonce_field( 'wsc_auth_forgot_password', 'wsc_auth_nonce' ); ?>
 
 				<button type="submit" class="wsc-auth-submit">
-					<span class="wsc-auth-submit-text"><?php esc_html_e( 'Send Reset Link', 'wp-span-checker' ); ?></span>
+					<span class="wsc-auth-submit-text"><?php esc_html_e( 'Send Reset Link', 'vms-span-checker' ); ?></span>
 					<span class="wsc-auth-spinner"></span>
 				</button>
 
 				<div class="wsc-auth-links">
 					<?php if ( $settings['login_page_id'] ) : ?>
-						<a href="<?php echo esc_url( get_permalink( $settings['login_page_id'] ) ); ?>"><?php esc_html_e( 'Back to Login', 'wp-span-checker' ); ?></a>
+						<a href="<?php echo esc_url( get_permalink( $settings['login_page_id'] ) ); ?>"><?php esc_html_e( 'Back to Login', 'vms-span-checker' ); ?></a>
 					<?php endif; ?>
 				</div>
 			</form>
@@ -430,11 +430,16 @@ class Auth_Forms {
 	 */
 	public function render_reset_password_form( $atts = array() ) {
 		if ( is_user_logged_in() ) {
-			return '<p class="wsc-auth-message">' . esc_html__( 'You are already logged in.', 'wp-span-checker' ) . '</p>';
+			return '<p class="wsc-auth-message">' . esc_html__( 'You are already logged in.', 'vms-span-checker' ) . '</p>';
 		}
 
-		// Check for reset key and login
+		// Check for reset key and login.
+		// These come from password-reset links generated by WordPress itself
+		// and are validated by `check_password_reset_key()` below; a separate
+		// nonce is not used for these read-only link parameters.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Validated via check_password_reset_key().
 		$rp_key   = isset( $_GET['key'] ) ? sanitize_text_field( wp_unslash( $_GET['key'] ) ) : '';
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Validated via check_password_reset_key().
 		$rp_login = isset( $_GET['login'] ) ? sanitize_user( wp_unslash( $_GET['login'] ) ) : '';
 
 		if ( empty( $rp_key ) || empty( $rp_login ) ) {
@@ -445,11 +450,11 @@ class Auth_Forms {
 			<div class="wsc-auth-form-wrap">
 				<div class="wsc-auth-form">
 					<div class="wsc-auth-message wsc-auth-message--error">
-						<?php esc_html_e( 'Invalid password reset link. Please request a new one.', 'wp-span-checker' ); ?>
+						<?php esc_html_e( 'Invalid password reset link. Please request a new one.', 'vms-span-checker' ); ?>
 					</div>
 					<?php if ( $settings['forgot_page_id'] ) : ?>
 						<div class="wsc-auth-links">
-							<a href="<?php echo esc_url( get_permalink( $settings['forgot_page_id'] ) ); ?>"><?php esc_html_e( 'Request new reset link', 'wp-span-checker' ); ?></a>
+							<a href="<?php echo esc_url( get_permalink( $settings['forgot_page_id'] ) ); ?>"><?php esc_html_e( 'Request new reset link', 'vms-span-checker' ); ?></a>
 						</div>
 					<?php endif; ?>
 				</div>
@@ -468,11 +473,11 @@ class Auth_Forms {
 			<div class="wsc-auth-form-wrap">
 				<div class="wsc-auth-form">
 					<div class="wsc-auth-message wsc-auth-message--error">
-						<?php esc_html_e( 'This password reset link has expired or is invalid. Please request a new one.', 'wp-span-checker' ); ?>
+						<?php esc_html_e( 'This password reset link has expired or is invalid. Please request a new one.', 'vms-span-checker' ); ?>
 					</div>
 					<?php if ( $settings['forgot_page_id'] ) : ?>
 						<div class="wsc-auth-links">
-							<a href="<?php echo esc_url( get_permalink( $settings['forgot_page_id'] ) ); ?>"><?php esc_html_e( 'Request new reset link', 'wp-span-checker' ); ?></a>
+							<a href="<?php echo esc_url( get_permalink( $settings['forgot_page_id'] ) ); ?>"><?php esc_html_e( 'Request new reset link', 'vms-span-checker' ); ?></a>
 						</div>
 					<?php endif; ?>
 				</div>
@@ -488,19 +493,19 @@ class Auth_Forms {
 		?>
 		<div class="wsc-auth-form-wrap" data-form-type="reset_password">
 			<form class="wsc-auth-form wsc-auth-reset" id="wsc-reset-form" method="post">
-				<h2 class="wsc-auth-title"><?php esc_html_e( 'Set New Password', 'wp-span-checker' ); ?></h2>
+				<h2 class="wsc-auth-title"><?php esc_html_e( 'Set New Password', 'vms-span-checker' ); ?></h2>
 				
 				<div class="wsc-auth-message-area"></div>
 
 				<div class="wsc-auth-field">
 					<?php if ( $settings['show_labels'] ) : ?>
-						<label for="wsc-reset-pass"><?php esc_html_e( 'New Password', 'wp-span-checker' ); ?></label>
+						<label for="wsc-reset-pass"><?php esc_html_e( 'New Password', 'vms-span-checker' ); ?></label>
 					<?php endif; ?>
 					<div class="wsc-auth-password-wrap">
 						<input type="password" id="wsc-reset-pass" name="user_password" 
-							<?php echo $settings['show_placeholders'] ? 'placeholder="' . esc_attr__( 'New Password', 'wp-span-checker' ) . '"' : ''; ?>
+							<?php echo $settings['show_placeholders'] ? 'placeholder="' . esc_attr__( 'New Password', 'vms-span-checker' ) . '"' : ''; ?>
 							required autocomplete="new-password">
-						<button type="button" class="wsc-auth-toggle-pass" aria-label="<?php esc_attr_e( 'Toggle password visibility', 'wp-span-checker' ); ?>">
+						<button type="button" class="wsc-auth-toggle-pass" aria-label="<?php esc_attr_e( 'Toggle password visibility', 'vms-span-checker' ); ?>">
 							<span class="dashicons dashicons-visibility"></span>
 						</button>
 					</div>
@@ -509,11 +514,11 @@ class Auth_Forms {
 
 				<div class="wsc-auth-field">
 					<?php if ( $settings['show_labels'] ) : ?>
-						<label for="wsc-reset-pass-confirm"><?php esc_html_e( 'Confirm New Password', 'wp-span-checker' ); ?></label>
+						<label for="wsc-reset-pass-confirm"><?php esc_html_e( 'Confirm New Password', 'vms-span-checker' ); ?></label>
 					<?php endif; ?>
 					<div class="wsc-auth-password-wrap">
 						<input type="password" id="wsc-reset-pass-confirm" name="user_password_confirm" 
-							<?php echo $settings['show_placeholders'] ? 'placeholder="' . esc_attr__( 'Confirm Password', 'wp-span-checker' ) . '"' : ''; ?>
+							<?php echo $settings['show_placeholders'] ? 'placeholder="' . esc_attr__( 'Confirm Password', 'vms-span-checker' ) . '"' : ''; ?>
 							required autocomplete="new-password">
 					</div>
 				</div>
@@ -524,7 +529,7 @@ class Auth_Forms {
 				<?php wp_nonce_field( 'wsc_auth_reset_password', 'wsc_auth_nonce' ); ?>
 
 				<button type="submit" class="wsc-auth-submit">
-					<span class="wsc-auth-submit-text"><?php esc_html_e( 'Reset Password', 'wp-span-checker' ); ?></span>
+					<span class="wsc-auth-submit-text"><?php esc_html_e( 'Reset Password', 'vms-span-checker' ); ?></span>
 					<span class="wsc-auth-spinner"></span>
 				</button>
 			</form>
@@ -541,14 +546,19 @@ class Auth_Forms {
 	 */
 	public function render_verify_form( $atts = array() ) {
 		if ( is_user_logged_in() ) {
-			return '<p class="wsc-auth-message">' . esc_html__( 'You are already logged in.', 'wp-span-checker' ) . '</p>';
+			return '<p class="wsc-auth-message">' . esc_html__( 'You are already logged in.', 'vms-span-checker' ) . '</p>';
 		}
 
 		$settings = self::get_settings();
 
-		// Check for activation link parameters
+		// Check for activation link parameters. These come from one-time email
+		// activation links generated by this plugin; the `key` is validated
+		// against `wsc_activation_key` user meta below before any action.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Validated below.
 		$key   = isset( $_GET['key'] ) ? sanitize_text_field( wp_unslash( $_GET['key'] ) ) : '';
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Validated below.
 		$login = isset( $_GET['login'] ) ? sanitize_user( wp_unslash( $_GET['login'] ) ) : '';
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Validated below.
 		$email = isset( $_GET['email'] ) ? sanitize_email( wp_unslash( $_GET['email'] ) ) : '';
 
 		ob_start();
@@ -573,7 +583,15 @@ class Auth_Forms {
 					$login_url = $settings['login_page_id'] ? get_permalink( $settings['login_page_id'] ) : wp_login_url();
 					$body      = function_exists( 'wsc_email_welcome' ) ? wsc_email_welcome( $user->display_name, $login_url ) : '';
 					if ( $body ) {
-						wsc_send_html_email( $user->user_email, sprintf( __( '[%s] Welcome!', 'wp-span-checker' ), get_bloginfo( 'name' ) ), $body );
+						wsc_send_html_email(
+							$user->user_email,
+							sprintf(
+								/* translators: %s: site name */
+								__( '[%s] Welcome!', 'vms-span-checker' ),
+								get_bloginfo( 'name' )
+							),
+							$body
+						);
 					}
 					?>
 					<div class="wsc-auth-form-wrap" data-form-type="activation_success">
@@ -581,9 +599,9 @@ class Auth_Forms {
 							<div class="wsc-auth-success-icon">
 								<span class="dashicons dashicons-yes-alt"></span>
 							</div>
-							<h2 class="wsc-auth-title"><?php esc_html_e( 'Account Verified!', 'wp-span-checker' ); ?></h2>
-							<p class="wsc-auth-subtitle"><?php esc_html_e( 'Your account has been successfully verified. You can now log in.', 'wp-span-checker' ); ?></p>
-							<a href="<?php echo esc_url( $login_url ); ?>" class="wsc-auth-submit"><?php esc_html_e( 'Login Now', 'wp-span-checker' ); ?></a>
+							<h2 class="wsc-auth-title"><?php esc_html_e( 'Account Verified!', 'vms-span-checker' ); ?></h2>
+							<p class="wsc-auth-subtitle"><?php esc_html_e( 'Your account has been successfully verified. You can now log in.', 'vms-span-checker' ); ?></p>
+							<a href="<?php echo esc_url( $login_url ); ?>" class="wsc-auth-submit"><?php esc_html_e( 'Login Now', 'vms-span-checker' ); ?></a>
 						</div>
 					</div>
 					<?php
@@ -595,7 +613,7 @@ class Auth_Forms {
 					<div class="wsc-auth-form-wrap" data-form-type="verify">
 						<div class="wsc-auth-form">
 							<div class="wsc-auth-message wsc-auth-message--error">
-								<?php esc_html_e( 'This activation link has expired. Please enter the verification code or request a new link.', 'wp-span-checker' ); ?>
+								<?php esc_html_e( 'This activation link has expired. Please enter the verification code or request a new link.', 'vms-span-checker' ); ?>
 							</div>
 						</div>
 					</div>
@@ -610,11 +628,11 @@ class Auth_Forms {
 			<div class="wsc-auth-form-wrap">
 				<div class="wsc-auth-form">
 					<div class="wsc-auth-message wsc-auth-message--error">
-						<?php esc_html_e( 'Invalid verification request. Please check your email for the verification link.', 'wp-span-checker' ); ?>
+						<?php esc_html_e( 'Invalid verification request. Please check your email for the verification link.', 'vms-span-checker' ); ?>
 					</div>
 					<?php if ( $settings['login_page_id'] ) : ?>
 						<div class="wsc-auth-links" style="margin-top: 20px;">
-							<a href="<?php echo esc_url( get_permalink( $settings['login_page_id'] ) ); ?>"><?php esc_html_e( 'Back to Login', 'wp-span-checker' ); ?></a>
+							<a href="<?php echo esc_url( get_permalink( $settings['login_page_id'] ) ); ?>"><?php esc_html_e( 'Back to Login', 'vms-span-checker' ); ?></a>
 						</div>
 					<?php endif; ?>
 				</div>
@@ -625,16 +643,22 @@ class Auth_Forms {
 		?>
 		<div class="wsc-auth-form-wrap" data-form-type="verify">
 			<form class="wsc-auth-form wsc-auth-verify" id="wsc-verify-form" method="post">
-				<h2 class="wsc-auth-title"><?php esc_html_e( 'Verify Your Email', 'wp-span-checker' ); ?></h2>
+				<h2 class="wsc-auth-title"><?php esc_html_e( 'Verify Your Email', 'vms-span-checker' ); ?></h2>
 				<p class="wsc-auth-subtitle">
-					<?php printf( esc_html__( 'We sent a verification code and activation link to %s', 'wp-span-checker' ), '<strong>' . esc_html( $email ) . '</strong>' ); ?>
+					<?php
+					printf(
+						/* translators: %s: email address wrapped in strong tags */
+						esc_html__( 'We sent a verification code and activation link to %s', 'vms-span-checker' ),
+						'<strong>' . esc_html( $email ) . '</strong>' // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+					);
+					?>
 				</p>
 				
 				<div class="wsc-auth-message-area"></div>
 
 				<div class="wsc-auth-field">
 					<?php if ( $settings['show_labels'] ) : ?>
-						<label><?php esc_html_e( 'Enter 6-digit verification code', 'wp-span-checker' ); ?></label>
+						<label><?php esc_html_e( 'Enter 6-digit verification code', 'vms-span-checker' ); ?></label>
 					<?php endif; ?>
 					<div class="wsc-auth-otp-inputs">
 						<input type="text" class="wsc-otp-digit" maxlength="1" pattern="[0-9]" inputmode="numeric" autocomplete="one-time-code" autofocus>
@@ -652,17 +676,17 @@ class Auth_Forms {
 				<?php wp_nonce_field( 'wsc_auth_verify_otp', 'wsc_auth_nonce' ); ?>
 
 				<button type="submit" class="wsc-auth-submit">
-					<span class="wsc-auth-submit-text"><?php esc_html_e( 'Verify Code', 'wp-span-checker' ); ?></span>
+					<span class="wsc-auth-submit-text"><?php esc_html_e( 'Verify Code', 'vms-span-checker' ); ?></span>
 					<span class="wsc-auth-spinner"></span>
 				</button>
 
 				<div class="wsc-auth-links">
 					<p class="wsc-auth-resend">
-						<?php esc_html_e( "Didn't receive the code?", 'wp-span-checker' ); ?>
-						<a href="#" id="wsc-resend-otp" data-email="<?php echo esc_attr( $email ); ?>"><?php esc_html_e( 'Resend', 'wp-span-checker' ); ?></a>
+						<?php esc_html_e( "Didn't receive the code?", 'vms-span-checker' ); ?>
+						<a href="#" id="wsc-resend-otp" data-email="<?php echo esc_attr( $email ); ?>"><?php esc_html_e( 'Resend', 'vms-span-checker' ); ?></a>
 					</p>
 					<p class="wsc-auth-link-hint">
-						<?php esc_html_e( 'You can also click the activation link in your email.', 'wp-span-checker' ); ?>
+						<?php esc_html_e( 'You can also click the activation link in your email.', 'vms-span-checker' ); ?>
 					</p>
 				</div>
 			</form>
@@ -730,11 +754,14 @@ class Auth_Forms {
 		check_ajax_referer( 'wsc_auth_login', 'wsc_auth_nonce' );
 
 		$user_login = isset( $_POST['user_login'] ) ? sanitize_text_field( wp_unslash( $_POST['user_login'] ) ) : '';
-		$password   = isset( $_POST['user_password'] ) ? wp_unslash( $_POST['user_password'] ) : '';
+		// Passwords must NOT be passed through sanitize_text_field because that
+		// would strip valid characters; the password is later hashed by
+		// wp_signon() / wp_set_password().
+		$password   = isset( $_POST['user_password'] ) ? wp_unslash( $_POST['user_password'] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Raw password, hashed before use.
 		$remember   = isset( $_POST['remember'] ) && $_POST['remember'] === '1';
 
 		if ( empty( $user_login ) || empty( $password ) ) {
-			wp_send_json_error( array( 'message' => __( 'Please fill in all fields.', 'wp-span-checker' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Please fill in all fields.', 'vms-span-checker' ) ) );
 		}
 
 		// Check reCAPTCHA if enabled
@@ -744,13 +771,13 @@ class Auth_Forms {
 		if ( ! empty( $settings['login_recaptcha'] ) && ! empty( $ai_cfg['recaptcha_site_key'] ) ) {
 			$recaptcha_token = isset( $_POST['recaptcha_token'] ) ? sanitize_text_field( wp_unslash( $_POST['recaptcha_token'] ) ) : '';
 			if ( empty( $recaptcha_token ) ) {
-				wp_send_json_error( array( 'message' => __( 'Please complete the reCAPTCHA.', 'wp-span-checker' ) ) );
+				wp_send_json_error( array( 'message' => __( 'Please complete the reCAPTCHA.', 'vms-span-checker' ) ) );
 			}
 
 			$ajax = new Ajax();
 			$result = $ajax->verify_recaptcha( $recaptcha_token );
 			if ( ! $result['success'] ) {
-				wp_send_json_error( array( 'message' => __( 'reCAPTCHA verification failed.', 'wp-span-checker' ) ) );
+				wp_send_json_error( array( 'message' => __( 'reCAPTCHA verification failed.', 'vms-span-checker' ) ) );
 			}
 		}
 
@@ -761,7 +788,7 @@ class Auth_Forms {
 		) );
 
 		if ( is_wp_error( $user ) ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid username or password.', 'wp-span-checker' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Invalid username or password.', 'vms-span-checker' ) ) );
 		}
 
 		$redirect = $settings['login_redirect'];
@@ -770,7 +797,7 @@ class Auth_Forms {
 		}
 
 		wp_send_json_success( array(
-			'message'  => __( 'Login successful! Redirecting...', 'wp-span-checker' ),
+			'message'  => __( 'Login successful! Redirecting...', 'vms-span-checker' ),
 			'redirect' => $redirect,
 		) );
 	}
@@ -783,20 +810,22 @@ class Auth_Forms {
 
 		$user_login = isset( $_POST['user_login'] ) ? sanitize_user( wp_unslash( $_POST['user_login'] ) ) : '';
 		$user_email = isset( $_POST['user_email'] ) ? sanitize_email( wp_unslash( $_POST['user_email'] ) ) : '';
-		$password   = isset( $_POST['user_password'] ) ? wp_unslash( $_POST['user_password'] ) : '';
-		$password_confirm = isset( $_POST['user_password_confirm'] ) ? wp_unslash( $_POST['user_password_confirm'] ) : '';
+		// Passwords must NOT be passed through sanitize_text_field; they are
+		// later hashed by wp_create_user() / wp_set_password().
+		$password         = isset( $_POST['user_password'] ) ? wp_unslash( $_POST['user_password'] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Raw password, hashed before use.
+		$password_confirm = isset( $_POST['user_password_confirm'] ) ? wp_unslash( $_POST['user_password_confirm'] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Raw password, used only for equality check.
 
 		// Basic validation
 		if ( empty( $user_login ) || empty( $user_email ) || empty( $password ) ) {
-			wp_send_json_error( array( 'message' => __( 'Please fill in all required fields.', 'wp-span-checker' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Please fill in all required fields.', 'vms-span-checker' ) ) );
 		}
 
 		if ( $password !== $password_confirm ) {
-			wp_send_json_error( array( 'message' => __( 'Passwords do not match.', 'wp-span-checker' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Passwords do not match.', 'vms-span-checker' ) ) );
 		}
 
 		if ( strlen( $password ) < 8 ) {
-			wp_send_json_error( array( 'message' => __( 'Password must be at least 8 characters.', 'wp-span-checker' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Password must be at least 8 characters.', 'vms-span-checker' ) ) );
 		}
 
 		$settings = self::get_settings();
@@ -806,13 +835,13 @@ class Auth_Forms {
 		if ( ! empty( $settings['register_recaptcha'] ) && ! empty( $ai_cfg['recaptcha_site_key'] ) ) {
 			$recaptcha_token = isset( $_POST['recaptcha_token'] ) ? sanitize_text_field( wp_unslash( $_POST['recaptcha_token'] ) ) : '';
 			if ( empty( $recaptcha_token ) ) {
-				wp_send_json_error( array( 'message' => __( 'Please complete the reCAPTCHA.', 'wp-span-checker' ) ) );
+				wp_send_json_error( array( 'message' => __( 'Please complete the reCAPTCHA.', 'vms-span-checker' ) ) );
 			}
 
 			$ajax = new Ajax();
 			$result = $ajax->verify_recaptcha( $recaptcha_token );
 			if ( ! $result['success'] ) {
-				wp_send_json_error( array( 'message' => __( 'reCAPTCHA verification failed.', 'wp-span-checker' ) ) );
+				wp_send_json_error( array( 'message' => __( 'reCAPTCHA verification failed.', 'vms-span-checker' ) ) );
 			}
 		}
 
@@ -822,49 +851,49 @@ class Auth_Forms {
 
 		// DNS check (mandatory if API checks enabled)
 		if ( ! empty( $settings['register_check_dns'] ) || $needs_api_checks ) {
-			if ( ! wp_span_checker_check_domain_dns( $domain ) ) {
-				wp_send_json_error( array( 'message' => __( 'Email domain does not exist.', 'wp-span-checker' ) ) );
+			if ( ! vms_span_checker_check_domain_dns( $domain ) ) {
+				wp_send_json_error( array( 'message' => __( 'Email domain does not exist.', 'vms-span-checker' ) ) );
 			}
 		}
 
 		// MX check (mandatory if API checks enabled)
 		if ( ! empty( $settings['register_check_mx'] ) || $needs_api_checks ) {
-			if ( ! wp_span_checker_check_mx_record( $domain ) ) {
-				wp_send_json_error( array( 'message' => __( 'Email domain cannot receive emails.', 'wp-span-checker' ) ) );
+			if ( ! vms_span_checker_check_mx_record( $domain ) ) {
+				wp_send_json_error( array( 'message' => __( 'Email domain cannot receive emails.', 'vms-span-checker' ) ) );
 			}
 		}
 
 		// Disposable check
 		if ( ! empty( $settings['register_check_disposable'] ) ) {
-			if ( wp_span_checker_is_disposable_domain( $domain ) ) {
-				wp_send_json_error( array( 'message' => __( 'Disposable email addresses are not allowed.', 'wp-span-checker' ) ) );
+			if ( vms_span_checker_is_disposable_domain( $domain ) ) {
+				wp_send_json_error( array( 'message' => __( 'Disposable email addresses are not allowed.', 'vms-span-checker' ) ) );
 			}
 		}
 
 		// Web Risk check
 		if ( ! empty( $settings['register_webrisk'] ) ) {
-			$webrisk_result = wp_span_checker_check_webrisk( $domain );
+			$webrisk_result = vms_span_checker_check_webrisk( $domain );
 			if ( $webrisk_result && ! empty( $webrisk_result['threat'] ) ) {
-				wp_send_json_error( array( 'message' => __( 'Email domain flagged for security issues.', 'wp-span-checker' ) ) );
+				wp_send_json_error( array( 'message' => __( 'Email domain flagged for security issues.', 'vms-span-checker' ) ) );
 			}
 		}
 
 		// VirusTotal check
 		if ( ! empty( $settings['register_virustotal'] ) ) {
-			$vt_result = wp_span_checker_check_virustotal( $domain );
+			$vt_result = vms_span_checker_check_virustotal( $domain );
 			if ( $vt_result && isset( $vt_result['malicious'] ) && $vt_result['malicious'] > 0 ) {
-				wp_send_json_error( array( 'message' => __( 'Email domain flagged as potentially harmful.', 'wp-span-checker' ) ) );
+				wp_send_json_error( array( 'message' => __( 'Email domain flagged as potentially harmful.', 'vms-span-checker' ) ) );
 			}
 		}
 
 		// Check if username exists
 		if ( username_exists( $user_login ) ) {
-			wp_send_json_error( array( 'message' => __( 'Username already exists.', 'wp-span-checker' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Username already exists.', 'vms-span-checker' ) ) );
 		}
 
 		// Check if email exists
 		if ( email_exists( $user_email ) ) {
-			wp_send_json_error( array( 'message' => __( 'Email address already registered.', 'wp-span-checker' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Email address already registered.', 'vms-span-checker' ) ) );
 		}
 
 		// Check if email verification is enabled (combined OTP + activation link)
@@ -898,13 +927,14 @@ class Auth_Forms {
 
 			// Send combined verification email (OTP + activation link)
 			if ( function_exists( 'wsc_email_verification' ) && function_exists( 'wsc_send_html_email' ) ) {
-				$subject = sprintf( __( '[%s] Verify Your Email', 'wp-span-checker' ), get_bloginfo( 'name' ) );
+				/* translators: %s: site name */
+				$subject = sprintf( __( '[%s] Verify Your Email', 'vms-span-checker' ), get_bloginfo( 'name' ) );
 				$body    = wsc_email_verification( $activation_url, $otp, $user_login, $user_email, $otp_expires, $link_expires );
 				$sent    = wsc_send_html_email( $user_email, $subject, $body );
 
 				if ( ! $sent ) {
 					delete_transient( $transient_key );
-					wp_send_json_error( array( 'message' => __( 'Failed to send verification email. Please try again.', 'wp-span-checker' ) ) );
+					wp_send_json_error( array( 'message' => __( 'Failed to send verification email. Please try again.', 'vms-span-checker' ) ) );
 				}
 			}
 
@@ -914,7 +944,7 @@ class Auth_Forms {
 				: add_query_arg( 'email', urlencode( $user_email ), home_url( '/verify/' ) );
 
 			wp_send_json_success( array(
-				'message'          => __( 'Verification email sent! Check your inbox for the code or activation link.', 'wp-span-checker' ),
+				'message'          => __( 'Verification email sent! Check your inbox for the code or activation link.', 'vms-span-checker' ),
 				'redirect'         => $redirect,
 				'require_verify'   => true,
 			) );
@@ -940,7 +970,7 @@ class Auth_Forms {
 		}
 
 		wp_send_json_success( array(
-			'message'  => __( 'Account created successfully! Redirecting...', 'wp-span-checker' ),
+			'message'  => __( 'Account created successfully! Redirecting...', 'vms-span-checker' ),
 			'redirect' => $redirect,
 		) );
 	}
@@ -954,14 +984,14 @@ class Auth_Forms {
 		$user_email = isset( $_POST['user_email'] ) ? sanitize_email( wp_unslash( $_POST['user_email'] ) ) : '';
 
 		if ( empty( $user_email ) || ! is_email( $user_email ) ) {
-			wp_send_json_error( array( 'message' => __( 'Please enter a valid email address.', 'wp-span-checker' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Please enter a valid email address.', 'vms-span-checker' ) ) );
 		}
 
 		$user = get_user_by( 'email', $user_email );
 
 		// Don't reveal if user exists
 		if ( ! $user ) {
-			wp_send_json_success( array( 'message' => __( 'If an account exists with that email, you will receive a password reset link.', 'wp-span-checker' ) ) );
+			wp_send_json_success( array( 'message' => __( 'If an account exists with that email, you will receive a password reset link.', 'vms-span-checker' ) ) );
 			return;
 		}
 
@@ -969,7 +999,7 @@ class Auth_Forms {
 		$key = get_password_reset_key( $user );
 
 		if ( is_wp_error( $key ) ) {
-			wp_send_json_error( array( 'message' => __( 'Unable to generate reset link. Please try again.', 'wp-span-checker' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Unable to generate reset link. Please try again.', 'vms-span-checker' ) ) );
 		}
 
 		// Build reset URL
@@ -978,10 +1008,11 @@ class Auth_Forms {
 			? add_query_arg( array( 'key' => $key, 'login' => rawurlencode( $user->user_login ) ), get_permalink( $settings['reset_page_id'] ) )
 			: network_site_url( "wp-login.php?action=rp&key=$key&login=" . rawurlencode( $user->user_login ), 'login' );
 
-		// Send email
-		$subject = sprintf( __( '[%s] Password Reset', 'wp-span-checker' ), get_bloginfo( 'name' ) );
+		/* translators: %s: site name */
+		$subject = sprintf( __( '[%s] Password Reset', 'vms-span-checker' ), get_bloginfo( 'name' ) );
 		$message = sprintf(
-			__( "Hello %s,\n\nYou requested a password reset for your account.\n\nClick the link below to reset your password:\n%s\n\nIf you didn't request this, you can ignore this email.\n\nThanks,\n%s", 'wp-span-checker' ),
+			/* translators: 1: user display name, 2: password reset URL, 3: site name */
+			__( "Hello %1\$s,\n\nYou requested a password reset for your account.\n\nClick the link below to reset your password:\n%2\$s\n\nIf you didn't request this, you can ignore this email.\n\nThanks,\n%3\$s", 'vms-span-checker' ),
 			$user->display_name,
 			$reset_url,
 			get_bloginfo( 'name' )
@@ -990,10 +1021,10 @@ class Auth_Forms {
 		$sent = wp_mail( $user_email, $subject, $message );
 
 		if ( ! $sent ) {
-			wp_send_json_error( array( 'message' => __( 'Failed to send email. Please check SMTP settings.', 'wp-span-checker' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Failed to send email. Please check SMTP settings.', 'vms-span-checker' ) ) );
 		}
 
-		wp_send_json_success( array( 'message' => __( 'If an account exists with that email, you will receive a password reset link.', 'wp-span-checker' ) ) );
+		wp_send_json_success( array( 'message' => __( 'If an account exists with that email, you will receive a password reset link.', 'vms-span-checker' ) ) );
 	}
 
 	/**
@@ -1004,29 +1035,31 @@ class Auth_Forms {
 
 		$rp_key   = isset( $_POST['rp_key'] ) ? sanitize_text_field( wp_unslash( $_POST['rp_key'] ) ) : '';
 		$rp_login = isset( $_POST['rp_login'] ) ? sanitize_user( wp_unslash( $_POST['rp_login'] ) ) : '';
-		$password = isset( $_POST['user_password'] ) ? wp_unslash( $_POST['user_password'] ) : '';
-		$password_confirm = isset( $_POST['user_password_confirm'] ) ? wp_unslash( $_POST['user_password_confirm'] ) : '';
+		// Passwords must NOT be passed through sanitize_text_field; they are
+		// later hashed by wp_set_password().
+		$password         = isset( $_POST['user_password'] ) ? wp_unslash( $_POST['user_password'] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Raw password, hashed before use.
+		$password_confirm = isset( $_POST['user_password_confirm'] ) ? wp_unslash( $_POST['user_password_confirm'] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Raw password, used only for equality check.
 
 		if ( empty( $rp_key ) || empty( $rp_login ) ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid reset link.', 'wp-span-checker' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Invalid reset link.', 'vms-span-checker' ) ) );
 		}
 
 		if ( empty( $password ) ) {
-			wp_send_json_error( array( 'message' => __( 'Please enter a new password.', 'wp-span-checker' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Please enter a new password.', 'vms-span-checker' ) ) );
 		}
 
 		if ( $password !== $password_confirm ) {
-			wp_send_json_error( array( 'message' => __( 'Passwords do not match.', 'wp-span-checker' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Passwords do not match.', 'vms-span-checker' ) ) );
 		}
 
 		if ( strlen( $password ) < 8 ) {
-			wp_send_json_error( array( 'message' => __( 'Password must be at least 8 characters.', 'wp-span-checker' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Password must be at least 8 characters.', 'vms-span-checker' ) ) );
 		}
 
 		$user = check_password_reset_key( $rp_key, $rp_login );
 
 		if ( is_wp_error( $user ) ) {
-			wp_send_json_error( array( 'message' => __( 'Reset link has expired or is invalid.', 'wp-span-checker' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Reset link has expired or is invalid.', 'vms-span-checker' ) ) );
 		}
 
 		reset_password( $user, $password );
@@ -1035,7 +1068,7 @@ class Auth_Forms {
 		$redirect = $settings['login_page_id'] ? get_permalink( $settings['login_page_id'] ) : wp_login_url();
 
 		wp_send_json_success( array(
-			'message'  => __( 'Password reset successfully! Redirecting to login...', 'wp-span-checker' ),
+			'message'  => __( 'Password reset successfully! Redirecting to login...', 'vms-span-checker' ),
 			'redirect' => $redirect,
 		) );
 	}
@@ -1044,35 +1077,35 @@ class Auth_Forms {
 	 * AJAX: Generate auth pages.
 	 */
 	public function ajax_generate_auth_pages() {
-		check_ajax_referer( 'wp_span_checker_nonce', 'nonce' );
+		check_ajax_referer( 'vms_span_checker_nonce', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-span-checker' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'vms-span-checker' ) ) );
 		}
 
 		$pages = array(
 			'login' => array(
-				'title'     => __( 'Login', 'wp-span-checker' ),
+				'title'     => __( 'Login', 'vms-span-checker' ),
 				'shortcode' => '[wsc_login_form]',
 				'option'    => 'login_page_id',
 			),
 			'register' => array(
-				'title'     => __( 'Register', 'wp-span-checker' ),
+				'title'     => __( 'Register', 'vms-span-checker' ),
 				'shortcode' => '[wsc_register_form]',
 				'option'    => 'register_page_id',
 			),
 			'forgot_password' => array(
-				'title'     => __( 'Forgot Password', 'wp-span-checker' ),
+				'title'     => __( 'Forgot Password', 'vms-span-checker' ),
 				'shortcode' => '[wsc_forgot_password_form]',
 				'option'    => 'forgot_page_id',
 			),
 			'reset_password' => array(
-				'title'     => __( 'Reset Password', 'wp-span-checker' ),
+				'title'     => __( 'Reset Password', 'vms-span-checker' ),
 				'shortcode' => '[wsc_reset_password_form]',
 				'option'    => 'reset_page_id',
 			),
 			'verify' => array(
-				'title'     => __( 'Verify Email', 'wp-span-checker' ),
+				'title'     => __( 'Verify Email', 'vms-span-checker' ),
 				'shortcode' => '[wsc_verify_form]',
 				'option'    => 'verify_page_id',
 			),
@@ -1106,11 +1139,12 @@ class Auth_Forms {
 		update_option( self::OPTION_KEY, $settings );
 
 		if ( empty( $created ) ) {
-			wp_send_json_success( array( 'message' => __( 'All auth pages already exist.', 'wp-span-checker' ) ) );
+			wp_send_json_success( array( 'message' => __( 'All auth pages already exist.', 'vms-span-checker' ) ) );
 		}
 
 		wp_send_json_success( array(
-			'message' => sprintf( __( 'Created pages: %s', 'wp-span-checker' ), implode( ', ', $created ) ),
+			/* translators: %s: comma-separated list of created page titles */
+			'message' => sprintf( __( 'Created pages: %s', 'vms-span-checker' ), implode( ', ', $created ) ),
 			'settings' => $settings,
 		) );
 	}
@@ -1119,10 +1153,10 @@ class Auth_Forms {
 	 * AJAX: Save settings.
 	 */
 	public function ajax_save_settings() {
-		check_ajax_referer( 'wp_span_checker_nonce', 'nonce' );
+		check_ajax_referer( 'vms_span_checker_nonce', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-span-checker' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'vms-span-checker' ) ) );
 		}
 
 		$settings = array(
@@ -1166,17 +1200,17 @@ class Auth_Forms {
 
 		update_option( self::OPTION_KEY, $settings );
 
-		wp_send_json_success( array( 'message' => __( 'Settings saved.', 'wp-span-checker' ) ) );
+		wp_send_json_success( array( 'message' => __( 'Settings saved.', 'vms-span-checker' ) ) );
 	}
 
 	/**
 	 * AJAX: Save SMTP settings.
 	 */
 	public function ajax_save_smtp_settings() {
-		check_ajax_referer( 'wp_span_checker_nonce', 'nonce' );
+		check_ajax_referer( 'vms_span_checker_nonce', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-span-checker' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'vms-span-checker' ) ) );
 		}
 
 		$settings = array(
@@ -1186,41 +1220,43 @@ class Auth_Forms {
 			'encryption' => sanitize_text_field( wp_unslash( $_POST['smtp_encryption'] ?? 'tls' ) ),
 			'auth'       => ! empty( $_POST['smtp_auth'] ),
 			'username'   => sanitize_text_field( wp_unslash( $_POST['smtp_username'] ?? '' ) ),
-			'password'   => wp_unslash( $_POST['smtp_password'] ?? '' ),
+			// SMTP password is stored verbatim for the SMTP client; sanitize_text_field would strip valid characters.
+			'password'   => wp_unslash( $_POST['smtp_password'] ?? '' ), // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Raw SMTP password.
 			'from_email' => sanitize_email( wp_unslash( $_POST['smtp_from_email'] ?? '' ) ),
 			'from_name'  => sanitize_text_field( wp_unslash( $_POST['smtp_from_name'] ?? '' ) ),
 		);
 
 		update_option( self::SMTP_OPTION_KEY, $settings );
 
-		wp_send_json_success( array( 'message' => __( 'SMTP settings saved.', 'wp-span-checker' ) ) );
+		wp_send_json_success( array( 'message' => __( 'SMTP settings saved.', 'vms-span-checker' ) ) );
 	}
 
 	/**
 	 * AJAX: Test SMTP.
 	 */
 	public function ajax_test_smtp() {
-		check_ajax_referer( 'wp_span_checker_nonce', 'nonce' );
+		check_ajax_referer( 'vms_span_checker_nonce', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-span-checker' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'vms-span-checker' ) ) );
 		}
 
 		$to = isset( $_POST['test_email'] ) ? sanitize_email( wp_unslash( $_POST['test_email'] ) ) : '';
 
 		if ( empty( $to ) || ! is_email( $to ) ) {
-			wp_send_json_error( array( 'message' => __( 'Please enter a valid email address.', 'wp-span-checker' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Please enter a valid email address.', 'vms-span-checker' ) ) );
 		}
 
-		$subject = sprintf( __( '[%s] SMTP Test Email', 'wp-span-checker' ), get_bloginfo( 'name' ) );
-		$message = __( 'This is a test email to verify your SMTP configuration is working correctly.', 'wp-span-checker' );
+		/* translators: %s: site name */
+		$subject = sprintf( __( '[%s] SMTP Test Email', 'vms-span-checker' ), get_bloginfo( 'name' ) );
+		$message = __( 'This is a test email to verify your SMTP configuration is working correctly.', 'vms-span-checker' );
 
 		$sent = wp_mail( $to, $subject, $message );
 
 		if ( $sent ) {
-			wp_send_json_success( array( 'message' => __( 'Test email sent successfully!', 'wp-span-checker' ) ) );
+			wp_send_json_success( array( 'message' => __( 'Test email sent successfully!', 'vms-span-checker' ) ) );
 		} else {
-			wp_send_json_error( array( 'message' => __( 'Failed to send test email. Check your SMTP settings.', 'wp-span-checker' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Failed to send test email. Check your SMTP settings.', 'vms-span-checker' ) ) );
 		}
 	}
 
@@ -1286,7 +1322,7 @@ class Auth_Forms {
 	public function add_form_meta_box() {
 		add_meta_box(
 			'wsc_auth_form_meta',
-			__( 'WP Span Checker Auth Form', 'wp-span-checker' ),
+			__( 'VMS Span Checker Auth Form', 'vms-span-checker' ),
 			array( $this, 'render_form_meta_box' ),
 			'page',
 			'side',
@@ -1304,9 +1340,9 @@ class Auth_Forms {
 		wp_nonce_field( 'wsc_auth_form_meta', 'wsc_auth_form_nonce' );
 		?>
 		<p>
-			<label for="wsc_auth_form_type"><?php esc_html_e( 'Select Auth Form', 'wp-span-checker' ); ?></label>
+			<label for="wsc_auth_form_type"><?php esc_html_e( 'Select Auth Form', 'vms-span-checker' ); ?></label>
 			<select name="wsc_auth_form_type" id="wsc_auth_form_type" class="widefat">
-				<option value=""><?php esc_html_e( '— None —', 'wp-span-checker' ); ?></option>
+				<option value=""><?php esc_html_e( '— None —', 'vms-span-checker' ); ?></option>
 				<?php foreach ( self::$form_types as $key => $label ) : ?>
 					<option value="<?php echo esc_attr( $key ); ?>" <?php selected( $current, $key ); ?>>
 						<?php echo esc_html( $label ); ?>
@@ -1315,10 +1351,10 @@ class Auth_Forms {
 			</select>
 		</p>
 		<p class="description">
-			<?php esc_html_e( 'If selected, the page content will display the chosen auth form with built-in validation.', 'wp-span-checker' ); ?>
+			<?php esc_html_e( 'If selected, the page content will display the chosen auth form with built-in validation.', 'vms-span-checker' ); ?>
 		</p>
 		<p class="description" style="margin-top: 10px;">
-			<strong><?php esc_html_e( 'Shortcodes:', 'wp-span-checker' ); ?></strong><br>
+			<strong><?php esc_html_e( 'Shortcodes:', 'vms-span-checker' ); ?></strong><br>
 			<code>[wsc_login_form]</code><br>
 			<code>[wsc_register_form]</code><br>
 			<code>[wsc_forgot_password_form]</code><br>
@@ -1335,7 +1371,13 @@ class Auth_Forms {
 	 * @param int $post_id Post ID.
 	 */
 	public function save_form_meta( $post_id ) {
-		if ( ! isset( $_POST['wsc_auth_form_nonce'] ) || ! wp_verify_nonce( $_POST['wsc_auth_form_nonce'], 'wsc_auth_form_meta' ) ) {
+		if (
+			! isset( $_POST['wsc_auth_form_nonce'] )
+			|| ! wp_verify_nonce(
+				sanitize_text_field( wp_unslash( $_POST['wsc_auth_form_nonce'] ) ),
+				'wsc_auth_form_meta'
+			)
+		) {
 			return;
 		}
 
@@ -1385,7 +1427,8 @@ class Auth_Forms {
 
 		$settings = self::get_settings();
 		$expires  = (int) ( $settings['otp_expires_minutes'] ?? 10 );
-		$subject  = sprintf( __( '[%s] Your Verification Code', 'wp-span-checker' ), get_bloginfo( 'name' ) );
+		/* translators: %s: site name */
+		$subject  = sprintf( __( '[%s] Your Verification Code', 'vms-span-checker' ), get_bloginfo( 'name' ) );
 		$body     = wsc_email_otp_verification( $otp, $name, $expires );
 
 		return wsc_send_html_email( $email, $subject, $body );
@@ -1401,7 +1444,7 @@ class Auth_Forms {
 		$otp_code = isset( $_POST['otp_code'] ) ? sanitize_text_field( wp_unslash( $_POST['otp_code'] ) ) : '';
 
 		if ( empty( $email ) || empty( $otp_code ) ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid request.', 'wp-span-checker' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Invalid request.', 'vms-span-checker' ) ) );
 		}
 
 		// Try new combined transient first, then legacy
@@ -1415,16 +1458,16 @@ class Auth_Forms {
 		}
 
 		if ( ! $stored_data || ! is_array( $stored_data ) ) {
-			wp_send_json_error( array( 'message' => __( 'Verification code expired. Please request a new one.', 'wp-span-checker' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Verification code expired. Please request a new one.', 'vms-span-checker' ) ) );
 		}
 
 		// Check if OTP has expired
 		if ( isset( $stored_data['otp_expires'] ) && time() > $stored_data['otp_expires'] ) {
-			wp_send_json_error( array( 'message' => __( 'Verification code expired. Please request a new one or use the activation link.', 'wp-span-checker' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Verification code expired. Please request a new one or use the activation link.', 'vms-span-checker' ) ) );
 		}
 
 		if ( $stored_data['otp'] !== $otp_code ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid verification code.', 'wp-span-checker' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Invalid verification code.', 'vms-span-checker' ) ) );
 		}
 
 		// OTP verified - complete registration
@@ -1433,7 +1476,7 @@ class Auth_Forms {
 		$user_data = $stored_data['user_data'] ?? array();
 
 		if ( empty( $user_data ) ) {
-			wp_send_json_error( array( 'message' => __( 'Registration data not found. Please register again.', 'wp-span-checker' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Registration data not found. Please register again.', 'vms-span-checker' ) ) );
 		}
 
 		// Create user
@@ -1453,7 +1496,15 @@ class Auth_Forms {
 		
 		if ( function_exists( 'wsc_email_welcome' ) && function_exists( 'wsc_send_html_email' ) ) {
 			$body = wsc_email_welcome( $user_data['user_login'], $login_url );
-			wsc_send_html_email( $email, sprintf( __( '[%s] Welcome!', 'wp-span-checker' ), get_bloginfo( 'name' ) ), $body );
+			wsc_send_html_email(
+				$email,
+				sprintf(
+					/* translators: %s: site name */
+					__( '[%s] Welcome!', 'vms-span-checker' ),
+					get_bloginfo( 'name' )
+				),
+				$body
+			);
 		}
 
 		// Auto login
@@ -1463,7 +1514,7 @@ class Auth_Forms {
 		$redirect = $settings['register_redirect'] ?: home_url();
 
 		wp_send_json_success( array(
-			'message'  => __( 'Email verified! Redirecting...', 'wp-span-checker' ),
+			'message'  => __( 'Email verified! Redirecting...', 'vms-span-checker' ),
 			'redirect' => $redirect,
 		) );
 	}
@@ -1472,10 +1523,14 @@ class Auth_Forms {
 	 * AJAX: Resend OTP.
 	 */
 	public function ajax_handle_resend_otp() {
+		// Reuse the verify-OTP nonce; the resend link lives inside the same
+		// verify form and is rendered with that nonce.
+		check_ajax_referer( 'wsc_auth_verify_otp', 'wsc_auth_nonce' );
+
 		$email = isset( $_POST['email'] ) ? sanitize_email( wp_unslash( $_POST['email'] ) ) : '';
 
 		if ( empty( $email ) ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid request.', 'wp-span-checker' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Invalid request.', 'vms-span-checker' ) ) );
 		}
 
 		// Try new combined transient first, then legacy
@@ -1489,7 +1544,7 @@ class Auth_Forms {
 		}
 
 		if ( ! $stored_data || ! isset( $stored_data['user_data'] ) ) {
-			wp_send_json_error( array( 'message' => __( 'Session expired. Please register again.', 'wp-span-checker' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Session expired. Please register again.', 'vms-span-checker' ) ) );
 		}
 
 		$settings    = self::get_settings();
@@ -1511,37 +1566,42 @@ class Auth_Forms {
 		$sent = self::send_otp_email( $email, $new_otp, $name );
 
 		if ( ! $sent ) {
-			wp_send_json_error( array( 'message' => __( 'Failed to send email. Please try again.', 'wp-span-checker' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Failed to send email. Please try again.', 'vms-span-checker' ) ) );
 		}
 
-		wp_send_json_success( array( 'message' => __( 'A new verification code has been sent.', 'wp-span-checker' ) ) );
+		wp_send_json_success( array( 'message' => __( 'A new verification code has been sent.', 'vms-span-checker' ) ) );
 	}
 
 	/**
 	 * AJAX: Handle activation.
 	 */
 	public function ajax_handle_activation() {
+		// One-time activation link parameters; the `key` is validated against
+		// `wsc_activation_key` user meta below, which is the equivalent of a
+		// server-side nonce.
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Validated below.
 		$key   = isset( $_POST['key'] ) ? sanitize_text_field( wp_unslash( $_POST['key'] ) ) : '';
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Validated below.
 		$login = isset( $_POST['login'] ) ? sanitize_user( wp_unslash( $_POST['login'] ) ) : '';
 
 		if ( empty( $key ) || empty( $login ) ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid activation link.', 'wp-span-checker' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Invalid activation link.', 'vms-span-checker' ) ) );
 		}
 
 		$user = get_user_by( 'login', $login );
 		if ( ! $user ) {
-			wp_send_json_error( array( 'message' => __( 'User not found.', 'wp-span-checker' ) ) );
+			wp_send_json_error( array( 'message' => __( 'User not found.', 'vms-span-checker' ) ) );
 		}
 
 		$stored_key = get_user_meta( $user->ID, '_wsc_activation_key', true );
 		$expires    = get_user_meta( $user->ID, '_wsc_activation_expires', true );
 
 		if ( $stored_key !== $key ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid activation key.', 'wp-span-checker' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Invalid activation key.', 'vms-span-checker' ) ) );
 		}
 
 		if ( $expires && time() > $expires ) {
-			wp_send_json_error( array( 'message' => __( 'Activation link has expired.', 'wp-span-checker' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Activation link has expired.', 'vms-span-checker' ) ) );
 		}
 
 		// Activate
@@ -1553,7 +1613,7 @@ class Auth_Forms {
 		$login_url = $settings['login_page_id'] ? get_permalink( $settings['login_page_id'] ) : wp_login_url();
 
 		wp_send_json_success( array(
-			'message'  => __( 'Account activated! You can now log in.', 'wp-span-checker' ),
+			'message'  => __( 'Account activated! You can now log in.', 'vms-span-checker' ),
 			'redirect' => $login_url,
 		) );
 	}

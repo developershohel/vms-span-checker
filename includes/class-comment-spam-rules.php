@@ -2,12 +2,12 @@
 /**
  * Facade for heuristic comment anti-spam (delegates to Spam component pipeline).
  *
- * @package WP_Span_Checker
+ * @package VMS_Span_Checker
  */
 
-namespace WP_Span_Checker;
+namespace VMS_Span_Checker;
 
-use WP_Span_Checker\Spam\Comment_Spam_Controller;
+use VMS_Span_Checker\Spam\Comment_Spam_Controller;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

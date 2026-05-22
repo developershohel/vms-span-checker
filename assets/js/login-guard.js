@@ -1,5 +1,5 @@
 /**
- * WP Span Checker - Login Guard
+ * VMS Span Checker - Login Guard
  * Adds reCAPTCHA protection to WordPress login forms.
  */
 (function($) {
@@ -128,7 +128,7 @@
         }
         
         if (!$form || !$form.length) {
-            console.log('[WP Span Checker] Login Guard: No login form found.');
+            console.log('[VMS Span Checker] Login Guard: No login form found.');
             return;
         }
 
@@ -138,14 +138,14 @@
 
         // Check if form is already protected by another guard
         if ($form.data('wsc-guard-protected')) {
-            console.log('[WP Span Checker] Login Guard: Form already protected by another guard, skipping');
+            console.log('[VMS Span Checker] Login Guard: Form already protected by another guard, skipping');
             return;
         }
 
         $form.data('wsc-login-guard', true);
         $form.data('wsc-guard-protected', true); // Mark as protected
         loginGuardAttached = true;
-        console.log('[WP Span Checker] Login Guard initializing on form:', $form[0]);
+        console.log('[VMS Span Checker] Login Guard initializing on form:', $form[0]);
 
         if (!recaptchaEnabled || !recaptchaSiteKey) {
             return;
@@ -154,7 +154,7 @@
         var $submitBtn = findSubmitButton($form);
         
         if (!$submitBtn.length) {
-            console.log('[WP Span Checker] Login Guard: No submit button found');
+            console.log('[VMS Span Checker] Login Guard: No submit button found');
             return;
         }
 

@@ -1,11 +1,11 @@
 <?php
 /**
- * AI Span Checker configuration (providers, comment rules, prompts).
+ * AI VMS Span Checker configuration (providers, comment rules, prompts).
  *
- * @package WP_Span_Checker
+ * @package VMS_Span_Checker
  */
 
-namespace WP_Span_Checker;
+namespace VMS_Span_Checker;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -134,7 +134,7 @@ class AI_Span_Config {
 	public static function default_system_prompt(): string {
 		return __(
 			'You are a strict comment moderator. Compare the POST_SUMMARY with the COMMENT_TEXT. Decide if the comment is good-faith and on-topic, or spam: promotional/affiliate, SEO or backlink pitches, pharma/gambling/adult promos, unrelated topics, gibberish, foreign-language off-topic ads, contact harvesting (“email me at…”), crypto/loan scams, essay-writing services, or mass emoji/noise. If PRODUCT_REVIEW_MODE is yes, genuine short product reviews are allowed. Respond with ONLY valid JSON (no markdown, no code fences): {"status":"ok"|"spam","message":"If spam, name the spam pattern in English; if ok use a short neutral phrase."}',
-			'wp-span-checker'
+			'vms-span-checker'
 		);
 	}
 
@@ -154,7 +154,7 @@ REJECT as spam: Promotional or affiliate pitches; URLs/link farming or SEO keywo
 Always compare REVIEW_TEXT against PRODUCT_SUMMARY—reject generic praise or rage that could apply to any product.
 
 Respond ONLY with valid JSON (no markdown, no code fences): {"status":"ok"|"spam","message":"If spam, name the pattern briefly in English; if ok use a short neutral phrase."}',
-			'wp-span-checker'
+			'vms-span-checker'
 		);
 	}
 

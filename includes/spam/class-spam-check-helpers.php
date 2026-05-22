@@ -2,10 +2,10 @@
 /**
  * Shared helpers for spam check components.
  *
- * @package WP_Span_Checker
+ * @package VMS_Span_Checker
  */
 
-namespace WP_Span_Checker\Spam;
+namespace VMS_Span_Checker\Spam;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -17,8 +17,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 final class Spam_Check_Helpers {
 
 	public static function visitor_ip(): string {
-		if ( function_exists( 'wp_span_checker_get_user_ip' ) ) {
-			return wp_span_checker_get_user_ip();
+		if ( function_exists( 'vms_span_checker_get_user_ip' ) ) {
+			return vms_span_checker_get_user_ip();
 		}
 		return isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( (string) $_SERVER['REMOTE_ADDR'] ) ) : '';
 	}

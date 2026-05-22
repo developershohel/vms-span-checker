@@ -1,0 +1,4801 @@
+# Copyright (C) 2026 VMS Universe
+# This file is distributed under the GPL-2.0-or-later.
+msgid ""
+msgstr ""
+"Project-Id-Version: VMS Span Checker 1.0.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/vms-span-checker\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2026-05-18T21:46:32+02:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.12.0\n"
+"X-Domain: vms-span-checker\n"
+
+#. Plugin Name of the plugin
+#: vms-span-checker.php
+#: includes/class-admin-menu.php:83
+#: includes/class-admin-menu.php:84
+#: templates/auth-forms.php:563
+#: templates/partials/admin-page-header.php:33
+msgid "VMS Span Checker"
+msgstr ""
+
+#. Plugin URI of the plugin
+#: vms-span-checker.php
+msgid "https://wordpress.org/plugins/vms-span-checker"
+msgstr ""
+
+#. Description of the plugin
+#: vms-span-checker.php
+msgid "Validates email domains on front-end forms using disposable domain lists, HTTPS checks, and optional third-party safe-browsing APIs."
+msgstr ""
+
+#. Author of the plugin
+#: vms-span-checker.php
+msgid "VMS Universe"
+msgstr ""
+
+#. Author URI of the plugin
+#: vms-span-checker.php
+msgid "https://vmsuniverse.com"
+msgstr ""
+
+#: includes/class-admin-menu.php:94
+#: includes/class-admin-menu.php:95
+#: templates/dashboard.php:120
+msgid "Dashboard"
+msgstr ""
+
+#: includes/class-admin-menu.php:102
+#: includes/class-admin-menu.php:103
+#: templates/whitelist.php:20
+msgid "Whitelist Domains"
+msgstr ""
+
+#: includes/class-admin-menu.php:110
+#: includes/class-admin-menu.php:111
+#: templates/disposable.php:20
+msgid "Disposable Domains"
+msgstr ""
+
+#: includes/class-admin-menu.php:118
+#: includes/class-admin-menu.php:119
+#: templates/api-settings.php:116
+msgid "API Settings"
+msgstr ""
+
+#: includes/class-admin-menu.php:126
+#: includes/class-admin-menu.php:127
+#: templates/dashboard.php:110
+#: templates/registration-guard.php:63
+msgid "Registration guard"
+msgstr ""
+
+#: includes/class-admin-menu.php:134
+#: includes/class-admin-menu.php:135
+#: templates/comment-blocks.php:376
+#: templates/login-guard.php:49
+msgid "Login Guard"
+msgstr ""
+
+#: includes/class-admin-menu.php:142
+#: includes/class-admin-menu.php:143
+#: templates/tools.php:120
+msgid "Tools & log"
+msgstr ""
+
+#: includes/class-admin-menu.php:150
+#: includes/class-admin-menu.php:151
+#: templates/error-messages.php:117
+msgid "Error Messages"
+msgstr ""
+
+#: includes/class-admin-menu.php:158
+#: includes/class-admin-menu.php:159
+#: templates/ai-settings.php:76
+msgid "AI Span Settings"
+msgstr ""
+
+#: includes/class-admin-menu.php:166
+#: includes/class-admin-menu.php:167
+#: templates/comment-settings.php:82
+msgid "Comment Guard"
+msgstr ""
+
+#: includes/class-admin-menu.php:174
+#: includes/class-admin-menu.php:175
+#: templates/comment-blocks.php:121
+msgid "Blocked Users"
+msgstr ""
+
+#: includes/class-admin-menu.php:182
+#: includes/class-admin-menu.php:183
+#: templates/block-user-settings.php:49
+#: templates/comment-blocks.php:273
+msgid "Block User Settings"
+msgstr ""
+
+#: includes/class-admin-menu.php:190
+#: includes/class-admin-menu.php:191
+#: templates/auth-forms.php:26
+msgid "Auth Form Templates"
+msgstr ""
+
+#: includes/class-admin-menu.php:198
+#: includes/class-admin-menu.php:199
+#: templates/auth-forms.php:32
+msgid "SMTP Settings"
+msgstr ""
+
+#: includes/class-admin-menu.php:210
+#: licensing/class-pro-bridge.php:107
+#: templates/comment-blocks.php:371
+#: templates/dashboard.php:92
+msgid "Form Guard"
+msgstr ""
+
+#: includes/class-admin-menu.php:211
+#: licensing/class-pro-bridge.php:131
+msgid "AI Post Summaries"
+msgstr ""
+
+#: includes/class-admin-menu.php:212
+#: licensing/class-pro-bridge.php:137
+#: templates/ai-settings.php:227
+msgid "AI Product Summaries"
+msgstr ""
+
+#: includes/class-admin-menu.php:213
+#: licensing/class-pro-bridge.php:125
+msgid "Product Review Guard"
+msgstr ""
+
+#: includes/class-admin-menu.php:214
+#: licensing/class-pro-bridge.php:113
+#: templates/comment-blocks.php:372
+msgid "Contact Guard"
+msgstr ""
+
+#: includes/class-admin-menu.php:215
+#: licensing/class-pro-bridge.php:119
+#: templates/comment-blocks.php:373
+msgid "Subscribe Guard"
+msgstr ""
+
+#: includes/class-admin-menu.php:216
+#: licensing/class-pro-bridge.php:143
+msgid "Email Templates"
+msgstr ""
+
+#: includes/class-admin-menu.php:251
+msgid "Unlock Form Guard, Contact Guard, Subscribe Guard, AI Summaries, Email Templates and more with VMS Span Checker Pro."
+msgstr ""
+
+#: includes/class-admin-menu.php:253
+#: templates/license-promo.php:63
+msgid "Upgrade to Pro"
+msgstr ""
+
+#: includes/class-admin-menu.php:255
+msgid "Enter license key"
+msgstr ""
+
+#: includes/class-admin-menu.php:286
+#: templates/license-promo.php:22
+msgid "Pro feature"
+msgstr ""
+
+#: includes/class-admin-menu.php:287
+msgid "This feature is available in VMS Span Checker Pro."
+msgstr ""
+
+#: includes/class-admin-menu.php:303
+msgid "Loading Pro feature…"
+msgstr ""
+
+#: includes/class-ai-span-comments.php:90
+msgid "Your account was signed out because it has been permanently restricted from this site due to repeated abuse."
+msgstr ""
+
+#: includes/class-ai-span-comments.php:119
+msgid "Comment not posted"
+msgstr ""
+
+#: includes/class-ai-span-comments.php:192
+#: includes/class-registration-guard.php:482
+msgid "OK"
+msgstr ""
+
+#: includes/class-ai-span-comments.php:264
+msgid "You cannot use this site anymore due to repeated abuse. Use the contact page if you need to reach the owner."
+msgstr ""
+
+#. translators: %s: short reason from AI
+#: includes/class-ai-span-comments.php:307
+#, php-format
+msgid "Comment rejected: %s"
+msgstr ""
+
+#: includes/class-ai-span-comments.php:320
+msgid "You are blocked from commenting on this site due to repeated spam attempts."
+msgstr ""
+
+#: includes/class-ai-span-comments.php:418
+#: includes/class-auth-forms.php:1593
+msgid "User not found."
+msgstr ""
+
+#: includes/class-ai-span-comments.php:428
+msgid "This user is an administrator and is exempt from blocking. Disable \"Exempt Admins\" in Block User Settings to override."
+msgstr ""
+
+#: includes/class-ai-span-comments.php:441
+msgid "Manually blocked by administrator."
+msgstr ""
+
+#: includes/class-ai-span-comments.php:499
+msgid "Database error while saving block."
+msgstr ""
+
+#. translators: %s: user display label
+#: includes/class-ai-span-comments.php:508
+#, php-format
+msgid "User %s is now blocked."
+msgstr ""
+
+#: includes/class-ai-span-comments.php:593
+msgid "Your access to this site has been permanently restricted due to repeated spam or abuse."
+msgstr ""
+
+#: includes/class-ai-span-comments.php:595
+msgid "Access restricted"
+msgstr ""
+
+#: includes/class-ai-span-comments.php:615
+msgid "This account cannot sign in because it was permanently restricted due to repeated abuse. Please contact the site owner."
+msgstr ""
+
+#. translators: %d: strike threshold
+#: includes/class-ai-span-comments.php:669
+#, php-format
+msgid "Comments are disabled for you on this site because your submissions exceeded the strike limit (%d). This helps protect the community from spam."
+msgstr ""
+
+#: includes/class-ai-span-comments.php:672
+msgid "Why you cannot comment here"
+msgstr ""
+
+#: includes/class-ai-span-comments.php:689
+msgid "If you believe this is a mistake, please reach the site owner through any contact method they publish on this website."
+msgstr ""
+
+#. translators: %s: anchor HTML to contact page
+#: includes/class-ai-span-comments.php:693
+#, php-format
+msgid "If you need to reach the site owner, use the %s page."
+msgstr ""
+
+#: includes/class-ai-span-comments.php:694
+msgid "contact"
+msgstr ""
+
+#: includes/class-ai-span-config.php:135
+msgid "You are a strict comment moderator. Compare the POST_SUMMARY with the COMMENT_TEXT. Decide if the comment is good-faith and on-topic, or spam: promotional/affiliate, SEO or backlink pitches, pharma/gambling/adult promos, unrelated topics, gibberish, foreign-language off-topic ads, contact harvesting (“email me at…”), crypto/loan scams, essay-writing services, or mass emoji/noise. If PRODUCT_REVIEW_MODE is yes, genuine short product reviews are allowed. Respond with ONLY valid JSON (no markdown, no code fences): {\"status\":\"ok\"|\"spam\",\"message\":\"If spam, name the spam pattern in English; if ok use a short neutral phrase.\"}"
+msgstr ""
+
+#: includes/class-ai-span-config.php:145
+msgid ""
+"You are an expert WooCommerce review moderator. Each request includes PRODUCT_SUMMARY (an AI-generated factual overview of the exact product being reviewed—use it as ground truth for what the item is), PRODUCT_CONTEXT (name, SKU, categories), STAR_RATING_SUBMITTED, and REVIEW_TEXT.\r\n"
+"\r\n"
+"Your task: Decide whether REVIEW_TEXT genuinely discusses THIS product—quality, materials, fit/sizing, performance, packaging, shipping speed, seller support, defects, honest comparisons to expectations—or whether it is spam or abuse.\r\n"
+"\r\n"
+"ACCEPT: Thoughtful, brief, or emotional opinions (positive or negative) that clearly relate to PRODUCT_SUMMARY; reasonable complaints; mixed ratings; non-native English if still product-specific.\r\n"
+"\r\n"
+"REJECT as spam: Promotional or affiliate pitches; URLs/link farming or SEO keyword stuffing; obvious copy-paste templates not tied to this product; reviews clearly about a different item; competitor ads; phishing or contact harvesting (“DM me”, “WhatsApp”, bulk emails); scams (crypto, loans, jobs); pharma/gambling/adult promotions; unrelated languages or topics; meaningless gibberish; emoji/noise floods; fake testimonial patterns (“life-changing miracle”) with zero product-specific detail.\r\n"
+"\r\n"
+"Always compare REVIEW_TEXT against PRODUCT_SUMMARY—reject generic praise or rage that could apply to any product.\r\n"
+"\r\n"
+"Respond ONLY with valid JSON (no markdown, no code fences): {\"status\":\"ok\"|\"spam\",\"message\":\"If spam, name the pattern briefly in English; if ok use a short neutral phrase.\"}"
+msgstr ""
+
+#: includes/class-ajax.php:78
+#: includes/class-ajax.php:105
+#: includes/class-ajax.php:166
+#: includes/class-ajax.php:210
+#: includes/class-ajax.php:949
+#: includes/class-ajax.php:1007
+#: includes/class-auth-forms.php:1083
+#: includes/class-auth-forms.php:1159
+#: includes/class-auth-forms.php:1213
+#: includes/class-auth-forms.php:1241
+msgid "Permission denied."
+msgstr ""
+
+#: includes/class-ajax.php:83
+#: includes/class-ajax.php:171
+msgid "Invalid user ID."
+msgstr ""
+
+#: includes/class-ajax.php:88
+msgid "Could not unblock that user."
+msgstr ""
+
+#: includes/class-ajax.php:93
+msgid "User unblocked."
+msgstr ""
+
+#: includes/class-ajax.php:110
+#: templates/comment-blocks.php:554
+msgid "Enter an ID, username, or email."
+msgstr ""
+
+#: includes/class-ajax.php:115
+#: templates/comment-blocks.php:567
+msgid "No user matches that input."
+msgstr ""
+
+#: includes/class-ajax.php:215
+msgid "Missing actor key."
+msgstr ""
+
+#: includes/class-ajax.php:231
+msgid "Could not update block scope."
+msgstr ""
+
+#: includes/class-ajax.php:234
+msgid "Block scope updated."
+msgstr ""
+
+#: includes/class-ajax.php:248
+#: includes/class-ajax.php:279
+#: includes/class-ajax.php:308
+#: includes/class-ajax.php:876
+msgid "You do not have permission to perform this action."
+msgstr ""
+
+#: includes/class-ajax.php:290
+#: includes/class-ajax.php:344
+msgid "Domain is required."
+msgstr ""
+
+#: includes/class-ajax.php:319
+msgid "Invalid ID."
+msgstr ""
+
+#: includes/class-ajax.php:383
+#: includes/class-ajax.php:428
+msgid "Invalid mapping."
+msgstr ""
+
+#: includes/class-ajax.php:390
+#: includes/class-ajax.php:440
+msgid "Mapping not found."
+msgstr ""
+
+#: includes/class-ajax.php:395
+msgid "Field configuration not found."
+msgstr ""
+
+#: includes/class-ajax.php:563
+#: includes/class-ajax.php:784
+msgid "Contact Form"
+msgstr ""
+
+#: includes/class-ajax.php:687
+msgid "Invalid email address format."
+msgstr ""
+
+#: includes/class-ajax.php:697
+msgid "Email domain does not exist (no DNS A record found)."
+msgstr ""
+
+#: includes/class-ajax.php:792
+#: includes/class-enqueue-scripts.php:692
+msgid "Your message appears to be spam."
+msgstr ""
+
+#: includes/class-ajax.php:801
+msgid "This username is already taken."
+msgstr ""
+
+#: includes/class-ajax.php:881
+msgid "Whitelist SQL file not found."
+msgstr ""
+
+#: includes/class-ajax.php:886
+msgid "Whitelist SQL file is empty."
+msgstr ""
+
+#: includes/class-ajax.php:905
+msgid "No domains found in whitelist SQL."
+msgstr ""
+
+#. translators: 1: inserted count, 2: skipped duplicates
+#: includes/class-ajax.php:933
+#, php-format
+msgid "Whitelist import complete: %1$d inserted, %2$d already existed."
+msgstr ""
+
+#: includes/class-auth-forms.php:186
+#: includes/class-auth-forms.php:265
+#: includes/class-auth-forms.php:382
+#: includes/class-auth-forms.php:433
+#: includes/class-auth-forms.php:549
+msgid "You are already logged in."
+msgstr ""
+
+#: includes/class-auth-forms.php:197
+#: includes/class-auth-forms.php:239
+#: includes/class-auth-forms.php:1088
+#: includes/class-users-list-actions.php:108
+#: includes/class-users-list-actions.php:354
+#: templates/auth-forms.php:896
+#: templates/auth-forms.php:898
+#: templates/auth-forms.php:901
+#: templates/auth-forms.php:902
+#: templates/comment-blocks.php:211
+#: templates/comment-blocks.php:375
+#: templates/comment-blocks.php:444
+#: templates/comment-blocks.php:583
+#: templates/comment-blocks.php:651
+msgid "Login"
+msgstr ""
+
+#: includes/class-auth-forms.php:203
+#: includes/class-auth-forms.php:206
+#: templates/auth-forms.php:903
+msgid "Username or Email"
+msgstr ""
+
+#: includes/class-auth-forms.php:212
+#: includes/class-auth-forms.php:216
+#: includes/class-auth-forms.php:305
+#: includes/class-auth-forms.php:309
+#: includes/functions.php:687
+#: templates/auth-forms.php:470
+#: templates/auth-forms.php:904
+#: templates/auth-forms.php:910
+msgid "Password"
+msgstr ""
+
+#: includes/class-auth-forms.php:218
+#: includes/class-auth-forms.php:311
+#: includes/class-auth-forms.php:508
+msgid "Toggle password visibility"
+msgstr ""
+
+#: includes/class-auth-forms.php:227
+msgid "Remember me"
+msgstr ""
+
+#: includes/class-auth-forms.php:245
+msgid "Forgot Password?"
+msgstr ""
+
+#: includes/class-auth-forms.php:248
+msgid "Create an account"
+msgstr ""
+
+#: includes/class-auth-forms.php:269
+msgid "Registration is currently disabled."
+msgstr ""
+
+#: includes/class-auth-forms.php:280
+#: includes/class-auth-forms.php:359
+#: templates/auth-forms.php:906
+#: templates/auth-forms.php:907
+msgid "Create Account"
+msgstr ""
+
+#: includes/class-auth-forms.php:286
+#: includes/class-auth-forms.php:289
+#: includes/functions.php:677
+#: templates/auth-forms.php:464
+#: templates/auth-forms.php:908
+msgid "Username"
+msgstr ""
+
+#: includes/class-auth-forms.php:295
+#: includes/functions.php:675
+#: templates/auth-forms.php:909
+#: templates/auth-forms.php:916
+#: templates/license-settings.php:146
+msgid "Email"
+msgstr ""
+
+#: includes/class-auth-forms.php:298
+#: includes/class-auth-forms.php:399
+#: includes/class-auth-forms.php:402
+msgid "Email Address"
+msgstr ""
+
+#: includes/class-auth-forms.php:320
+#: includes/class-auth-forms.php:324
+#: includes/class-auth-forms.php:521
+#: templates/auth-forms.php:911
+msgid "Confirm Password"
+msgstr ""
+
+#: includes/class-auth-forms.php:338
+msgid "Valid domain"
+msgstr ""
+
+#: includes/class-auth-forms.php:341
+msgid "Email deliverable"
+msgstr ""
+
+#: includes/class-auth-forms.php:344
+msgid "No disposable emails"
+msgstr ""
+
+#: includes/class-auth-forms.php:365
+msgid "Already have an account? Login"
+msgstr ""
+
+#: includes/class-auth-forms.php:392
+#: includes/class-auth-forms.php:532
+#: includes/class-auth-forms.php:1103
+#: templates/auth-forms.php:913
+#: templates/emails/wsc-email-template-functions.php:214
+msgid "Reset Password"
+msgstr ""
+
+#: includes/class-auth-forms.php:393
+msgid "Enter your email address and we'll send you a link to reset your password."
+msgstr ""
+
+#: includes/class-auth-forms.php:410
+#: templates/auth-forms.php:914
+msgid "Send Reset Link"
+msgstr ""
+
+#: includes/class-auth-forms.php:416
+#: includes/class-auth-forms.php:635
+msgid "Back to Login"
+msgstr ""
+
+#: includes/class-auth-forms.php:453
+msgid "Invalid password reset link. Please request a new one."
+msgstr ""
+
+#: includes/class-auth-forms.php:457
+#: includes/class-auth-forms.php:480
+msgid "Request new reset link"
+msgstr ""
+
+#: includes/class-auth-forms.php:476
+msgid "This password reset link has expired or is invalid. Please request a new one."
+msgstr ""
+
+#: includes/class-auth-forms.php:496
+msgid "Set New Password"
+msgstr ""
+
+#: includes/class-auth-forms.php:502
+#: includes/class-auth-forms.php:506
+msgid "New Password"
+msgstr ""
+
+#: includes/class-auth-forms.php:517
+msgid "Confirm New Password"
+msgstr ""
+
+#. translators: %s: site name
+#: includes/class-auth-forms.php:590
+#: includes/class-auth-forms.php:1503
+#, php-format
+msgid "[%s] Welcome!"
+msgstr ""
+
+#: includes/class-auth-forms.php:602
+msgid "Account Verified!"
+msgstr ""
+
+#: includes/class-auth-forms.php:603
+msgid "Your account has been successfully verified. You can now log in."
+msgstr ""
+
+#: includes/class-auth-forms.php:604
+msgid "Login Now"
+msgstr ""
+
+#: includes/class-auth-forms.php:616
+msgid "This activation link has expired. Please enter the verification code or request a new link."
+msgstr ""
+
+#: includes/class-auth-forms.php:631
+msgid "Invalid verification request. Please check your email for the verification link."
+msgstr ""
+
+#: includes/class-auth-forms.php:646
+#: templates/emails/wsc-email-template-functions.php:43
+msgid "Verify Your Email"
+msgstr ""
+
+#. translators: %s: email address wrapped in strong tags
+#: includes/class-auth-forms.php:651
+#, php-format
+msgid "We sent a verification code and activation link to %s"
+msgstr ""
+
+#: includes/class-auth-forms.php:661
+msgid "Enter 6-digit verification code"
+msgstr ""
+
+#: includes/class-auth-forms.php:679
+msgid "Verify Code"
+msgstr ""
+
+#: includes/class-auth-forms.php:685
+msgid "Didn't receive the code?"
+msgstr ""
+
+#: includes/class-auth-forms.php:686
+msgid "Resend"
+msgstr ""
+
+#: includes/class-auth-forms.php:689
+msgid "You can also click the activation link in your email."
+msgstr ""
+
+#: includes/class-auth-forms.php:764
+msgid "Please fill in all fields."
+msgstr ""
+
+#: includes/class-auth-forms.php:774
+#: includes/class-auth-forms.php:838
+#: includes/class-enqueue-scripts.php:943
+msgid "Please complete the reCAPTCHA."
+msgstr ""
+
+#: includes/class-auth-forms.php:780
+#: includes/class-auth-forms.php:844
+msgid "reCAPTCHA verification failed."
+msgstr ""
+
+#: includes/class-auth-forms.php:791
+msgid "Invalid username or password."
+msgstr ""
+
+#: includes/class-auth-forms.php:800
+msgid "Login successful! Redirecting..."
+msgstr ""
+
+#: includes/class-auth-forms.php:820
+#: includes/class-enqueue-scripts.php:697
+msgid "Please fill in all required fields."
+msgstr ""
+
+#: includes/class-auth-forms.php:824
+#: includes/class-auth-forms.php:1052
+#: includes/class-enqueue-scripts.php:945
+msgid "Passwords do not match."
+msgstr ""
+
+#: includes/class-auth-forms.php:828
+#: includes/class-auth-forms.php:1056
+#: includes/class-enqueue-scripts.php:946
+msgid "Password must be at least 8 characters."
+msgstr ""
+
+#: includes/class-auth-forms.php:855
+msgid "Email domain does not exist."
+msgstr ""
+
+#: includes/class-auth-forms.php:862
+msgid "Email domain cannot receive emails."
+msgstr ""
+
+#: includes/class-auth-forms.php:869
+msgid "Disposable email addresses are not allowed."
+msgstr ""
+
+#: includes/class-auth-forms.php:877
+msgid "Email domain flagged for security issues."
+msgstr ""
+
+#: includes/class-auth-forms.php:885
+msgid "Email domain flagged as potentially harmful."
+msgstr ""
+
+#: includes/class-auth-forms.php:891
+msgid "Username already exists."
+msgstr ""
+
+#: includes/class-auth-forms.php:896
+msgid "Email address already registered."
+msgstr ""
+
+#. translators: %s: site name
+#: includes/class-auth-forms.php:931
+#, php-format
+msgid "[%s] Verify Your Email"
+msgstr ""
+
+#: includes/class-auth-forms.php:937
+msgid "Failed to send verification email. Please try again."
+msgstr ""
+
+#: includes/class-auth-forms.php:947
+msgid "Verification email sent! Check your inbox for the code or activation link."
+msgstr ""
+
+#: includes/class-auth-forms.php:973
+msgid "Account created successfully! Redirecting..."
+msgstr ""
+
+#: includes/class-auth-forms.php:987
+#: includes/class-auth-forms.php:1247
+#: includes/class-enqueue-scripts.php:541
+#: includes/class-enqueue-scripts.php:689
+#: includes/class-enqueue-scripts.php:767
+#: includes/class-enqueue-scripts.php:864
+#: includes/functions.php:1411
+msgid "Please enter a valid email address."
+msgstr ""
+
+#: includes/class-auth-forms.php:994
+#: includes/class-auth-forms.php:1027
+msgid "If an account exists with that email, you will receive a password reset link."
+msgstr ""
+
+#: includes/class-auth-forms.php:1002
+msgid "Unable to generate reset link. Please try again."
+msgstr ""
+
+#. translators: %s: site name
+#: includes/class-auth-forms.php:1012
+#, php-format
+msgid "[%s] Password Reset"
+msgstr ""
+
+#. translators: 1: user display name, 2: password reset URL, 3: site name
+#: includes/class-auth-forms.php:1015
+#, php-format
+msgid ""
+"Hello %1$s,\n"
+"\n"
+"You requested a password reset for your account.\n"
+"\n"
+"Click the link below to reset your password:\n"
+"%2$s\n"
+"\n"
+"If you didn't request this, you can ignore this email.\n"
+"\n"
+"Thanks,\n"
+"%3$s"
+msgstr ""
+
+#: includes/class-auth-forms.php:1024
+msgid "Failed to send email. Please check SMTP settings."
+msgstr ""
+
+#: includes/class-auth-forms.php:1044
+msgid "Invalid reset link."
+msgstr ""
+
+#: includes/class-auth-forms.php:1048
+msgid "Please enter a new password."
+msgstr ""
+
+#: includes/class-auth-forms.php:1062
+msgid "Reset link has expired or is invalid."
+msgstr ""
+
+#: includes/class-auth-forms.php:1071
+msgid "Password reset successfully! Redirecting to login..."
+msgstr ""
+
+#: includes/class-auth-forms.php:1093
+#: includes/class-enqueue-scripts.php:765
+#: includes/class-enqueue-scripts.php:862
+msgid "Register"
+msgstr ""
+
+#: includes/class-auth-forms.php:1098
+#: templates/auth-forms.php:307
+msgid "Forgot Password"
+msgstr ""
+
+#: includes/class-auth-forms.php:1108
+msgid "Verify Email"
+msgstr ""
+
+#: includes/class-auth-forms.php:1142
+msgid "All auth pages already exist."
+msgstr ""
+
+#. translators: %s: comma-separated list of created page titles
+#: includes/class-auth-forms.php:1147
+#, php-format
+msgid "Created pages: %s"
+msgstr ""
+
+#: includes/class-auth-forms.php:1203
+#: templates/block-user-settings.php:55
+msgid "Settings saved."
+msgstr ""
+
+#: includes/class-auth-forms.php:1231
+msgid "SMTP settings saved."
+msgstr ""
+
+#. translators: %s: site name
+#: includes/class-auth-forms.php:1251
+#, php-format
+msgid "[%s] SMTP Test Email"
+msgstr ""
+
+#: includes/class-auth-forms.php:1252
+msgid "This is a test email to verify your SMTP configuration is working correctly."
+msgstr ""
+
+#: includes/class-auth-forms.php:1257
+msgid "Test email sent successfully!"
+msgstr ""
+
+#: includes/class-auth-forms.php:1259
+msgid "Failed to send test email. Check your SMTP settings."
+msgstr ""
+
+#: includes/class-auth-forms.php:1325
+msgid "VMS Span Checker Auth Form"
+msgstr ""
+
+#: includes/class-auth-forms.php:1343
+msgid "Select Auth Form"
+msgstr ""
+
+#: includes/class-auth-forms.php:1345
+msgid "— None —"
+msgstr ""
+
+#: includes/class-auth-forms.php:1354
+msgid "If selected, the page content will display the chosen auth form with built-in validation."
+msgstr ""
+
+#: includes/class-auth-forms.php:1357
+msgid "Shortcodes:"
+msgstr ""
+
+#. translators: %s: site name
+#: includes/class-auth-forms.php:1431
+#, php-format
+msgid "[%s] Your Verification Code"
+msgstr ""
+
+#: includes/class-auth-forms.php:1447
+#: includes/class-auth-forms.php:1533
+msgid "Invalid request."
+msgstr ""
+
+#: includes/class-auth-forms.php:1461
+msgid "Verification code expired. Please request a new one."
+msgstr ""
+
+#: includes/class-auth-forms.php:1466
+msgid "Verification code expired. Please request a new one or use the activation link."
+msgstr ""
+
+#: includes/class-auth-forms.php:1470
+msgid "Invalid verification code."
+msgstr ""
+
+#: includes/class-auth-forms.php:1479
+msgid "Registration data not found. Please register again."
+msgstr ""
+
+#: includes/class-auth-forms.php:1517
+msgid "Email verified! Redirecting..."
+msgstr ""
+
+#: includes/class-auth-forms.php:1547
+msgid "Session expired. Please register again."
+msgstr ""
+
+#: includes/class-auth-forms.php:1569
+msgid "Failed to send email. Please try again."
+msgstr ""
+
+#: includes/class-auth-forms.php:1572
+msgid "A new verification code has been sent."
+msgstr ""
+
+#: includes/class-auth-forms.php:1588
+msgid "Invalid activation link."
+msgstr ""
+
+#: includes/class-auth-forms.php:1600
+msgid "Invalid activation key."
+msgstr ""
+
+#: includes/class-auth-forms.php:1604
+msgid "Activation link has expired."
+msgstr ""
+
+#: includes/class-auth-forms.php:1616
+msgid "Account activated! You can now log in."
+msgstr ""
+
+#: includes/class-comment-enforcement.php:168
+msgid "Comment blocked"
+msgstr ""
+
+#: includes/class-enqueue-scripts.php:68
+msgid "Strict Email (addresses only)"
+msgstr ""
+
+#: includes/class-enqueue-scripts.php:70
+msgid "One email-shaped address only—not a display name, sentence, or multiple addresses."
+msgstr ""
+
+#: includes/class-enqueue-scripts.php:77
+msgid "Strict Email (TLD length limit)"
+msgstr ""
+
+#: includes/class-enqueue-scripts.php:79
+msgid "Email format with TLD between 2 and 6 letters."
+msgstr ""
+
+#: includes/class-enqueue-scripts.php:86
+msgid "Simple Email (lenient)"
+msgstr ""
+
+#: includes/class-enqueue-scripts.php:88
+msgid "Very loose UX check—allows unusual formats."
+msgstr ""
+
+#: includes/class-enqueue-scripts.php:95
+msgid "Username (3–16 characters)"
+msgstr ""
+
+#: includes/class-enqueue-scripts.php:97
+msgid "Letters, numbers, dot, underscore, and hyphen."
+msgstr ""
+
+#: includes/class-enqueue-scripts.php:104
+msgid "Strong Password (recommended)"
+msgstr ""
+
+#: includes/class-enqueue-scripts.php:106
+msgid "Minimum 8 characters with mixed case, number, and symbol."
+msgstr ""
+
+#: includes/class-enqueue-scripts.php:113
+msgid "International Phone (E.164)"
+msgstr ""
+
+#: includes/class-enqueue-scripts.php:115
+msgid "E.164 international phone format."
+msgstr ""
+
+#: includes/class-enqueue-scripts.php:122
+msgid "US Phone (common)"
+msgstr ""
+
+#: includes/class-enqueue-scripts.php:124
+msgid "US phone numbers with optional parentheses or dashes."
+msgstr ""
+
+#: includes/class-enqueue-scripts.php:131
+msgid "URL (http/https)"
+msgstr ""
+
+#: includes/class-enqueue-scripts.php:133
+msgid "Checks basic HTTP/HTTPS URLs. Not fully RFC-compliant but practical."
+msgstr ""
+
+#: includes/class-enqueue-scripts.php:140
+msgid "Plain text (no URLs)"
+msgstr ""
+
+#: includes/class-enqueue-scripts.php:142
+msgid "Allows any text except strings that look like http(s) URLs."
+msgstr ""
+
+#: includes/class-enqueue-scripts.php:143
+#: includes/class-enqueue-scripts.php:144
+msgid "Hello, thanks for your message."
+msgstr ""
+
+#: includes/class-enqueue-scripts.php:149
+msgid "Letters and numbers (spaces OK)"
+msgstr ""
+
+#: includes/class-enqueue-scripts.php:151
+msgid "Safe short labels without punctuation."
+msgstr ""
+
+#: includes/class-enqueue-scripts.php:158
+msgid "Digits only"
+msgstr ""
+
+#: includes/class-enqueue-scripts.php:160
+msgid "Whole numbers with no spaces or symbols."
+msgstr ""
+
+#: includes/class-enqueue-scripts.php:167
+msgid "Slug (lowercase, hyphen)"
+msgstr ""
+
+#: includes/class-enqueue-scripts.php:169
+msgid "URL slug with lowercase words separated by hyphens."
+msgstr ""
+
+#: includes/class-enqueue-scripts.php:176
+msgid "Date YYYY-MM-DD"
+msgstr ""
+
+#: includes/class-enqueue-scripts.php:178
+msgid "Simple date format (does not validate leap years)."
+msgstr ""
+
+#: includes/class-enqueue-scripts.php:185
+msgid "Domain (hostname)"
+msgstr ""
+
+#: includes/class-enqueue-scripts.php:187
+msgid "Hostname such as example.com or sub.example.net."
+msgstr ""
+
+#: includes/class-enqueue-scripts.php:194
+msgid "IPv4"
+msgstr ""
+
+#: includes/class-enqueue-scripts.php:196
+msgid "Validates IPv4 addresses."
+msgstr ""
+
+#: includes/class-enqueue-scripts.php:203
+msgid "IPv6 (basic)"
+msgstr ""
+
+#: includes/class-enqueue-scripts.php:205
+msgid "Simple IPv6 validation (full form)."
+msgstr ""
+
+#: includes/class-enqueue-scripts.php:212
+msgid "Hex Color (#rgb or #rrggbb)"
+msgstr ""
+
+#: includes/class-enqueue-scripts.php:214
+msgid "Hex color codes with or without a leading hash."
+msgstr ""
+
+#: includes/class-enqueue-scripts.php:221
+msgid "UUID v4"
+msgstr ""
+
+#: includes/class-enqueue-scripts.php:223
+msgid "Validates UUID version 4."
+msgstr ""
+
+#: includes/class-enqueue-scripts.php:308
+#: templates/comment-blocks.php:681
+msgid "Request failed."
+msgstr ""
+
+#: includes/class-enqueue-scripts.php:309
+msgid "Summary saved. Refreshing…"
+msgstr ""
+
+#: includes/class-enqueue-scripts.php:538
+#: includes/class-enqueue-scripts.php:686
+#: includes/class-enqueue-scripts.php:764
+#: includes/class-enqueue-scripts.php:861
+#: includes/functions.php:664
+msgid "Validating..."
+msgstr ""
+
+#: includes/class-enqueue-scripts.php:539
+#: templates/comment-blocks.php:374
+msgid "Subscribe"
+msgstr ""
+
+#: includes/class-enqueue-scripts.php:540
+#: includes/class-enqueue-scripts.php:688
+#: includes/class-enqueue-scripts.php:766
+#: includes/class-enqueue-scripts.php:863
+msgid "Email address is required."
+msgstr ""
+
+#: includes/class-enqueue-scripts.php:542
+#: includes/class-enqueue-scripts.php:690
+#: includes/class-enqueue-scripts.php:768
+#: includes/class-enqueue-scripts.php:865
+msgid "Validation failed."
+msgstr ""
+
+#: includes/class-enqueue-scripts.php:543
+#: includes/class-enqueue-scripts.php:691
+#: includes/class-enqueue-scripts.php:769
+#: includes/class-enqueue-scripts.php:866
+msgid "Server error. Please try again."
+msgstr ""
+
+#: includes/class-enqueue-scripts.php:544
+#: includes/class-enqueue-scripts.php:693
+#: includes/class-enqueue-scripts.php:727
+#: includes/class-enqueue-scripts.php:770
+#: includes/class-enqueue-scripts.php:830
+#: includes/class-enqueue-scripts.php:867
+msgid "Please complete the reCAPTCHA verification."
+msgstr ""
+
+#: includes/class-enqueue-scripts.php:545
+#: includes/class-enqueue-scripts.php:694
+msgid "You have been blocked due to repeated violations."
+msgstr ""
+
+#: includes/class-enqueue-scripts.php:546
+#: includes/class-enqueue-scripts.php:695
+#: includes/functions.php:744
+msgid "Blocked"
+msgstr ""
+
+#: includes/class-enqueue-scripts.php:687
+#: includes/functions.php:667
+msgid "Submit"
+msgstr ""
+
+#: includes/class-enqueue-scripts.php:696
+#: includes/functions.php:1435
+msgid "This field is required."
+msgstr ""
+
+#: includes/class-enqueue-scripts.php:944
+msgid "Network error. Please try again."
+msgstr ""
+
+#. translators: %s: user login (not password).
+#: includes/class-plugin-activity-log.php:38
+#, php-format
+msgid "Signed in: %s"
+msgstr ""
+
+#. translators: %s: attempted username (not password).
+#: includes/class-plugin-activity-log.php:56
+#, php-format
+msgid "Failed sign-in: %s"
+msgstr ""
+
+#. translators: 1: time until retry, 2: support reference id
+#: includes/class-registration-guard.php:584
+#, php-format
+msgid "Too many failed registration attempts from your network. Please try again in about %1$s. Reference: %2$s"
+msgstr ""
+
+#. translators: %s: support reference id
+#: includes/class-registration-guard.php:598
+#, php-format
+msgid "Daily registration attempt limit reached for your network. Please try again tomorrow. Reference: %s"
+msgstr ""
+
+#. translators: %s: support reference id
+#: includes/class-registration-guard.php:675
+#, php-format
+msgid "(Reference: %s)"
+msgstr ""
+
+#: includes/class-users-list-actions.php:70
+#: includes/class-users-list-actions.php:75
+msgid "Block Status"
+msgstr ""
+
+#: includes/class-users-list-actions.php:103
+#: templates/comment-blocks.php:438
+#: templates/comment-blocks.php:582
+msgid "Form"
+msgstr ""
+
+#: includes/class-users-list-actions.php:113
+#: templates/comment-blocks.php:450
+#: templates/comment-blocks.php:584
+msgid "Site"
+msgstr ""
+
+#. translators: %d: strike count
+#: includes/class-users-list-actions.php:120
+#, php-format
+msgid "%d strike(s)"
+msgstr ""
+
+#: includes/class-users-list-actions.php:161
+msgid "Edit Block"
+msgstr ""
+
+#: includes/class-users-list-actions.php:167
+#: templates/comment-blocks.php:485
+msgid "Unblock"
+msgstr ""
+
+#: includes/class-users-list-actions.php:174
+msgid "Block"
+msgstr ""
+
+#: includes/class-users-list-actions.php:191
+msgid "Block (VMS Span Checker)"
+msgstr ""
+
+#: includes/class-users-list-actions.php:192
+msgid "Unblock (VMS Span Checker)"
+msgstr ""
+
+#: includes/class-users-list-actions.php:233
+msgid "Bulk block from Users list."
+msgstr ""
+
+#. translators: %d: number of users blocked
+#: includes/class-users-list-actions.php:290
+#, php-format
+msgid "%d user blocked."
+msgid_plural "%d users blocked."
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %d: number of users unblocked
+#: includes/class-users-list-actions.php:298
+#, php-format
+msgid "%d user unblocked."
+msgid_plural "%d users unblocked."
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %d: number of users skipped
+#: includes/class-users-list-actions.php:306
+#, php-format
+msgid "%d user skipped (yourself or an exempt admin)."
+msgid_plural "%d users skipped (yourself or exempt admins)."
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/class-users-list-actions.php:350
+msgid "Block user"
+msgstr ""
+
+#: includes/class-users-list-actions.php:351
+#: templates/comment-blocks.php:647
+msgid "Edit block scope"
+msgstr ""
+
+#: includes/class-users-list-actions.php:352
+msgid "Unblock user"
+msgstr ""
+
+#: includes/class-users-list-actions.php:353
+#: templates/comment-blocks.php:205
+#: templates/comment-blocks.php:650
+msgid "Form / Comments"
+msgstr ""
+
+#: includes/class-users-list-actions.php:355
+#: templates/comment-blocks.php:217
+#: templates/comment-blocks.php:652
+msgid "Site-wide ban"
+msgstr ""
+
+#: includes/class-users-list-actions.php:356
+msgid "Reason (optional)"
+msgstr ""
+
+#: includes/class-users-list-actions.php:357
+msgid "Auto-expire after (days, 0 = permanent)"
+msgstr ""
+
+#: includes/class-users-list-actions.php:358
+#: templates/comment-blocks.php:257
+msgid "Block this user"
+msgstr ""
+
+#: includes/class-users-list-actions.php:359
+#: templates/comment-blocks.php:655
+msgid "Save"
+msgstr ""
+
+#: includes/class-users-list-actions.php:360
+msgid "Yes, unblock"
+msgstr ""
+
+#: includes/class-users-list-actions.php:361
+#: includes/functions.php:649
+#: templates/comment-blocks.php:260
+#: templates/comment-blocks.php:656
+msgid "Cancel"
+msgstr ""
+
+#: includes/class-users-list-actions.php:362
+#: templates/comment-blocks.php:629
+msgid "Pick at least one block scope."
+msgstr ""
+
+#: includes/class-users-list-actions.php:363
+msgid "This will clear all strikes and block flags for"
+msgstr ""
+
+#: includes/class-users-list-actions.php:364
+msgid "Request failed. Try again."
+msgstr ""
+
+#: includes/class-users-list-actions.php:365
+msgid "Done."
+msgstr ""
+
+#. translators: %s: database table name
+#: includes/functions.php:39
+#, php-format
+msgid "Table %s does not exist."
+msgstr ""
+
+#. translators: %s: export file path
+#: includes/functions.php:67
+#, php-format
+msgid "Table exported successfully to %s."
+msgstr ""
+
+#. translators: %d: shell exit code
+#: includes/functions.php:71
+#, php-format
+msgid "Export failed. Return code: %d"
+msgstr ""
+
+#: includes/functions.php:371
+msgid "Entire site (every page & view)"
+msgstr ""
+
+#: includes/functions.php:372
+msgid "Front page"
+msgstr ""
+
+#: includes/functions.php:373
+msgid "Blog / posts index"
+msgstr ""
+
+#: includes/functions.php:374
+msgid "Any single page"
+msgstr ""
+
+#: includes/functions.php:375
+msgid "Any single post"
+msgstr ""
+
+#: includes/functions.php:376
+msgid "Any singular content"
+msgstr ""
+
+#: includes/functions.php:377
+msgid "Any archive"
+msgstr ""
+
+#: includes/functions.php:378
+msgid "Category archives"
+msgstr ""
+
+#: includes/functions.php:379
+msgid "Tag archives"
+msgstr ""
+
+#: includes/functions.php:380
+msgid "Search results"
+msgstr ""
+
+#: includes/functions.php:381
+msgid "404 error page"
+msgstr ""
+
+#: includes/functions.php:623
+msgid "Form not found. Check Form ID / class under VMS Span Checker Form Guard."
+msgstr ""
+
+#: includes/functions.php:629
+msgid "Password must meet all requirements."
+msgstr ""
+
+#: includes/functions.php:632
+msgid "URL is valid"
+msgstr ""
+
+#: includes/functions.php:645
+msgid "Are you sure you want to delete this domain?"
+msgstr ""
+
+#: includes/functions.php:646
+msgid "Remove this domain?"
+msgstr ""
+
+#: includes/functions.php:647
+msgid "Are you sure you want to delete this Form Guard mapping?"
+msgstr ""
+
+#: includes/functions.php:648
+msgid "Remove this Form Guard mapping?"
+msgstr ""
+
+#: includes/functions.php:650
+msgid "Domain added."
+msgstr ""
+
+#: includes/functions.php:651
+msgid "Domain removed."
+msgstr ""
+
+#: includes/functions.php:652
+msgid "Form Guard mapping removed."
+msgstr ""
+
+#: includes/functions.php:653
+msgid "Error adding domain."
+msgstr ""
+
+#: includes/functions.php:654
+msgid "Error deleting domain."
+msgstr ""
+
+#: includes/functions.php:655
+msgid "Could not delete Form Guard mapping."
+msgstr ""
+
+#: includes/functions.php:656
+msgid "Saved"
+msgstr ""
+
+#: includes/functions.php:657
+#: templates/api-settings.php:276
+msgid "Delete"
+msgstr ""
+
+#: includes/functions.php:658
+#: templates/comment-blocks.php:478
+msgid "Edit"
+msgstr ""
+
+#: includes/functions.php:659
+msgid "Copied"
+msgstr ""
+
+#: includes/functions.php:660
+#: templates/auth-forms.php:54
+#: templates/auth-forms.php:76
+#: templates/auth-forms.php:98
+#: templates/auth-forms.php:120
+#: templates/auth-forms.php:142
+msgid "Copy"
+msgstr ""
+
+#: includes/functions.php:661
+msgid "Example:"
+msgstr ""
+
+#: includes/functions.php:662
+msgid "Could not copy."
+msgstr ""
+
+#: includes/functions.php:663
+msgid "Request failed"
+msgstr ""
+
+#: includes/functions.php:665
+msgid "Submitting..."
+msgstr ""
+
+#: includes/functions.php:666
+msgid "Validation passed"
+msgstr ""
+
+#: includes/functions.php:668
+msgid "Field type"
+msgstr ""
+
+#: includes/functions.php:669
+msgid "Field ID"
+msgstr ""
+
+#: includes/functions.php:670
+msgid "Field class"
+msgstr ""
+
+#: includes/functions.php:671
+msgid "Event name"
+msgstr ""
+
+#: includes/functions.php:672
+msgid "Form field"
+msgstr ""
+
+#: includes/functions.php:673
+msgid "JavaScript event"
+msgstr ""
+
+#: includes/functions.php:674
+msgid "URL"
+msgstr ""
+
+#: includes/functions.php:676
+msgid "Text"
+msgstr ""
+
+#: includes/functions.php:678
+msgid "Change"
+msgstr ""
+
+#: includes/functions.php:679
+msgid "Input"
+msgstr ""
+
+#: includes/functions.php:680
+msgid "Form submit"
+msgstr ""
+
+#: includes/functions.php:681
+#: templates/comment-blocks.php:574
+#: templates/dashboard.php:307
+#: templates/disposable.php:40
+#: templates/whitelist.php:48
+msgid "ID"
+msgstr ""
+
+#: includes/functions.php:682
+msgid "Class"
+msgstr ""
+
+#: includes/functions.php:683
+msgid "Select field type"
+msgstr ""
+
+#: includes/functions.php:684
+msgid "Textarea"
+msgstr ""
+
+#: includes/functions.php:685
+msgid "Telephone"
+msgstr ""
+
+#: includes/functions.php:686
+msgid "Number"
+msgstr ""
+
+#: includes/functions.php:688
+msgid "Enable"
+msgstr ""
+
+#: includes/functions.php:689
+msgid "Disable"
+msgstr ""
+
+#: includes/functions.php:690
+msgid "Required field"
+msgstr ""
+
+#: includes/functions.php:691
+msgid "Mark the field as required in the browser."
+msgstr ""
+
+#: includes/functions.php:692
+msgid "Require validation"
+msgstr ""
+
+#: includes/functions.php:693
+msgid "Run server-side validation for this field."
+msgstr ""
+
+#: includes/functions.php:694
+#: templates/api-settings.php:180
+#: templates/registration-guard.php:91
+#: templates/tools.php:52
+msgid "Google Web Risk"
+msgstr ""
+
+#: includes/functions.php:695
+msgid "VirusTotal scanner"
+msgstr ""
+
+#: includes/functions.php:696
+msgid "Reject if username exists (live check)"
+msgstr ""
+
+#: includes/functions.php:697
+msgid "Use for registration/login name inputs. When enabled, checks WordPress while typing (debounced) and on submit."
+msgstr ""
+
+#: includes/functions.php:698
+msgid "Allow links in message"
+msgstr ""
+
+#: includes/functions.php:699
+msgid "AI spam checker (textarea)"
+msgstr ""
+
+#: includes/functions.php:700
+msgid "Uses AI settings from VMS Span Checker → AI. Runs on the server when validation is enabled."
+msgstr ""
+
+#: includes/functions.php:701
+msgid "Allow URLs in value"
+msgstr ""
+
+#: includes/functions.php:702
+msgid "Disable to reject http(s) URLs typed into this single-line field."
+msgstr ""
+
+#: includes/functions.php:703
+msgid "Custom regex (delimited)"
+msgstr ""
+
+#: includes/functions.php:704
+msgid "Optional. Must look like /pattern/flags. Checked on the server when validation is enabled."
+msgstr ""
+
+#: includes/functions.php:705
+msgid "Preset patterns"
+msgstr ""
+
+#: includes/functions.php:706
+msgid "Valid"
+msgstr ""
+
+#: includes/functions.php:707
+msgid "Invalid"
+msgstr ""
+
+#: includes/functions.php:708
+msgid "Use pattern"
+msgstr ""
+
+#: includes/functions.php:709
+msgid "Keep at least one field row."
+msgstr ""
+
+#: includes/functions.php:710
+msgid "Mapped form control"
+msgstr ""
+
+#: includes/functions.php:711
+msgid "Guards in this row apply only to this field’s ID/class. Use “Add field” for each separate input (10 fields → 10 rows)."
+msgstr ""
+
+#: includes/functions.php:712
+msgid "Guards for this field only"
+msgstr ""
+
+#: includes/functions.php:713
+msgid "Protection methods (based on field type)"
+msgstr ""
+
+#: includes/functions.php:714
+msgid "Email and URL rows show Web Risk and VirusTotal (Web Risk defaults ON when you switch to Email). Username rows show live “already registered” checks. Plain Text adds URL-in-value rules; textarea adds links + AI spam screening."
+msgstr ""
+
+#: includes/functions.php:715
+msgid "Used when “Form field” is Email or URL and “Require validation” is enabled for domain checks."
+msgstr ""
+
+#: includes/functions.php:716
+msgid "Same as Web Risk: applies together with Email or URL domain validation."
+msgstr ""
+
+#: includes/functions.php:717
+msgid "Email and URL rows use the reputation toggles here together with validation above."
+msgstr ""
+
+#: includes/functions.php:718
+msgid "Validation rules"
+msgstr ""
+
+#: includes/functions.php:719
+msgid "Web Risk"
+msgstr ""
+
+#: includes/functions.php:720
+#: templates/registration-guard.php:105
+#: templates/tools.php:64
+msgid "VirusTotal"
+msgstr ""
+
+#: includes/functions.php:721
+msgid "On"
+msgstr ""
+
+#: includes/functions.php:722
+msgid "Off"
+msgstr ""
+
+#: includes/functions.php:723
+msgid "Username exists check"
+msgstr ""
+
+#: includes/functions.php:724
+msgid "Links allowed"
+msgstr ""
+
+#: includes/functions.php:725
+msgid "AI spam check"
+msgstr ""
+
+#: includes/functions.php:726
+msgid "URLs in text field"
+msgstr ""
+
+#: includes/functions.php:727
+msgid "Regex"
+msgstr ""
+
+#: includes/functions.php:728
+msgid "Please select at least one location (Common locations, Specific pages, or Specific posts)."
+msgstr ""
+
+#: includes/functions.php:729
+msgid "Please enter a Form id/class or Submit button selector to identify the form."
+msgstr ""
+
+#: includes/functions.php:730
+msgid "Form id/class is required when targeting the entire site."
+msgstr ""
+
+#: includes/functions.php:731
+msgid "Auto"
+msgstr ""
+
+#: includes/functions.php:732
+#: templates/comment-blocks.php:379
+msgid "Manual"
+msgstr ""
+
+#: includes/functions.php:733
+msgid "Default rules"
+msgstr ""
+
+#: includes/functions.php:738
+msgid "Password is too weak. Use at least 8 characters with uppercase, lowercase, number, and symbol."
+msgstr ""
+
+#: includes/functions.php:739
+msgid "Links are not allowed in this field."
+msgstr ""
+
+#: includes/functions.php:740
+msgid "URLs are not allowed in this field."
+msgstr ""
+
+#: includes/functions.php:1399
+msgid "Registration Blocked"
+msgstr ""
+
+#: includes/functions.php:1400
+msgid "We could not complete your registration due to security checks."
+msgstr ""
+
+#: includes/functions.php:1401
+msgid "The email domain does not appear to exist."
+msgstr ""
+
+#: includes/functions.php:1402
+msgid "The email domain cannot receive messages."
+msgstr ""
+
+#: includes/functions.php:1403
+msgid "Temporary email addresses are not permitted."
+msgstr ""
+
+#: includes/functions.php:1404
+msgid "Too many registration attempts. Please try again later."
+msgstr ""
+
+#: includes/functions.php:1405
+msgid "This email domain did not pass our security screening."
+msgstr ""
+
+#. translators: 1: current attempt number, 2: max attempts allowed per day
+#: includes/functions.php:1407
+#, php-format
+msgid "Attempt %1$d of %2$d for today."
+msgstr ""
+
+#: includes/functions.php:1408
+msgid "Contact the site administrator if you need assistance."
+msgstr ""
+
+#: includes/functions.php:1412
+msgid "This email domain does not exist."
+msgstr ""
+
+#: includes/functions.php:1413
+msgid "This email domain cannot receive messages."
+msgstr ""
+
+#: includes/functions.php:1414
+msgid "Temporary email addresses are not allowed."
+msgstr ""
+
+#: includes/functions.php:1415
+msgid "This email domain has security issues."
+msgstr ""
+
+#: includes/functions.php:1416
+msgid "This email domain may be unsafe."
+msgstr ""
+
+#: includes/functions.php:1419
+msgid "Please enter a valid URL."
+msgstr ""
+
+#: includes/functions.php:1420
+msgid "This URL cannot be reached."
+msgstr ""
+
+#: includes/functions.php:1421
+msgid "This URL has been flagged for security issues."
+msgstr ""
+
+#: includes/functions.php:1422
+msgid "This URL may be unsafe."
+msgstr ""
+
+#: includes/functions.php:1425
+msgid "Your submission appears to be spam."
+msgstr ""
+
+#: includes/functions.php:1426
+msgid "This username is already in use."
+msgstr ""
+
+#: includes/functions.php:1429
+msgid "Please complete the security verification."
+msgstr ""
+
+#: includes/functions.php:1430
+msgid "Security verification failed. Please try again."
+msgstr ""
+
+#: includes/functions.php:1433
+msgid "Access denied due to repeated violations."
+msgstr ""
+
+#: includes/functions.php:1434
+msgid "Validation failed. Please check your input."
+msgstr ""
+
+#: includes/functions.php:1436
+msgid "A server error occurred. Please try again."
+msgstr ""
+
+#: includes/spam/class-default-spam-check-components.php:29
+#: templates/comment-settings.php:132
+msgid "Block trackbacks & pingbacks"
+msgstr ""
+
+#: includes/spam/class-default-spam-check-components.php:39
+msgid "Trackbacks and pingbacks are disabled."
+msgstr ""
+
+#: includes/spam/class-default-spam-check-components.php:51
+msgid "IP flood limit"
+msgstr ""
+
+#: includes/spam/class-default-spam-check-components.php:70
+msgid "You are submitting comments too quickly. Please wait and try again."
+msgstr ""
+
+#: includes/spam/class-default-spam-check-components.php:83
+msgid "Duplicate comment body"
+msgstr ""
+
+#: includes/spam/class-default-spam-check-components.php:103
+msgid "This comment was already submitted on this post."
+msgstr ""
+
+#: includes/spam/class-default-spam-check-components.php:115
+msgid "Min / max length"
+msgstr ""
+
+#: includes/spam/class-default-spam-check-components.php:123
+msgid "Comment is too short."
+msgstr ""
+
+#: includes/spam/class-default-spam-check-components.php:126
+msgid "Comment is too long."
+msgstr ""
+
+#: includes/spam/class-default-spam-check-components.php:137
+msgid "Disposable email list"
+msgstr ""
+
+#: includes/spam/class-default-spam-check-components.php:158
+msgid "Disposable or throwaway email addresses are not allowed."
+msgstr ""
+
+#: includes/spam/class-default-spam-check-components.php:170
+#: templates/comment-settings.php:329
+msgid "Blocked email domains"
+msgstr ""
+
+#: includes/spam/class-default-spam-check-components.php:189
+msgid "This email domain is not allowed."
+msgstr ""
+
+#: includes/spam/class-default-spam-check-components.php:202
+msgid "Punycode / IDN abuse"
+msgstr ""
+
+#: includes/spam/class-default-spam-check-components.php:213
+msgid "Internationalized (punycode) email domains are not allowed here."
+msgstr ""
+
+#: includes/spam/class-default-spam-check-components.php:220
+msgid "Internationalized (punycode) URLs are not allowed in the website field."
+msgstr ""
+
+#: includes/spam/class-default-spam-check-components.php:227
+msgid "Comments cannot contain punycode / IDN homograph URLs."
+msgstr ""
+
+#: includes/spam/class-default-spam-check-components.php:239
+#: templates/comment-settings.php:323
+msgid "Custom blocked phrases"
+msgstr ""
+
+#: includes/spam/class-default-spam-check-components.php:254
+msgid "Comment blocked: matched blocked phrase or pattern."
+msgstr ""
+
+#: includes/spam/class-default-spam-check-components.php:267
+#: templates/comment-settings.php:309
+msgid "Bundled spam phrase list"
+msgstr ""
+
+#: includes/spam/class-default-spam-check-components.php:289
+msgid "Comment blocked: promotional or spam-like content."
+msgstr ""
+
+#: includes/spam/class-default-spam-check-components.php:302
+#: templates/comment-settings.php:335
+msgid "Guest website field"
+msgstr ""
+
+#: includes/spam/class-default-spam-check-components.php:316
+msgid "Please leave the website field empty when commenting as a guest."
+msgstr ""
+
+#: includes/spam/class-default-spam-check-components.php:328
+msgid "HTTP(S) in website field"
+msgstr ""
+
+#: includes/spam/class-default-spam-check-components.php:341
+msgid "Please remove the http(s) link from the website field."
+msgstr ""
+
+#: includes/spam/class-default-spam-check-components.php:353
+msgid "BBCode links"
+msgstr ""
+
+#: includes/spam/class-default-spam-check-components.php:363
+msgid "BBCode-style links are not allowed in comments."
+msgstr ""
+
+#: includes/spam/class-default-spam-check-components.php:375
+msgid "Script / iframe injection"
+msgstr ""
+
+#: includes/spam/class-default-spam-check-components.php:389
+msgid "Comments cannot contain scripts, iframes, or javascript URLs."
+msgstr ""
+
+#: includes/spam/class-default-spam-check-components.php:401
+msgid "ALL CAPS ratio"
+msgstr ""
+
+#: includes/spam/class-default-spam-check-components.php:423
+msgid "Too many capital letters — looks like shout/spam."
+msgstr ""
+
+#: includes/spam/class-default-spam-check-components.php:435
+msgid "Repeated character spam"
+msgstr ""
+
+#: includes/spam/class-default-spam-check-components.php:445
+msgid "Comment contains excessive repeated characters."
+msgstr ""
+
+#: includes/spam/class-default-spam-check-components.php:457
+msgid "Emoji / pictograph flood"
+msgstr ""
+
+#: includes/spam/class-default-spam-check-components.php:473
+msgid "Too many emoji or symbols in this comment."
+msgstr ""
+
+#: includes/spam/class-default-spam-check-components.php:485
+msgid "Link count & allow links"
+msgstr ""
+
+#: includes/spam/class-default-spam-check-components.php:492
+msgid "Comments with links are not allowed."
+msgstr ""
+
+#: includes/spam/class-default-spam-check-components.php:498
+msgid "Too many links in this comment."
+msgstr ""
+
+#: licensing/class-license-admin.php:47
+#: licensing/class-license-admin.php:48
+#: templates/license-settings.php:35
+#: templates/license-settings.php:39
+msgid "License"
+msgstr ""
+
+#: licensing/class-license-admin.php:77
+msgid "You do not have permission to do this."
+msgstr ""
+
+#: licensing/class-license-admin.php:82
+#: templates/ai-settings.php:27
+#: templates/api-settings.php:58
+#: templates/block-user-settings.php:24
+#: templates/comment-blocks.php:40
+#: templates/comment-blocks.php:62
+#: templates/comment-settings.php:23
+#: templates/login-guard.php:22
+#: templates/registration-guard.php:21
+#: templates/tools.php:25
+msgid "Security check failed."
+msgstr ""
+
+#: licensing/class-license-admin.php:94
+msgid "Unknown action."
+msgstr ""
+
+#: licensing/class-license-base.php:265
+msgid "Invalid license key."
+msgstr ""
+
+#: licensing/class-license-base.php:274
+msgid "License server unreachable."
+msgstr ""
+
+#: licensing/class-license-base.php:285
+msgid "License removed."
+msgstr ""
+
+#: licensing/class-license-base.php:291
+#: licensing/class-license-manager.php:147
+msgid "License deactivated."
+msgstr ""
+
+#: licensing/class-license-base.php:295
+msgid "Could not contact license server."
+msgstr ""
+
+#. translators: %d: HTTP status code
+#: licensing/class-license-base.php:388
+#, php-format
+msgid "License server returned %d."
+msgstr ""
+
+#: licensing/class-license-base.php:411
+msgid "Unexpected license server response."
+msgstr ""
+
+#: licensing/class-license-manager.php:130
+msgid "License activated."
+msgstr ""
+
+#: licensing/class-license-manager.php:130
+msgid "License activation failed."
+msgstr ""
+
+#: licensing/class-license-manager.php:147
+msgid "Could not deactivate license."
+msgstr ""
+
+#: licensing/class-license-manager.php:161
+msgid "No license to verify."
+msgstr ""
+
+#: licensing/class-license-manager.php:176
+msgid "Inactive"
+msgstr ""
+
+#: licensing/class-license-manager.php:182
+msgid "Active (lifetime)"
+msgstr ""
+
+#. translators: %s: date
+#: licensing/class-license-manager.php:184
+#, php-format
+msgid "Active (until %s)"
+msgstr ""
+
+#: licensing/class-license-manager.php:186
+#: templates/auth-forms.php:67
+#: templates/auth-forms.php:89
+#: templates/auth-forms.php:111
+#: templates/auth-forms.php:133
+#: templates/auth-forms.php:155
+msgid "Active"
+msgstr ""
+
+#: licensing/class-pro-bridge.php:108
+msgid "Validate any front-end form (Contact Form 7, WPForms, custom) with anti-spam rules, AI moderation, and per-form scope."
+msgstr ""
+
+#: licensing/class-pro-bridge.php:114
+msgid "Block disposable / risky senders on contact forms before they reach your inbox."
+msgstr ""
+
+#: licensing/class-pro-bridge.php:120
+msgid "Stop fake newsletter sign-ups and disposable-email subscribers at the source."
+msgstr ""
+
+#: licensing/class-pro-bridge.php:126
+msgid "Add WooCommerce review moderation with AI scoring and disposable-email blocks."
+msgstr ""
+
+#: licensing/class-pro-bridge.php:132
+msgid "Generate short AI summaries for posts to give Comment Guard more context (and surface them on the front end)."
+msgstr ""
+
+#: licensing/class-pro-bridge.php:138
+msgid "AI-generated summaries for WooCommerce products."
+msgstr ""
+
+#: licensing/class-pro-bridge.php:144
+msgid "Visual editor for every transactional email sent by Auth Forms and the Guards."
+msgstr ""
+
+#: services/class-ai-span-completion.php:30
+msgid "AI VMS Span Checker is disabled."
+msgstr ""
+
+#: services/class-ai-span-completion.php:46
+msgid "Unknown AI provider."
+msgstr ""
+
+#: services/class-ai-span-completion.php:63
+msgid "AI did not return valid JSON."
+msgstr ""
+
+#: services/class-ai-span-completion.php:70
+msgid "AI JSON missing ok/spam status."
+msgstr ""
+
+#: services/class-ai-span-completion.php:75
+msgid "Spam detected."
+msgstr ""
+
+#: services/class-ai-span-completion.php:85
+msgid "OpenAI API key is missing."
+msgstr ""
+
+#: services/class-ai-span-completion.php:108
+msgid "DeepSeek API key is missing."
+msgstr ""
+
+#: services/class-ai-span-completion.php:161
+msgid "Unexpected chat completion response."
+msgstr ""
+
+#: services/class-ai-span-completion.php:170
+msgid "Anthropic API key is missing."
+msgstr ""
+
+#: services/class-ai-span-completion.php:214
+msgid "Unexpected Anthropic response."
+msgstr ""
+
+#: services/class-ai-span-completion.php:223
+msgid "Google Gemini API key is missing."
+msgstr ""
+
+#: services/class-ai-span-completion.php:273
+msgid "Unexpected Gemini response."
+msgstr ""
+
+#: services/class-ai-span-completion.php:286
+msgid "AWS Bedrock access key, secret, and model ID are required."
+msgstr ""
+
+#: services/class-ai-span-completion.php:386
+msgid "Unrecognized Bedrock model ID. Use an Anthropic, Meta Llama, Mistral, or Amazon Titan text model ID from AWS."
+msgstr ""
+
+#: services/class-ai-span-completion.php:413
+msgid "Unexpected Bedrock response."
+msgstr ""
+
+#: services/class-ai-span-completion.php:429
+msgid "Unexpected Bedrock response shape for this model family."
+msgstr ""
+
+#. translators: 1: provider context, 2: HTTP code
+#: services/class-ai-span-completion.php:449
+#, php-format
+msgid "AI request failed (%1$s) HTTP %2$s."
+msgstr ""
+
+#: services/class-domain-validator.php:97
+msgid "Domain is whitelisted."
+msgstr ""
+
+#: services/class-domain-validator.php:102
+msgid "Disposable email or domain detected."
+msgstr ""
+
+#: services/class-domain-validator.php:114
+msgid "This email domain does not exist (no DNS A record found). Use an address at a real, active domain."
+msgstr ""
+
+#: services/class-domain-validator.php:129
+msgid "Email domain cannot receive emails (no MX record found). Use an address at a domain that can receive mail."
+msgstr ""
+
+#: services/class-domain-validator.php:157
+msgid "Domain is safe and valid."
+msgstr ""
+
+#: services/class-domain-validator.php:223
+msgid "No URL provided."
+msgstr ""
+
+#: services/class-domain-validator.php:234
+msgid "Invalid domain."
+msgstr ""
+
+#. translators: %s: WordPress error message
+#: services/class-domain-validator.php:251
+#, php-format
+msgid "Request failed: %s"
+msgstr ""
+
+#: services/class-domain-validator.php:260
+msgid "Site responded successfully."
+msgstr ""
+
+#. translators: %d: HTTP status code
+#: services/class-domain-validator.php:267
+#, php-format
+msgid "Redirect only (%d)."
+msgstr ""
+
+#. translators: %d: HTTP status code
+#: services/class-domain-validator.php:274
+#, php-format
+msgid "Client error (%d)."
+msgstr ""
+
+#. translators: %d: HTTP status code
+#: services/class-domain-validator.php:281
+#, php-format
+msgid "Server error (%d)."
+msgstr ""
+
+#. translators: %d: HTTP status code
+#: services/class-domain-validator.php:288
+#, php-format
+msgid "Unknown status (%d)."
+msgstr ""
+
+#: services/class-domain-validator.php:323
+msgid "Invalid email format."
+msgstr ""
+
+#: services/class-google-webrisk.php:45
+msgid "Google API key is required."
+msgstr ""
+
+#. translators: %s: WordPress error message
+#: services/class-google-webrisk.php:70
+#, php-format
+msgid "Web Risk API request failed: %s"
+msgstr ""
+
+#: services/class-google-webrisk.php:78
+msgid "Web Risk API returned an empty response."
+msgstr ""
+
+#: services/class-google-webrisk.php:87
+msgid "Threat detected."
+msgstr ""
+
+#: services/class-google-webrisk.php:93
+msgid "No threats detected."
+msgstr ""
+
+#: services/class-virustotal.php:64
+#: services/class-virustotal.php:72
+msgid "Security reputation check is temporarily unavailable. Please try again later."
+msgstr ""
+
+#: services/class-virustotal.php:91
+#: services/class-virustotal.php:99
+msgid "Security reputation check could not be completed. Please try again."
+msgstr ""
+
+#: services/class-virustotal.php:107
+msgid "Security reputation check returned an empty response. Please try again."
+msgstr ""
+
+#: services/class-virustotal.php:115
+msgid "Security reputation check returned an invalid response. Please try again."
+msgstr ""
+
+#: services/class-virustotal.php:126
+msgid "Security reputation report was incomplete. Please try again."
+msgstr ""
+
+#. translators: 1: malicious engine count, 2: allowed max
+#: services/class-virustotal.php:142
+#, php-format
+msgid "This email domain failed security reputation checks (%1$d signals; allowed max %2$d)."
+msgstr ""
+
+#. translators: 1: suspicious engine count, 2: allowed max
+#: services/class-virustotal.php:154
+#, php-format
+msgid "This email domain failed security reputation checks (%1$d suspicious signals; allowed max %2$d)."
+msgstr ""
+
+#: services/class-virustotal.php:163
+msgid "Domain passed reputation checks."
+msgstr ""
+
+#: templates/ai-settings.php:31
+#: templates/comment-settings.php:27
+#: templates/login-guard.php:25
+#: templates/registration-guard.php:24
+msgid "You do not have permission to save these settings."
+msgstr ""
+
+#: templates/ai-settings.php:62
+msgid "AI settings saved."
+msgstr ""
+
+#: templates/ai-settings.php:77
+msgid "Choose one provider for summaries and comment moderation. Credentials for other providers are kept if you switch—only the active provider is used."
+msgstr ""
+
+#: templates/ai-settings.php:86
+msgid "Enable AI VMS Span Checker"
+msgstr ""
+
+#: templates/ai-settings.php:93
+msgid "Generate post summaries and run AI comment checks when a summary exists."
+msgstr ""
+
+#: templates/ai-settings.php:100
+msgid "AI provider"
+msgstr ""
+
+#: templates/ai-settings.php:103
+#: templates/ai-settings.php:125
+msgid "OpenAI"
+msgstr ""
+
+#: templates/ai-settings.php:104
+msgid "Anthropic (API)"
+msgstr ""
+
+#: templates/ai-settings.php:105
+#: templates/ai-settings.php:175
+msgid "Google Gemini"
+msgstr ""
+
+#: templates/ai-settings.php:106
+#: templates/ai-settings.php:200
+msgid "DeepSeek"
+msgstr ""
+
+#: templates/ai-settings.php:126
+msgid "Uses Chat Completions with JSON object mode. Create a key in the OpenAI dashboard."
+msgstr ""
+
+#: templates/ai-settings.php:129
+#: templates/ai-settings.php:154
+#: templates/ai-settings.php:179
+#: templates/ai-settings.php:204
+#: templates/api-settings.php:194
+#: templates/api-settings.php:264
+msgid "API key"
+msgstr ""
+
+#: templates/ai-settings.php:132
+#: templates/ai-settings.php:157
+#: templates/ai-settings.php:182
+#: templates/ai-settings.php:207
+msgid "Enter API key"
+msgstr ""
+
+#: templates/ai-settings.php:138
+#: templates/ai-settings.php:163
+#: templates/ai-settings.php:188
+#: templates/ai-settings.php:213
+msgid "API key configured"
+msgstr ""
+
+#: templates/ai-settings.php:143
+#: templates/ai-settings.php:168
+#: templates/ai-settings.php:193
+#: templates/ai-settings.php:218
+msgid "Model"
+msgstr ""
+
+#: templates/ai-settings.php:150
+msgid "Anthropic"
+msgstr ""
+
+#: templates/ai-settings.php:151
+msgid "Direct Anthropic Messages API."
+msgstr ""
+
+#: templates/ai-settings.php:176
+msgid "Uses the Generative Language API. Get your key from Google AI Studio."
+msgstr ""
+
+#: templates/ai-settings.php:201
+msgid "OpenAI-compatible Chat Completions at api.deepseek.com."
+msgstr ""
+
+#: templates/ai-settings.php:224
+msgid "Summaries"
+msgstr ""
+
+#: templates/ai-settings.php:226
+msgid "When an item of a selected type is published or scheduled, the plugin requests a summary using the active provider above. Include “product” for WooCommerce—those summaries use catalog fields (descriptions, categories, attributes) and appear under"
+msgstr ""
+
+#: templates/ai-settings.php:229
+msgid "Post types for summaries"
+msgstr ""
+
+#: templates/ai-settings.php:252
+#: templates/comment-settings.php:421
+#: templates/registration-guard.php:295
+msgid "Save settings"
+msgstr ""
+
+#: templates/ai-settings.php:326
+msgid "Enter new key to replace"
+msgstr ""
+
+#: templates/api-settings.php:66
+msgid "Google configuration saved."
+msgstr ""
+
+#: templates/api-settings.php:74
+msgid "VirusTotal API key added."
+msgstr ""
+
+#: templates/api-settings.php:89
+msgid "VirusTotal API key removed."
+msgstr ""
+
+#: templates/api-settings.php:97
+msgid "VirusTotal thresholds saved."
+msgstr ""
+
+#: templates/api-settings.php:107
+msgid "Google reCAPTCHA configuration saved."
+msgstr ""
+
+#: templates/api-settings.php:117
+msgid "Connect Google Web Risk, VirusTotal, and reCAPTCHA for enhanced form protection."
+msgstr ""
+
+#: templates/api-settings.php:122
+msgid "Google reCAPTCHA"
+msgstr ""
+
+#: templates/api-settings.php:124
+msgid "Add Google reCAPTCHA v2 (checkbox) or v3 (invisible) to protect your forms from bots and spam."
+msgstr ""
+
+#: templates/api-settings.php:131
+msgid "reCAPTCHA Version"
+msgstr ""
+
+#: templates/api-settings.php:134
+msgid "reCAPTCHA v2 (Checkbox)"
+msgstr ""
+
+#: templates/api-settings.php:135
+msgid "reCAPTCHA v3 (Invisible)"
+msgstr ""
+
+#: templates/api-settings.php:138
+msgid "v2: Shows \"I'm not a robot\" checkbox. v3: Invisible, scores user behavior."
+msgstr ""
+
+#: templates/api-settings.php:143
+msgid "Site Key"
+msgstr ""
+
+#: templates/api-settings.php:149
+msgid "Secret Key"
+msgstr ""
+
+#. translators: %s: URL to Google reCAPTCHA admin
+#: templates/api-settings.php:157
+#, php-format
+msgid "Get your keys from <a href=\"%s\" rel=\"noopener noreferrer\" target=\"_blank\">Google reCAPTCHA Admin Console</a>."
+msgstr ""
+
+#: templates/api-settings.php:174
+msgid "Save reCAPTCHA configuration"
+msgstr ""
+
+#: templates/api-settings.php:183
+msgid "This plugin calls the Web Risk v1 API using a single API key (query parameter). Create a key in Google Cloud Console for the Web Risk API—no OAuth client or secret is required for this lookup."
+msgstr ""
+
+#. translators: %s: URL to Google Web Risk docs
+#: templates/api-settings.php:202
+#, php-format
+msgid "See <a href=\"%s\" rel=\"noopener noreferrer\" target=\"_blank\">Google Web Risk documentation</a> to enable the API and create a key."
+msgstr ""
+
+#: templates/api-settings.php:219
+msgid "Save Google configuration"
+msgstr ""
+
+#: templates/api-settings.php:225
+msgid "VirusTotal API keys"
+msgstr ""
+
+#: templates/api-settings.php:231
+msgid "Max malicious engines"
+msgstr ""
+
+#: templates/api-settings.php:234
+msgid "Reject the domain if VirusTotal reports more than this many “malicious” detections. Use 0 for strict (any malicious = block)."
+msgstr ""
+
+#: templates/api-settings.php:238
+msgid "Max suspicious engines"
+msgstr ""
+
+#: templates/api-settings.php:244
+msgid "off"
+msgstr ""
+
+#: templates/api-settings.php:245
+msgid "Leave empty to ignore “suspicious” counts. If set, block when suspicious is greater than this value."
+msgstr ""
+
+#: templates/api-settings.php:250
+msgid "Save VirusTotal thresholds"
+msgstr ""
+
+#: templates/api-settings.php:255
+msgid "Enter VirusTotal API key"
+msgstr ""
+
+#: templates/api-settings.php:256
+msgid "Add key"
+msgstr ""
+
+#: templates/api-settings.php:265
+#: templates/disposable.php:42
+#: templates/whitelist.php:50
+msgid "Action"
+msgstr ""
+
+#: templates/api-settings.php:285
+msgid "No VirusTotal API keys have been added yet."
+msgstr ""
+
+#: templates/auth-forms.php:29
+msgid "Form Templates"
+msgstr ""
+
+#: templates/auth-forms.php:30
+msgid "Design & Preview"
+msgstr ""
+
+#: templates/auth-forms.php:31
+msgid "Validation Rules"
+msgstr ""
+
+#: templates/auth-forms.php:33
+msgid "How to Use"
+msgstr ""
+
+#: templates/auth-forms.php:39
+msgid "Available Form Templates"
+msgstr ""
+
+#: templates/auth-forms.php:40
+msgid "Use these shortcodes to add authentication forms to any page. Each form includes built-in validation and spam protection."
+msgstr ""
+
+#: templates/auth-forms.php:45
+msgid "Form Type"
+msgstr ""
+
+#: templates/auth-forms.php:46
+msgid "Shortcode"
+msgstr ""
+
+#: templates/auth-forms.php:47
+msgid "Assigned Page"
+msgstr ""
+
+#: templates/auth-forms.php:48
+#: templates/comment-blocks.php:276
+#: templates/dashboard.php:311
+msgid "Status"
+msgstr ""
+
+#: templates/auth-forms.php:53
+#: templates/auth-forms.php:305
+msgid "Login Form"
+msgstr ""
+
+#: templates/auth-forms.php:57
+#: templates/auth-forms.php:79
+#: templates/auth-forms.php:101
+#: templates/auth-forms.php:123
+#: templates/auth-forms.php:145
+#: templates/auth-forms.php:400
+msgid "— Select Page —"
+msgstr ""
+
+#: templates/auth-forms.php:68
+#: templates/auth-forms.php:90
+#: templates/auth-forms.php:112
+#: templates/auth-forms.php:134
+#: templates/auth-forms.php:156
+msgid "View"
+msgstr ""
+
+#: templates/auth-forms.php:70
+#: templates/auth-forms.php:92
+#: templates/auth-forms.php:114
+#: templates/auth-forms.php:136
+#: templates/auth-forms.php:158
+msgid "Not Assigned"
+msgstr ""
+
+#: templates/auth-forms.php:75
+#: templates/auth-forms.php:306
+msgid "Registration Form"
+msgstr ""
+
+#: templates/auth-forms.php:97
+msgid "Forgot Password Form"
+msgstr ""
+
+#: templates/auth-forms.php:119
+msgid "Reset Password Form"
+msgstr ""
+
+#: templates/auth-forms.php:141
+msgid "Email Verify Form"
+msgstr ""
+
+#: templates/auth-forms.php:141
+msgid "OTP + Activation Link"
+msgstr ""
+
+#: templates/auth-forms.php:168
+#: templates/auth-forms.php:680
+msgid "Auto-Generate All Auth Pages"
+msgstr ""
+
+#: templates/auth-forms.php:170
+msgid "Creates Login, Register, Forgot Password, Reset Password, and Email Verify pages automatically with the correct shortcodes."
+msgstr ""
+
+#: templates/auth-forms.php:175
+msgid "Redirect Settings"
+msgstr ""
+
+#: templates/auth-forms.php:178
+msgid "After Login Redirect"
+msgstr ""
+
+#: templates/auth-forms.php:181
+msgid "URL to redirect after successful login. Leave empty for home page."
+msgstr ""
+
+#: templates/auth-forms.php:185
+msgid "After Registration Redirect"
+msgstr ""
+
+#: templates/auth-forms.php:188
+msgid "URL to redirect after successful registration. Leave empty for home page."
+msgstr ""
+
+#: templates/auth-forms.php:200
+msgid "Form Design"
+msgstr ""
+
+#: templates/auth-forms.php:204
+msgid "Primary Color"
+msgstr ""
+
+#: templates/auth-forms.php:208
+msgid "Secondary Color"
+msgstr ""
+
+#: templates/auth-forms.php:212
+msgid "Text Color"
+msgstr ""
+
+#: templates/auth-forms.php:216
+msgid "Background Color"
+msgstr ""
+
+#: templates/auth-forms.php:223
+msgid "Input Field Colors"
+msgstr ""
+
+#: templates/auth-forms.php:226
+msgid "Border Color"
+msgstr ""
+
+#: templates/auth-forms.php:230
+msgid "Border Hover Color"
+msgstr ""
+
+#: templates/auth-forms.php:234
+msgid "Border Focus Color"
+msgstr ""
+
+#: templates/auth-forms.php:238
+msgid "Input Background"
+msgstr ""
+
+#: templates/auth-forms.php:242
+msgid "Input Focus Background"
+msgstr ""
+
+#: templates/auth-forms.php:246
+msgid "Error Color"
+msgstr ""
+
+#: templates/auth-forms.php:250
+msgid "Success Color"
+msgstr ""
+
+#: templates/auth-forms.php:257
+msgid "Layout & Style"
+msgstr ""
+
+#: templates/auth-forms.php:260
+msgid "Border Radius"
+msgstr ""
+
+#: templates/auth-forms.php:267
+msgid "Form Width"
+msgstr ""
+
+#: templates/auth-forms.php:274
+msgid "Display Options"
+msgstr ""
+
+#: templates/auth-forms.php:278
+msgid "Show field labels"
+msgstr ""
+
+#: templates/auth-forms.php:282
+msgid "Show placeholders"
+msgstr ""
+
+#: templates/auth-forms.php:287
+msgid "Button Style"
+msgstr ""
+
+#: templates/auth-forms.php:290
+msgid "Filled"
+msgstr ""
+
+#: templates/auth-forms.php:291
+msgid "Outline"
+msgstr ""
+
+#: templates/auth-forms.php:292
+msgid "Gradient"
+msgstr ""
+
+#: templates/auth-forms.php:302
+msgid "Live Preview"
+msgstr ""
+
+#: templates/auth-forms.php:321
+msgid "Login Form Validation"
+msgstr ""
+
+#: templates/auth-forms.php:324
+#: templates/auth-forms.php:341
+msgid "reCAPTCHA Protection"
+msgstr ""
+
+#: templates/auth-forms.php:328
+#: templates/auth-forms.php:345
+msgid "Configure reCAPTCHA keys in API Settings first."
+msgstr ""
+
+#: templates/auth-forms.php:336
+msgid "Registration Form Validation"
+msgstr ""
+
+#: templates/auth-forms.php:337
+msgid "These validation rules are automatically applied when users register through your auth forms."
+msgstr ""
+
+#: templates/auth-forms.php:350
+msgid "Check DNS (Domain Exists)"
+msgstr ""
+
+#: templates/auth-forms.php:354
+msgid "Check MX (Can Receive Email)"
+msgstr ""
+
+#: templates/auth-forms.php:358
+msgid "Block Disposable Emails"
+msgstr ""
+
+#: templates/auth-forms.php:362
+msgid "Google Web Risk Check"
+msgstr ""
+
+#: templates/auth-forms.php:365
+msgid "Requires Web Risk API key. DNS and MX checks become mandatory."
+msgstr ""
+
+#: templates/auth-forms.php:369
+msgid "VirusTotal Check"
+msgstr ""
+
+#: templates/auth-forms.php:372
+msgid "Requires VirusTotal API key. DNS and MX checks become mandatory."
+msgstr ""
+
+#: templates/auth-forms.php:379
+msgid "Email Verification (Choose One)"
+msgstr ""
+
+#: templates/auth-forms.php:380
+msgid "Add extra security by requiring users to verify their email before completing registration."
+msgstr ""
+
+#: templates/auth-forms.php:384
+msgid "Email Verification"
+msgstr ""
+
+#: templates/auth-forms.php:387
+msgid "Require email verification before account creation. Users receive both OTP code and activation link."
+msgstr ""
+
+#: templates/auth-forms.php:391
+msgid "OTP Expires (minutes)"
+msgstr ""
+
+#: templates/auth-forms.php:397
+msgid "Verification Page"
+msgstr ""
+
+#: templates/auth-forms.php:407
+msgid "Verification page with [wsc_verify_form] shortcode. Users can verify via OTP code OR activation link."
+msgstr ""
+
+#: templates/auth-forms.php:411
+msgid "Link Expires (hours)"
+msgstr ""
+
+#: templates/auth-forms.php:414
+msgid "How long the activation link in email remains valid."
+msgstr ""
+
+#: templates/auth-forms.php:420
+msgid "When enabled, users receive both an activation link AND a 6-digit OTP code. They can verify using either method."
+msgstr ""
+
+#: templates/auth-forms.php:428
+msgid "SMTP Configuration"
+msgstr ""
+
+#: templates/auth-forms.php:429
+msgid "Configure SMTP to ensure password reset emails are delivered reliably."
+msgstr ""
+
+#: templates/auth-forms.php:433
+msgid "Enable SMTP"
+msgstr ""
+
+#: templates/auth-forms.php:437
+msgid "SMTP Host"
+msgstr ""
+
+#: templates/auth-forms.php:443
+msgid "SMTP Port"
+msgstr ""
+
+#: templates/auth-forms.php:446
+msgid "Common ports: 25, 465 (SSL), 587 (TLS)"
+msgstr ""
+
+#: templates/auth-forms.php:450
+msgid "Encryption"
+msgstr ""
+
+#: templates/auth-forms.php:453
+msgid "None"
+msgstr ""
+
+#: templates/auth-forms.php:460
+msgid "Authentication"
+msgstr ""
+
+#: templates/auth-forms.php:476
+msgid "From Email"
+msgstr ""
+
+#: templates/auth-forms.php:482
+msgid "From Name"
+msgstr ""
+
+#: templates/auth-forms.php:490
+msgid "Test SMTP Configuration"
+msgstr ""
+
+#: templates/auth-forms.php:492
+msgid "Enter email to send test"
+msgstr ""
+
+#: templates/auth-forms.php:493
+msgid "Send Test Email"
+msgstr ""
+
+#: templates/auth-forms.php:503
+msgid "How to Use Auth Form Templates"
+msgstr ""
+
+#: templates/auth-forms.php:506
+msgid "Quick Start (Recommended)"
+msgstr ""
+
+#: templates/auth-forms.php:508
+msgid "Click \"Auto-Generate All Auth Pages\" button in the Form Templates tab."
+msgstr ""
+
+#: templates/auth-forms.php:509
+msgid "This creates Login, Register, Forgot Password, and Reset Password pages automatically."
+msgstr ""
+
+#: templates/auth-forms.php:510
+msgid "Customize the design in the \"Design & Preview\" tab."
+msgstr ""
+
+#: templates/auth-forms.php:511
+msgid "Configure validation rules in the \"Validation Rules\" tab."
+msgstr ""
+
+#: templates/auth-forms.php:512
+msgid "Set up SMTP for reliable email delivery."
+msgstr ""
+
+#: templates/auth-forms.php:517
+msgid "Manual Setup"
+msgstr ""
+
+#: templates/auth-forms.php:518
+msgid "If you prefer to create pages manually:"
+msgstr ""
+
+#: templates/auth-forms.php:520
+msgid "Create a new page in WordPress."
+msgstr ""
+
+#: templates/auth-forms.php:521
+msgid "Add the appropriate shortcode to the page content:"
+msgstr ""
+
+#: templates/auth-forms.php:523
+msgid "Login form"
+msgstr ""
+
+#: templates/auth-forms.php:524
+msgid "Registration form"
+msgstr ""
+
+#: templates/auth-forms.php:525
+msgid "Forgot password form"
+msgstr ""
+
+#: templates/auth-forms.php:526
+msgid "Reset password form"
+msgstr ""
+
+#: templates/auth-forms.php:529
+msgid "Publish the page."
+msgstr ""
+
+#: templates/auth-forms.php:530
+msgid "Assign the page in the Form Templates tab so forms can link to each other."
+msgstr ""
+
+#: templates/auth-forms.php:535
+msgid "Using the Page Editor Meta Box"
+msgstr ""
+
+#: templates/auth-forms.php:536
+msgid "When editing any page, you'll see a \"VMS Span Checker Auth Form\" meta box in the sidebar. Select a form type from the dropdown to indicate this page uses one of our auth forms. This helps with:"
+msgstr ""
+
+#: templates/auth-forms.php:538
+msgid "Organizing your auth pages"
+msgstr ""
+
+#: templates/auth-forms.php:539
+msgid "Automatic linking between forms"
+msgstr ""
+
+#: templates/auth-forms.php:540
+msgid "Quick reference for which pages have auth forms"
+msgstr ""
+
+#: templates/auth-forms.php:545
+msgid "Built-in Features"
+msgstr ""
+
+#: templates/auth-forms.php:547
+msgid "AJAX Submissions"
+msgstr ""
+
+#: templates/auth-forms.php:547
+msgid "Forms submit without page reload"
+msgstr ""
+
+#: templates/auth-forms.php:548
+#: templates/auth-forms.php:573
+msgid "Email Validation"
+msgstr ""
+
+#: templates/auth-forms.php:548
+msgid "DNS, MX, disposable, and reputation checks"
+msgstr ""
+
+#: templates/auth-forms.php:549
+msgid "reCAPTCHA"
+msgstr ""
+
+#: templates/auth-forms.php:549
+msgid "Optional bot protection"
+msgstr ""
+
+#: templates/auth-forms.php:550
+msgid "Password Strength"
+msgstr ""
+
+#: templates/auth-forms.php:550
+msgid "Visual indicator for password quality"
+msgstr ""
+
+#: templates/auth-forms.php:551
+msgid "Auto Redirect"
+msgstr ""
+
+#: templates/auth-forms.php:551
+msgid "Configurable redirects after login/register"
+msgstr ""
+
+#: templates/auth-forms.php:552
+msgid "Mobile Responsive"
+msgstr ""
+
+#: templates/auth-forms.php:552
+msgid "Works on all screen sizes"
+msgstr ""
+
+#: templates/auth-forms.php:557
+msgid "Advantages Over Default WordPress Forms"
+msgstr ""
+
+#: templates/auth-forms.php:561
+msgid "Feature"
+msgstr ""
+
+#: templates/auth-forms.php:562
+msgid "Default WordPress"
+msgstr ""
+
+#: templates/auth-forms.php:568
+msgid "Custom Design"
+msgstr ""
+
+#: templates/auth-forms.php:570
+msgid "Full customization"
+msgstr ""
+
+#: templates/auth-forms.php:574
+msgid "Basic format only"
+msgstr ""
+
+#: templates/auth-forms.php:575
+msgid "DNS, MX, disposable, reputation"
+msgstr ""
+
+#: templates/auth-forms.php:578
+msgid "Spam Protection"
+msgstr ""
+
+#: templates/auth-forms.php:580
+msgid "reCAPTCHA + validation"
+msgstr ""
+
+#: templates/auth-forms.php:583
+msgid "AJAX Submission"
+msgstr ""
+
+#: templates/auth-forms.php:588
+msgid "Page Integration"
+msgstr ""
+
+#: templates/auth-forms.php:589
+msgid "Separate wp-login.php"
+msgstr ""
+
+#: templates/auth-forms.php:590
+msgid "Any page via shortcode"
+msgstr ""
+
+#: templates/auth-forms.php:600
+msgid "Save All Settings"
+msgstr ""
+
+#: templates/auth-forms.php:651
+msgid "Copied!"
+msgstr ""
+
+#: templates/auth-forms.php:674
+msgid "Generating..."
+msgstr ""
+
+#: templates/auth-forms.php:682
+#: templates/auth-forms.php:922
+msgid "Success"
+msgstr ""
+
+#: templates/auth-forms.php:686
+#: templates/auth-forms.php:921
+msgid "Error"
+msgstr ""
+
+#: templates/auth-forms.php:696
+msgid "Saving..."
+msgstr ""
+
+#: templates/auth-forms.php:758
+msgid "Saved!"
+msgstr ""
+
+#: templates/auth-forms.php:770
+msgid "Please enter an email address."
+msgstr ""
+
+#: templates/auth-forms.php:774
+msgid "Sending..."
+msgstr ""
+
+#: templates/auth-forms.php:878
+msgid "Type here..."
+msgstr ""
+
+#: templates/auth-forms.php:915
+msgid "Enter your email to receive a reset link."
+msgstr ""
+
+#: templates/auth-forms.php:920
+msgid "Test states:"
+msgstr ""
+
+#: templates/block-user-settings.php:27
+#: templates/comment-blocks.php:43
+#: templates/comment-blocks.php:65
+msgid "You do not have permission."
+msgstr ""
+
+#: templates/block-user-settings.php:50
+msgid "Configure how users and guests are blocked after repeated spam attempts."
+msgstr ""
+
+#: templates/block-user-settings.php:63
+msgid "Enable Block User"
+msgstr ""
+
+#: templates/block-user-settings.php:70
+msgid "Track strikes and block repeat offenders"
+msgstr ""
+
+#: templates/block-user-settings.php:71
+msgid "When enabled, spam attempts will accumulate strikes against users/guests."
+msgstr ""
+
+#: templates/block-user-settings.php:80
+msgid "Max Strikes Before Block"
+msgstr ""
+
+#: templates/block-user-settings.php:87
+msgid "After this many spam attempts, the user/guest will be blocked from submitting forms."
+msgstr ""
+
+#: templates/block-user-settings.php:93
+#: templates/comment-blocks.php:292
+msgid "Block Login"
+msgstr ""
+
+#: templates/block-user-settings.php:100
+msgid "Block users from logging in when max strikes reached"
+msgstr ""
+
+#: templates/block-user-settings.php:101
+msgid "Blocked users will see an error when trying to log in until they are unblocked or strikes expire."
+msgstr ""
+
+#: templates/block-user-settings.php:109
+msgid "Auto Logout"
+msgstr ""
+
+#: templates/block-user-settings.php:116
+msgid "Automatically log out users when blocked"
+msgstr ""
+
+#: templates/block-user-settings.php:117
+msgid "When a logged-in user reaches max strikes, they will be immediately logged out."
+msgstr ""
+
+#: templates/block-user-settings.php:126
+#: templates/comment-blocks.php:296
+msgid "Strike Expiry"
+msgstr ""
+
+#: templates/block-user-settings.php:132
+msgid "days"
+msgstr ""
+
+#: templates/block-user-settings.php:134
+msgid "Strikes will automatically reset after this many days. Set to 0 for never (permanent until manually unblocked)."
+msgstr ""
+
+#: templates/block-user-settings.php:140
+msgid "Exempt Administrators"
+msgstr ""
+
+#: templates/block-user-settings.php:147
+msgid "Do not count strikes for administrators"
+msgstr ""
+
+#: templates/block-user-settings.php:148
+msgid "Admins can test the plugin without being blocked. Recommended to keep enabled."
+msgstr ""
+
+#: templates/block-user-settings.php:158
+#: templates/login-guard.php:153
+msgid "Save Settings"
+msgstr ""
+
+#: templates/block-user-settings.php:161
+msgid "View Blocked Users"
+msgstr ""
+
+#: templates/block-user-settings.php:167
+#: templates/login-guard.php:160
+msgid "How It Works"
+msgstr ""
+
+#: templates/block-user-settings.php:169
+msgid "When spam is detected (Form Guard validation, Comment spam, etc.), the user/guest receives a strike."
+msgstr ""
+
+#: templates/block-user-settings.php:170
+msgid "Strikes accumulate until the max is reached."
+msgstr ""
+
+#: templates/block-user-settings.php:171
+msgid "Once blocked, users cannot submit forms and optionally cannot log in."
+msgstr ""
+
+#: templates/block-user-settings.php:172
+msgid "Strikes expire after the configured number of days, or can be manually reset."
+msgstr ""
+
+#: templates/block-user-settings.php:173
+msgid "Administrators are exempt from strikes when the option is enabled."
+msgstr ""
+
+#: templates/comment-blocks.php:49
+msgid "User was unblocked and strikes were reset."
+msgstr ""
+
+#: templates/comment-blocks.php:54
+msgid "Could not update that record."
+msgstr ""
+
+#: templates/comment-blocks.php:73
+msgid "Could not find a user matching that ID, username, or email."
+msgstr ""
+
+#: templates/comment-blocks.php:122
+msgid "Browse users blocked through strikes or block someone manually by ID, username, or email."
+msgstr ""
+
+#: templates/comment-blocks.php:135
+#: templates/comment-blocks.php:329
+msgid "Blocked Users List"
+msgstr ""
+
+#: templates/comment-blocks.php:144
+msgid "Block User Manually"
+msgstr ""
+
+#: templates/comment-blocks.php:151
+msgid "Add a user to the block list"
+msgstr ""
+
+#: templates/comment-blocks.php:153
+msgid "Enter a user ID, login (username), or email address. The form auto-detects what you typed and shows a live preview before you block."
+msgstr ""
+
+#: templates/comment-blocks.php:162
+msgid "User identifier"
+msgstr ""
+
+#: templates/comment-blocks.php:171
+msgid "e.g. 42, johndoe, john@example.com"
+msgstr ""
+
+#: templates/comment-blocks.php:176
+msgid "Look up"
+msgstr ""
+
+#: templates/comment-blocks.php:190
+msgid "Edit user"
+msgstr ""
+
+#: templates/comment-blocks.php:198
+#: templates/comment-blocks.php:201
+msgid "Block scope"
+msgstr ""
+
+#: templates/comment-blocks.php:206
+msgid "Blocks submissions through comments, product reviews, and guarded forms."
+msgstr ""
+
+#: templates/comment-blocks.php:212
+msgid "Blocks the user from signing into wp-login.php."
+msgstr ""
+
+#: templates/comment-blocks.php:218
+msgid "Forces logout and blocks every front-end page except the contact page."
+msgstr ""
+
+#: templates/comment-blocks.php:225
+#: templates/comment-blocks.php:347
+msgid "Reason"
+msgstr ""
+
+#: templates/comment-blocks.php:232
+msgid "Optional. Shown in the Blocked Users list and the activity log."
+msgstr ""
+
+#: templates/comment-blocks.php:238
+msgid "Auto-expire after"
+msgstr ""
+
+#: templates/comment-blocks.php:249
+msgid "days. Use 0 to keep the block until you remove it."
+msgstr ""
+
+#: templates/comment-blocks.php:264
+#: templates/comment-blocks.php:548
+msgid "Look up a user first; the block button activates once a valid user is matched."
+msgstr ""
+
+#: templates/comment-blocks.php:280
+msgid "Enabled"
+msgstr ""
+
+#: templates/comment-blocks.php:283
+msgid "Disabled"
+msgstr ""
+
+#: templates/comment-blocks.php:288
+msgid "Max Strikes"
+msgstr ""
+
+#: templates/comment-blocks.php:293
+#: templates/comment-blocks.php:314
+msgid "Yes"
+msgstr ""
+
+#: templates/comment-blocks.php:293
+#: templates/comment-blocks.php:314
+msgid "No"
+msgstr ""
+
+#. translators: %d: number of days
+#: templates/comment-blocks.php:303
+#, php-format
+msgid "%d days"
+msgstr ""
+
+#: templates/comment-blocks.php:307
+#: templates/comment-blocks.php:392
+msgid "Never"
+msgstr ""
+
+#: templates/comment-blocks.php:313
+msgid "Admin Exempt"
+msgstr ""
+
+#: templates/comment-blocks.php:319
+msgid "Edit Settings"
+msgstr ""
+
+#: templates/comment-blocks.php:323
+msgid "Block a user manually"
+msgstr ""
+
+#: templates/comment-blocks.php:331
+msgid "No blocked users yet."
+msgstr ""
+
+#: templates/comment-blocks.php:334
+msgid "Add the first manual block"
+msgstr ""
+
+#: templates/comment-blocks.php:341
+msgid "User / Guest"
+msgstr ""
+
+#: templates/comment-blocks.php:342
+msgid "Strikes"
+msgstr ""
+
+#: templates/comment-blocks.php:343
+msgid "Scope"
+msgstr ""
+
+#: templates/comment-blocks.php:344
+msgid "Source"
+msgstr ""
+
+#: templates/comment-blocks.php:345
+#: templates/license-settings.php:77
+msgid "Expires"
+msgstr ""
+
+#: templates/comment-blocks.php:346
+msgid "Last Strike"
+msgstr ""
+
+#: templates/comment-blocks.php:348
+msgid "Actions"
+msgstr ""
+
+#: templates/comment-blocks.php:369
+msgid "Comment"
+msgstr ""
+
+#: templates/comment-blocks.php:370
+msgid "Product Review"
+msgstr ""
+
+#: templates/comment-blocks.php:377
+msgid "Registration"
+msgstr ""
+
+#: templates/comment-blocks.php:378
+msgid "Auth Forms"
+msgstr ""
+
+#: templates/comment-blocks.php:387
+msgid "Expired"
+msgstr ""
+
+#. translators: %d: user ID
+#: templates/comment-blocks.php:409
+#, php-format
+msgid "User ID: %d"
+msgstr ""
+
+#: templates/comment-blocks.php:419
+msgid "Guest"
+msgstr ""
+
+#: templates/comment-blocks.php:423
+#: templates/emails/wsc-email-template-functions.php:282
+msgid "IP:"
+msgstr ""
+
+#: templates/comment-blocks.php:558
+msgid "Looking up…"
+msgstr ""
+
+#: templates/comment-blocks.php:574
+msgid "no role"
+msgstr ""
+
+#: templates/comment-blocks.php:585
+msgid "Already blocked"
+msgstr ""
+
+#: templates/comment-blocks.php:587
+msgid "Not currently blocked."
+msgstr ""
+
+#: templates/comment-blocks.php:591
+msgid "Review the preview, then click \"Block this user\"."
+msgstr ""
+
+#: templates/comment-blocks.php:595
+msgid "Lookup failed. Try again."
+msgstr ""
+
+#: templates/comment-blocks.php:620
+msgid "Look up a user first."
+msgstr ""
+
+#: templates/comment-blocks.php:675
+msgid "Saved."
+msgstr ""
+
+#: templates/comment-blocks.php:678
+msgid "Could not save."
+msgstr ""
+
+#: templates/comment-settings.php:67
+msgid "Comment Guard settings saved."
+msgstr ""
+
+#: templates/comment-settings.php:83
+msgid "Works fully without AI: a pluggable component pipeline (filters, lists, flood control). Enable AI separately for semantic checks when post summaries exist."
+msgstr ""
+
+#: templates/comment-settings.php:92
+msgid "Spam shield (no AI)"
+msgstr ""
+
+#: templates/comment-settings.php:93
+msgid "AI & strikes"
+msgstr ""
+
+#: templates/comment-settings.php:98
+msgid "Checks run as ordered components. Developers can reorder or add classes implementing Spam_Check_Component via the"
+msgstr ""
+
+#: templates/comment-settings.php:100
+msgid "filter."
+msgstr ""
+
+#: templates/comment-settings.php:104
+msgid "Enable rule-based checks"
+msgstr ""
+
+#: templates/comment-settings.php:111
+msgid "Recommended. Runs all checks below before AI (if enabled)."
+msgstr ""
+
+#: templates/comment-settings.php:118
+msgid "Strikes on rule violations"
+msgstr ""
+
+#: templates/comment-settings.php:125
+msgid "Count heuristic blocks toward the strike limit and auto-block."
+msgstr ""
+
+#: templates/comment-settings.php:139
+msgid "Rejects trackback/pingback comment types (common spam vector)."
+msgstr ""
+
+#: templates/comment-settings.php:146
+msgid "Flood limit"
+msgstr ""
+
+#: templates/comment-settings.php:149
+msgid "comments per"
+msgstr ""
+
+#: templates/comment-settings.php:151
+msgid "minutes (0 = disable rate limit)"
+msgstr ""
+
+#: templates/comment-settings.php:152
+msgid "Uses the visitor IP. Each attempt counts, including failed spam, to slow bots."
+msgstr ""
+
+#: templates/comment-settings.php:156
+msgid "Flood scope"
+msgstr ""
+
+#: templates/comment-settings.php:159
+msgid "Per IP (whole site)"
+msgstr ""
+
+#: templates/comment-settings.php:160
+msgid "Per IP per post"
+msgstr ""
+
+#: templates/comment-settings.php:165
+msgid "Block duplicate comments"
+msgstr ""
+
+#: templates/comment-settings.php:172
+msgid "Same body text cannot be posted twice on one post (existing non-spam comments)."
+msgstr ""
+
+#: templates/comment-settings.php:179
+msgid "Comment length"
+msgstr ""
+
+#: templates/comment-settings.php:181
+msgid "Min"
+msgstr ""
+
+#: templates/comment-settings.php:183
+msgid "characters (0 = off)"
+msgstr ""
+
+#: templates/comment-settings.php:184
+msgid "Max"
+msgstr ""
+
+#: templates/comment-settings.php:186
+msgid "(0 = off)"
+msgstr ""
+
+#: templates/comment-settings.php:190
+msgid "Max links in body"
+msgstr ""
+
+#: templates/comment-settings.php:193
+msgid "Counts http(s) and HTML anchor hrefs. 0 = no extra cap when links are allowed."
+msgstr ""
+
+#: templates/comment-settings.php:197
+msgid "Allow links in comment body"
+msgstr ""
+
+#: templates/comment-settings.php:204
+msgid "When unchecked, any http(s) or href in the body is rejected by the link policy component."
+msgstr ""
+
+#: templates/comment-settings.php:211
+msgid "Block BBCode links"
+msgstr ""
+
+#: templates/comment-settings.php:218
+msgid "Flags [url=…], [link=…], [img …] patterns."
+msgstr ""
+
+#: templates/comment-settings.php:225
+msgid "Block script / iframe injection"
+msgstr ""
+
+#: templates/comment-settings.php:232
+msgid "Rejects <script, javascript: URLs, data:text/html, and <iframe tags."
+msgstr ""
+
+#: templates/comment-settings.php:239
+msgid "Block punycode / IDN abuse"
+msgstr ""
+
+#: templates/comment-settings.php:246
+msgid "Rejects xn-- domains in email, website field, or comment text (homograph / IDN trick spam)."
+msgstr ""
+
+#: templates/comment-settings.php:253
+msgid "Emoji / symbol flood limit"
+msgstr ""
+
+#: templates/comment-settings.php:256
+msgid "Max emoji / pictographs in the comment body (Unicode property). 0 = disable this check."
+msgstr ""
+
+#: templates/comment-settings.php:260
+msgid "Block character spam"
+msgstr ""
+
+#: templates/comment-settings.php:267
+msgid "Same character repeated many times in a row (keyboard spam)."
+msgstr ""
+
+#: templates/comment-settings.php:274
+msgid "Shout / caps ratio"
+msgstr ""
+
+#: templates/comment-settings.php:277
+msgid "If more than this fraction of letters are uppercase (min ~25 letters), reject. Use 0 to disable."
+msgstr ""
+
+#: templates/comment-settings.php:281
+msgid "Disposable email hosts"
+msgstr ""
+
+#: templates/comment-settings.php:288
+msgid "Block addresses whose domain is in your Disposable Domains list."
+msgstr ""
+
+#: templates/comment-settings.php:295
+msgid "Respect whitelist for email"
+msgstr ""
+
+#: templates/comment-settings.php:302
+msgid "If the email domain matches Whitelist Domains, skip the disposable check."
+msgstr ""
+
+#: templates/comment-settings.php:316
+msgid "English SEO / pharma / promo phrases shipped with the plugin (editable in code if needed)."
+msgstr ""
+
+#: templates/comment-settings.php:325
+msgid "One phrase per line (substring match, case-insensitive). Lines starting with # are ignored."
+msgstr ""
+
+#: templates/comment-settings.php:331
+msgid "One domain per line, e.g. competitor.ru"
+msgstr ""
+
+#: templates/comment-settings.php:342
+msgid "Guests must leave the website/URL field empty."
+msgstr ""
+
+#: templates/comment-settings.php:349
+msgid "Block http(s) in website field"
+msgstr ""
+
+#: templates/comment-settings.php:356
+msgid "Rejects comments where the author website field contains a web URL (logged-in users too)."
+msgstr ""
+
+#: templates/comment-settings.php:366
+msgid "AI moderation is optional. Turn it on under AI Span Settings and ensure post summaries exist for posts you want to protect."
+msgstr ""
+
+#: templates/comment-settings.php:369
+msgid "Max strikes before block"
+msgstr ""
+
+#: templates/comment-settings.php:372
+msgid "After this many rejected comments (per visitor), commenting is disabled for them. Further spam attempts can still add strikes toward a site ban."
+msgstr ""
+
+#: templates/comment-settings.php:376
+msgid "Permanent site restriction"
+msgstr ""
+
+#: templates/comment-settings.php:383
+msgid "After the strike count below, block the visitor from the front of the site (guests by IP; logged-in users lose access and cannot sign in again until you unblock them). The contact page above stays available."
+msgstr ""
+
+#: templates/comment-settings.php:390
+msgid "Strikes before permanent restriction"
+msgstr ""
+
+#: templates/comment-settings.php:393
+msgid "Must be at least the “max strikes before block” value. Shared IPs can affect guests—unblock from Blocked Users if needed."
+msgstr ""
+
+#: templates/comment-settings.php:397
+msgid "Product review mode (AI)"
+msgstr ""
+
+#: templates/comment-settings.php:404
+msgid "When AI moderation runs, allow genuine short product reviews."
+msgstr ""
+
+#: templates/comment-settings.php:411
+msgid "AI system prompt (JSON only)"
+msgstr ""
+
+#: templates/comment-settings.php:414
+msgid "Used only when AI is enabled and a post summary exists. Output must be JSON with status and message."
+msgstr ""
+
+#: templates/dashboard.php:56
+msgid "No form mappings yet—add one under Form Guard to start logging checks."
+msgstr ""
+
+#: templates/dashboard.php:59
+msgid "No validation events recorded yet. Traffic will appear here once forms are mapped and submitted."
+msgstr ""
+
+#: templates/dashboard.php:64
+msgid "Blocks are outpacing passes—review disposable rules and the top failing domains below."
+msgstr ""
+
+#: templates/dashboard.php:66
+msgid "Strong pass rate. Monitor API quotas and keep disposable lists current."
+msgstr ""
+
+#: templates/dashboard.php:70
+msgid "Dashboard is live—use the breakdowns below to spot patterns in validation traffic."
+msgstr ""
+
+#: templates/dashboard.php:80
+msgid "Whitelist domains"
+msgstr ""
+
+#: templates/dashboard.php:81
+msgid "Trusted domains that always pass"
+msgstr ""
+
+#: templates/dashboard.php:86
+#: templates/disposable.php:35
+msgid "Disposable list"
+msgstr ""
+
+#: templates/dashboard.php:87
+msgid "Block throwaway email hosts"
+msgstr ""
+
+#: templates/dashboard.php:93
+msgid "Map forms to validation & API scans"
+msgstr ""
+
+#: templates/dashboard.php:98
+msgid "API settings"
+msgstr ""
+
+#: templates/dashboard.php:99
+msgid "Web Risk & VirusTotal keys"
+msgstr ""
+
+#: templates/dashboard.php:104
+msgid "AI VMS Span Checker"
+msgstr ""
+
+#: templates/dashboard.php:105
+msgid "OpenAI, Anthropic, Gemini, DeepSeek, or Bedrock"
+msgstr ""
+
+#: templates/dashboard.php:111
+msgid "MX + reputation on new signups"
+msgstr ""
+
+#: templates/dashboard.php:121
+msgid "Monitor domain checks, list coverage, and API readiness in one place—built for calm, fast triage."
+msgstr ""
+
+#: templates/dashboard.php:124
+msgid "API and pass-rate summary"
+msgstr ""
+
+#: templates/dashboard.php:126
+msgid "Google Web Risk: key set"
+msgstr ""
+
+#: templates/dashboard.php:126
+msgid "Google Web Risk: add key"
+msgstr ""
+
+#. translators: %d: number of VirusTotal keys
+#: templates/dashboard.php:134
+#, php-format
+msgid "VirusTotal: %d key"
+msgid_plural "VirusTotal: %d keys"
+msgstr[0] ""
+msgstr[1] ""
+
+#: templates/dashboard.php:139
+msgid "VirusTotal: no keys"
+msgstr ""
+
+#. translators: %d: percentage of successful validations
+#: templates/dashboard.php:148
+#, php-format
+msgid "Pass rate: %d%%"
+msgstr ""
+
+#. translators: 1: max strikes before block, 2: number of blocked commenters
+#: templates/dashboard.php:160
+#, php-format
+msgid "AI comments: max %1$d strikes · %2$d blocked"
+msgstr ""
+
+#: templates/dashboard.php:172
+msgid "Total checks logged"
+msgstr ""
+
+#: templates/dashboard.php:174
+msgid "All validation events recorded by VMS Span Checker."
+msgstr ""
+
+#: templates/dashboard.php:177
+msgid "Passed"
+msgstr ""
+
+#: templates/dashboard.php:179
+msgid "Domains that cleared your rules and optional APIs."
+msgstr ""
+
+#: templates/dashboard.php:182
+msgid "Blocked / failed"
+msgstr ""
+
+#: templates/dashboard.php:184
+msgid "Disposable list, HTTPS, or reputation blocks."
+msgstr ""
+
+#: templates/dashboard.php:187
+#: templates/whitelist.php:43
+msgid "Whitelist entries"
+msgstr ""
+
+#: templates/dashboard.php:191
+msgid "Disposable domains"
+msgstr ""
+
+#: templates/dashboard.php:195
+msgid "Form mappings"
+msgstr ""
+
+#: templates/dashboard.php:197
+msgid "Active form ↔ validation profiles."
+msgstr ""
+
+#: templates/dashboard.php:200
+msgid "Login events"
+msgstr ""
+
+#: templates/dashboard.php:204
+msgid "Registration events"
+msgstr ""
+
+#: templates/dashboard.php:209
+msgid "Analysis & insights"
+msgstr ""
+
+#: templates/dashboard.php:212
+msgid "Events by type"
+msgstr ""
+
+#: templates/dashboard.php:214
+msgid "No log data to chart yet."
+msgstr ""
+
+#: templates/dashboard.php:224
+msgid "(empty)"
+msgstr ""
+
+#: templates/dashboard.php:235
+msgid "Signals"
+msgstr ""
+
+#: templates/dashboard.php:246
+msgid "Top blocked domains"
+msgstr ""
+
+#: templates/dashboard.php:248
+msgid "No failed domain counts yet."
+msgstr ""
+
+#: templates/dashboard.php:267
+msgid "Top failure messages"
+msgstr ""
+
+#: templates/dashboard.php:269
+msgid "No failure messages grouped yet."
+msgstr ""
+
+#: templates/dashboard.php:289
+msgid "Quick actions"
+msgstr ""
+
+#: templates/dashboard.php:302
+msgid "Recent blocked activity"
+msgstr ""
+
+#: templates/dashboard.php:308
+msgid "Type"
+msgstr ""
+
+#: templates/dashboard.php:309
+msgid "IP"
+msgstr ""
+
+#: templates/dashboard.php:310
+#: templates/disposable.php:41
+#: templates/whitelist.php:49
+msgid "Domain"
+msgstr ""
+
+#: templates/dashboard.php:312
+msgid "Message"
+msgstr ""
+
+#: templates/dashboard.php:313
+msgid "Date"
+msgstr ""
+
+#: templates/dashboard.php:319
+msgid "No failed validations yet—your traffic looks quiet."
+msgstr ""
+
+#. translators: %s: linked "VMS Universe"
+#: templates/dashboard.php:344
+#, php-format
+msgid "Powered by %s"
+msgstr ""
+
+#: templates/dashboard.php:350
+msgid "VMS Span Checker — domain intelligence for WordPress forms."
+msgstr ""
+
+#: templates/disposable.php:21
+msgid "Block throwaway and temporary email hosts. The plugin ships with a starter list you can extend."
+msgstr ""
+
+#: templates/disposable.php:26
+#: templates/disposable.php:30
+#: templates/whitelist.php:26
+#: templates/whitelist.php:30
+msgid "Add domain"
+msgstr ""
+
+#: templates/disposable.php:29
+#: templates/whitelist.php:29
+msgid "Enter domain"
+msgstr ""
+
+#: templates/emails/wsc-email-template-functions.php:73
+msgid "Reset Your Password"
+msgstr ""
+
+#: templates/emails/wsc-email-template-functions.php:90
+msgid "Welcome"
+msgstr ""
+
+#: templates/emails/wsc-email-template-functions.php:106
+msgid "Account Notice"
+msgstr ""
+
+#: templates/emails/wsc-email-template-functions.php:124
+msgid "New Login Alert"
+msgstr ""
+
+#. translators: %s: recipient name
+#: templates/emails/wsc-email-template-functions.php:163
+#: templates/emails/wsc-email-template-functions.php:202
+#: templates/emails/wsc-email-template-functions.php:247
+#: templates/emails/wsc-email-template-functions.php:268
+#, php-format
+msgid "Hello %s,"
+msgstr ""
+
+#. translators: %s: recipient name
+#: templates/emails/wsc-email-template-functions.php:164
+#: templates/emails/wsc-email-template-functions.php:203
+#: templates/emails/wsc-email-template-functions.php:248
+#: templates/emails/wsc-email-template-functions.php:269
+msgid "Hello,"
+msgstr ""
+
+#: templates/emails/wsc-email-template-functions.php:174
+msgid "To complete your sign up, we need to verify your email address."
+msgstr ""
+
+#: templates/emails/wsc-email-template-functions.php:176
+msgid "Verify Email Address"
+msgstr ""
+
+#: templates/emails/wsc-email-template-functions.php:180
+msgid "OR VERIFY WITH CODE"
+msgstr ""
+
+#. translators: %d: number of minutes until OTP code expires
+#: templates/emails/wsc-email-template-functions.php:189
+#, php-format
+msgid "Code expires in %d minutes"
+msgstr ""
+
+#: templates/emails/wsc-email-template-functions.php:194
+msgid "If you did not create an account, please ignore this email."
+msgstr ""
+
+#: templates/emails/wsc-email-template-functions.php:213
+msgid "Click the button below to reset your password:"
+msgstr ""
+
+#. translators: %s: recipient name
+#: templates/emails/wsc-email-template-functions.php:222
+#, php-format
+msgid "Welcome %s!"
+msgstr ""
+
+#. translators: %s: recipient name
+#: templates/emails/wsc-email-template-functions.php:223
+msgid "Welcome!"
+msgstr ""
+
+#. translators: %s: site name
+#: templates/emails/wsc-email-template-functions.php:236
+#, php-format
+msgid "Your account has been created on %s."
+msgstr ""
+
+#: templates/emails/wsc-email-template-functions.php:239
+msgid "Log In Now"
+msgstr ""
+
+#: templates/emails/wsc-email-template-functions.php:258
+msgid "Your account has been blocked due to suspicious activity."
+msgstr ""
+
+#: templates/emails/wsc-email-template-functions.php:260
+msgid "Contact site support if you think this is a mistake."
+msgstr ""
+
+#: templates/emails/wsc-email-template-functions.php:279
+msgid "A new sign-in was detected on your account."
+msgstr ""
+
+#: templates/emails/wsc-email-template-functions.php:281
+msgid "Time:"
+msgstr ""
+
+#: templates/emails/wsc-email-template-functions.php:283
+msgid "Location:"
+msgstr ""
+
+#: templates/emails/wsc-email-template-functions.php:285
+msgid "If this was not you, please change your password immediately."
+msgstr ""
+
+#: templates/error-messages.php:84
+msgid "Error messages saved."
+msgstr ""
+
+#: templates/error-messages.php:104
+#: templates/error-messages.php:251
+msgid "Custom"
+msgstr ""
+
+#: templates/error-messages.php:105
+#: templates/error-messages.php:252
+msgid "Reset to default"
+msgstr ""
+
+#: templates/error-messages.php:107
+#: templates/error-messages.php:234
+#: templates/error-messages.php:259
+msgid "Click to reset to default"
+msgstr ""
+
+#: templates/error-messages.php:107
+#: templates/error-messages.php:234
+#: templates/error-messages.php:259
+msgid "Default"
+msgstr ""
+
+#: templates/error-messages.php:118
+msgid "Customize validation error messages shown to users. Leave empty to use the professional default message."
+msgstr ""
+
+#: templates/error-messages.php:124
+msgid "Registration Guard Messages"
+msgstr ""
+
+#: templates/error-messages.php:127
+msgid "Blocked Title"
+msgstr ""
+
+#: templates/error-messages.php:128
+msgid "Blocked Introduction"
+msgstr ""
+
+#: templates/error-messages.php:129
+msgid "DNS Check Failed"
+msgstr ""
+
+#: templates/error-messages.php:130
+msgid "MX Check Failed"
+msgstr ""
+
+#: templates/error-messages.php:131
+#: templates/error-messages.php:153
+msgid "Disposable Email"
+msgstr ""
+
+#: templates/error-messages.php:132
+msgid "Rate Limit Reached"
+msgstr ""
+
+#: templates/error-messages.php:133
+msgid "Reputation Check Failed"
+msgstr ""
+
+#: templates/error-messages.php:138
+msgid "Rate Limit Count"
+msgstr ""
+
+#. translators: 1: placeholder for current attempts, 2: placeholder for maximum attempts
+#: templates/error-messages.php:140
+#, php-format
+msgid "Use %1$d for current attempts and %2$d for maximum."
+msgstr ""
+
+#: templates/error-messages.php:142
+msgid "Contact Admin Message"
+msgstr ""
+
+#: templates/error-messages.php:147
+msgid "Email Validation Messages"
+msgstr ""
+
+#: templates/error-messages.php:150
+msgid "Invalid Email Format"
+msgstr ""
+
+#: templates/error-messages.php:151
+msgid "Domain Not Found"
+msgstr ""
+
+#: templates/error-messages.php:152
+msgid "No Mail Server"
+msgstr ""
+
+#: templates/error-messages.php:154
+#: templates/error-messages.php:165
+msgid "Web Risk Flagged"
+msgstr ""
+
+#: templates/error-messages.php:155
+#: templates/error-messages.php:166
+msgid "VirusTotal Flagged"
+msgstr ""
+
+#: templates/error-messages.php:160
+msgid "URL Validation Messages"
+msgstr ""
+
+#: templates/error-messages.php:163
+msgid "Invalid URL"
+msgstr ""
+
+#: templates/error-messages.php:164
+msgid "Domain Not Reachable"
+msgstr ""
+
+#: templates/error-messages.php:171
+msgid "Content & Spam Messages"
+msgstr ""
+
+#: templates/error-messages.php:174
+msgid "Spam Detected"
+msgstr ""
+
+#: templates/error-messages.php:175
+msgid "Username Taken"
+msgstr ""
+
+#: templates/error-messages.php:180
+msgid "reCAPTCHA Messages"
+msgstr ""
+
+#: templates/error-messages.php:183
+msgid "reCAPTCHA Required"
+msgstr ""
+
+#: templates/error-messages.php:184
+msgid "reCAPTCHA Failed"
+msgstr ""
+
+#: templates/error-messages.php:189
+msgid "General Messages"
+msgstr ""
+
+#: templates/error-messages.php:192
+msgid "User Blocked"
+msgstr ""
+
+#: templates/error-messages.php:193
+msgid "Validation Failed"
+msgstr ""
+
+#: templates/error-messages.php:194
+msgid "Field Required"
+msgstr ""
+
+#: templates/error-messages.php:195
+msgid "Server Error"
+msgstr ""
+
+#: templates/error-messages.php:200
+msgid "Save Messages"
+msgstr ""
+
+#: templates/error-messages.php:201
+msgid "Reset to Defaults"
+msgstr ""
+
+#: templates/error-messages.php:210
+msgid "Reset all messages to defaults? This will restore all default messages."
+msgstr ""
+
+#: templates/license-promo.php:31
+msgid "PRO"
+msgstr ""
+
+#: templates/license-promo.php:42
+msgid "Everything you get in VMS Span Checker Pro"
+msgstr ""
+
+#: templates/license-promo.php:66
+msgid "Already have a license? Activate it"
+msgstr ""
+
+#: templates/license-promo.php:73
+msgid "Why upgrade?"
+msgstr ""
+
+#: templates/license-promo.php:76
+msgid "AI-assisted moderation on every form"
+msgstr ""
+
+#: templates/license-promo.php:77
+msgid "Custom-form mapping (Form Guard)"
+msgstr ""
+
+#: templates/license-promo.php:78
+msgid "WooCommerce review moderation"
+msgstr ""
+
+#: templates/license-promo.php:79
+msgid "Visual email-template editor"
+msgstr ""
+
+#: templates/license-promo.php:80
+msgid "AI summaries for posts & products"
+msgstr ""
+
+#: templates/license-promo.php:81
+msgid "Priority email support"
+msgstr ""
+
+#: templates/license-settings.php:36
+msgid "Activate your VMS Span Checker Pro license to unlock advanced features."
+msgstr ""
+
+#: templates/license-settings.php:47
+msgid "License status"
+msgstr ""
+
+#: templates/license-settings.php:56
+msgid "enter your license key below to unlock Pro features."
+msgstr ""
+
+#: templates/license-settings.php:62
+msgid "Get a license"
+msgstr ""
+
+#: templates/license-settings.php:72
+msgid "Product"
+msgstr ""
+
+#: templates/license-settings.php:78
+msgid "Unlimited"
+msgstr ""
+
+#: templates/license-settings.php:82
+msgid "Support until"
+msgstr ""
+
+#: templates/license-settings.php:88
+msgid "Domain slots"
+msgstr ""
+
+#. translators: 1: used count, 2: total slots
+#: templates/license-settings.php:94
+#, php-format
+msgid "%1$d of %2$d used"
+msgstr ""
+
+#: templates/license-settings.php:105
+msgid "Renew"
+msgstr ""
+
+#: templates/license-settings.php:108
+msgid "Renew this license"
+msgstr ""
+
+#: templates/license-settings.php:127
+msgid "License key"
+msgstr ""
+
+#: templates/license-settings.php:140
+msgid "Paste the license key from your account at vmselements.com."
+msgstr ""
+
+#: templates/license-settings.php:158
+msgid "The email tied to your purchase. Defaults to the site admin email."
+msgstr ""
+
+#: templates/license-settings.php:169
+msgid "Re-verify"
+msgstr ""
+
+#: templates/license-settings.php:172
+msgid "Deactivate license"
+msgstr ""
+
+#: templates/license-settings.php:176
+msgid "Activate license"
+msgstr ""
+
+#: templates/license-settings.php:186
+msgid "The license server is <code>license.vmselements.com</code>. Activation binds the license to this site URL. You can deactivate to free up the slot for another site."
+msgstr ""
+
+#: templates/login-guard.php:50
+msgid "Add reCAPTCHA protection to WordPress login forms to prevent brute force attacks."
+msgstr ""
+
+#: templates/login-guard.php:55
+msgid "Login Guard settings saved."
+msgstr ""
+
+#: templates/login-guard.php:62
+msgid "General Settings"
+msgstr ""
+
+#: templates/login-guard.php:65
+msgid "Enable Login Guard"
+msgstr ""
+
+#: templates/login-guard.php:72
+msgid "Enable Login Guard protection"
+msgstr ""
+
+#: templates/login-guard.php:73
+msgid "Adds security features to the WordPress login page."
+msgstr ""
+
+#: templates/login-guard.php:80
+#: templates/registration-guard.php:225
+msgid "Enable reCAPTCHA"
+msgstr ""
+
+#: templates/login-guard.php:87
+msgid "Add Google reCAPTCHA to login form"
+msgstr ""
+
+#: templates/login-guard.php:88
+msgid "Requires reCAPTCHA to be completed before login. Helps prevent automated login attempts."
+msgstr ""
+
+#: templates/login-guard.php:93
+#: templates/registration-guard.php:237
+msgid "reCAPTCHA keys not configured."
+msgstr ""
+
+#: templates/login-guard.php:93
+#: templates/registration-guard.php:237
+msgid "Configure API Settings"
+msgstr ""
+
+#: templates/login-guard.php:95
+#: templates/registration-guard.php:239
+msgid "reCAPTCHA configured"
+msgstr ""
+
+#: templates/login-guard.php:100
+msgid "Login Page"
+msgstr ""
+
+#: templates/login-guard.php:103
+msgid "Default WordPress login (wp-login.php)"
+msgstr ""
+
+#: templates/login-guard.php:104
+msgid "Custom login page(s)"
+msgstr ""
+
+#: templates/login-guard.php:106
+msgid "Choose where to apply Login Guard protection."
+msgstr ""
+
+#: templates/login-guard.php:110
+msgid "Select Login Pages"
+msgstr ""
+
+#: templates/login-guard.php:114
+#: templates/registration-guard.php:258
+msgid "Search pages..."
+msgstr ""
+
+#: templates/login-guard.php:126
+#: templates/login-guard.php:318
+#: templates/registration-guard.php:270
+#: templates/registration-guard.php:445
+msgid "Remove"
+msgstr ""
+
+#: templates/login-guard.php:135
+msgid "Select pages that contain custom login forms (e.g., WooCommerce My Account, membership plugin login pages)."
+msgstr ""
+
+#: templates/login-guard.php:139
+#: templates/registration-guard.php:283
+msgid "Form Selector"
+msgstr ""
+
+#: templates/login-guard.php:143
+msgid "CSS selector to identify the login form. Examples: .woocommerce-form-login, #my-login-form"
+msgstr ""
+
+#: templates/login-guard.php:145
+msgid "Required for custom login pages to ensure reCAPTCHA is applied only to the correct form."
+msgstr ""
+
+#: templates/login-guard.php:162
+msgid "Login Guard adds reCAPTCHA verification to the WordPress login page."
+msgstr ""
+
+#: templates/login-guard.php:163
+msgid "Users must complete the reCAPTCHA before the login button becomes active (v2) or tokens are verified server-side (v3)."
+msgstr ""
+
+#: templates/login-guard.php:164
+msgid "This helps prevent brute force attacks and automated login attempts."
+msgstr ""
+
+#: templates/login-guard.php:166
+msgid "Recommended Setup"
+msgstr ""
+
+#: templates/login-guard.php:168
+msgid "reCAPTCHA v2"
+msgstr ""
+
+#: templates/login-guard.php:168
+msgid "Shows a checkbox challenge. Login button is disabled until reCAPTCHA is completed."
+msgstr ""
+
+#: templates/login-guard.php:169
+msgid "reCAPTCHA v3"
+msgstr ""
+
+#: templates/login-guard.php:169
+msgid "Invisible scoring system. No user interaction required, but suspicious logins may be blocked."
+msgstr ""
+
+#: templates/login-guard.php:286
+#: templates/registration-guard.php:413
+msgid "No pages found or all matching pages already selected."
+msgstr ""
+
+#: templates/registration-guard.php:53
+msgid "Registration guard saved."
+msgstr ""
+
+#: templates/registration-guard.php:64
+msgid "Runs before WordPress creates the account: DNS “live” check, MX (if enabled), disposable list, then Google Web Risk and optionally VirusTotal. Failed attempts are counted per IP with lockout and a daily cap; reference IDs help match server logs."
+msgstr ""
+
+#: templates/registration-guard.php:69
+msgid "WordPress “Anyone can register” is currently disabled under Settings → General. This guard only runs when registration is allowed (or when WooCommerce creates accounts)."
+msgstr ""
+
+#: templates/registration-guard.php:77
+msgid "Enable registration guard"
+msgstr ""
+
+#: templates/registration-guard.php:84
+msgid "Run validation when a new user registers."
+msgstr ""
+
+#: templates/registration-guard.php:98
+msgid "Google threat-list check (malware/phishing/unwanted software). If clean, it means Google has not flagged this domain URL."
+msgstr ""
+
+#: templates/registration-guard.php:112
+msgid "Multi-engine reputation check. A domain can pass Web Risk but still fail here if your malicious/suspicious thresholds are exceeded."
+msgstr ""
+
+#: templates/registration-guard.php:119
+msgid "Require DNS “live” domain"
+msgstr ""
+
+#: templates/registration-guard.php:126
+msgid "Hostname must have at least one of MX, A, AAAA, NS, or SOA in public DNS (catches dead or typo domains before MX-specific rules)."
+msgstr ""
+
+#: templates/registration-guard.php:133
+msgid "Require MX / mail DNS"
+msgstr ""
+
+#: templates/registration-guard.php:140
+msgid "Domain must have MX records (or see fallback below)."
+msgstr ""
+
+#: templates/registration-guard.php:147
+msgid "Allow A-record fallback"
+msgstr ""
+
+#: templates/registration-guard.php:154
+msgid "If no MX exists, accept domains that have an A record (some small hosts)."
+msgstr ""
+
+#: templates/registration-guard.php:161
+msgid "Skip HTTPS check"
+msgstr ""
+
+#: templates/registration-guard.php:168
+msgid "Recommended for registration: many valid mail domains do not serve a public HTTPS site on the bare hostname."
+msgstr ""
+
+#: templates/registration-guard.php:175
+msgid "Rate limit failed signups"
+msgstr ""
+
+#: templates/registration-guard.php:182
+msgid "Count failed registration attempts by IP. Lockout and daily cap apply to the validation step (after DNS/MX/disposable, including API failures)."
+msgstr ""
+
+#: templates/registration-guard.php:187
+msgid "Max failures before lockout"
+msgstr ""
+
+#: templates/registration-guard.php:191
+msgid "Lockout duration (seconds)"
+msgstr ""
+
+#: templates/registration-guard.php:193
+msgid "(default 18000 ≈ 5 hours)"
+msgstr ""
+
+#: templates/registration-guard.php:196
+msgid "Max failures per calendar day (site timezone)"
+msgstr ""
+
+#: templates/registration-guard.php:208
+msgid "Frontend Validation"
+msgstr ""
+
+#: templates/registration-guard.php:211
+msgid "Enable frontend validation"
+msgstr ""
+
+#: templates/registration-guard.php:218
+msgid "Adds a validation button to registration forms. Email is validated via AJAX before form submission. Stores a validation token (IP-based) to verify backend."
+msgstr ""
+
+#: templates/registration-guard.php:232
+msgid "Add Google reCAPTCHA to registration forms for bot protection."
+msgstr ""
+
+#: templates/registration-guard.php:244
+msgid "Registration Page"
+msgstr ""
+
+#: templates/registration-guard.php:247
+msgid "Default WordPress registration (wp-login.php?action=register)"
+msgstr ""
+
+#: templates/registration-guard.php:248
+msgid "Custom registration page(s)"
+msgstr ""
+
+#: templates/registration-guard.php:250
+msgid "Choose where to apply frontend validation and reCAPTCHA."
+msgstr ""
+
+#: templates/registration-guard.php:254
+msgid "Select Registration Pages"
+msgstr ""
+
+#: templates/registration-guard.php:279
+msgid "Select pages that contain custom registration forms (e.g., WooCommerce registration, membership plugin signup pages)."
+msgstr ""
+
+#: templates/registration-guard.php:287
+msgid "CSS selector to identify the registration form. Examples: .woocommerce-form-register, #my-register-form"
+msgstr ""
+
+#: templates/registration-guard.php:289
+msgid "Required for custom registration pages to ensure validation is applied only to the correct form."
+msgstr ""
+
+#: templates/tools.php:28
+msgid "You do not have permission to run tools."
+msgstr ""
+
+#: templates/tools.php:38
+msgid "Invalid email"
+msgstr ""
+
+#: templates/tools.php:39
+msgid "Enter a valid email address to extract the domain for API checks."
+msgstr ""
+
+#: templates/tools.php:42
+msgid "Invalid email in manual test form."
+msgstr ""
+
+#: templates/tools.php:73
+msgid "Nothing selected"
+msgstr ""
+
+#: templates/tools.php:74
+msgid "Choose at least one API to run."
+msgstr ""
+
+#: templates/tools.php:121
+msgid "Run Web Risk and VirusTotal against an email’s domain, and review the latest 50 entries: successful and failed sign-ins, registration/domain checks, form validation, and manual tests."
+msgstr ""
+
+#: templates/tools.php:126
+msgid "Manual API test"
+msgstr ""
+
+#: templates/tools.php:131
+msgid "Email address"
+msgstr ""
+
+#: templates/tools.php:136
+msgid "The domain after @ is sent to the selected APIs (same as live form validation)."
+msgstr ""
+
+#: templates/tools.php:140
+msgid "Run"
+msgstr ""
+
+#: templates/tools.php:144
+msgid "Google Web Risk (https://domain)"
+msgstr ""
+
+#: templates/tools.php:148
+msgid "VirusTotal domain report"
+msgstr ""
+
+#: templates/tools.php:154
+msgid "Run tests"
+msgstr ""
+
+#: templates/tools.php:159
+msgid "Results"
+msgstr ""
+
+#: templates/tools.php:169
+msgid "API keys and thresholds are configured under API Settings."
+msgstr ""
+
+#: templates/tools.php:174
+msgid "Activity log (last 50)"
+msgstr ""
+
+#: templates/tools.php:175
+msgid "Includes wp-login success/failure, registration guard, front-end domain checks, and manual tests from this screen."
+msgstr ""
+
+#: templates/tools.php:177
+msgid "No log entries yet."
+msgstr ""
+
+#: templates/tools.php:179
+msgid "Activity log"
+msgstr ""
+
+#: templates/whitelist.php:21
+msgid "Trusted hostnames that always pass validation—ideal for partners and internal tools."
+msgstr ""
+
+#: templates/whitelist.php:34
+msgid "Import top provider whitelist (SQL)"
+msgstr ""
+
+#: templates/whitelist.php:38
+msgid "Loads bundled major email-provider domains from includes/data/whitelist.sql using insert-ignore (duplicates are skipped)."
+msgstr ""
+
+#. translators: %d: number of days
+#: vms-span-checker.php:177
+#, php-format
+msgid "Your account has been temporarily blocked due to suspicious activity. Please try again after %d days or contact support."
+msgstr ""
+
+#: vms-span-checker.php:181
+msgid "Your account has been blocked due to suspicious activity. Please contact support."
+msgstr ""
