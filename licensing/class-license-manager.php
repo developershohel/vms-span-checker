@@ -2,10 +2,6 @@
 /**
  * High-level license manager.
  *
- * Wraps {@see License_Base} with a friendly facade used by the rest of the
- * plugin and by the Pro plugin. Single source of truth for the
- * `vms_span_checker_is_pro_active` filter.
- *
  * @package VMS_Span_Checker
  */
 
@@ -22,6 +18,8 @@ require_once __DIR__ . '/class-license-base.php';
  */
 class License_Manager {
 
+	const CRON_HOOK = 'vms_span_checker_license_refresh';
+
 	/**
 	 * Singleton.
 	 *
@@ -30,15 +28,11 @@ class License_Manager {
 	private static $instance = null;
 
 	/**
-	 * Lower-level worker.
-	 *
 	 * @var License_Base
 	 */
 	private $base;
 
 	/**
-	 * Memoised validity for the current request.
-	 *
 	 * @var bool|null
 	 */
 	private $is_valid_cache = null;
@@ -51,7 +45,65 @@ class License_Manager {
 		License_Base::add_on_delete(
 			static function () {
 				delete_transient( 'vms_span_checker_license_state' );
+				wp_clear_scheduled_hook( self::CRON_HOOK );
 			}
+		);
+
+		add_action( self::CRON_HOOK, array( $this, 'cron_refresh' ) );
+		add_action( 'init', array( $this, 'ensure_cron_scheduled' ) );
+		add_filter( 'cron_schedules', array( $this, 'register_cron_interval' ) );
+		add_action( 'wp_ajax_vms_span_checker_license_refresh', array( $this, 'ajax_refresh' ) );
+	}
+
+	/**
+	 * @param array<string, array<string, int|string>> $schedules WP cron schedules.
+	 * @return array<string, array<string, int|string>>
+	 */
+	public function register_cron_interval( array $schedules ): array {
+		$schedules['vms_span_checker_five_minutes'] = array(
+			'interval' => License_Base::REFRESH_INTERVAL,
+			'display'  => __( 'Every 5 minutes (VMS license)', 'vms-span-checker' ),
+		);
+		return $schedules;
+	}
+
+	/**
+	 * Admin AJAX heartbeat — validates license; removes local record when invalid.
+	 */
+	public function ajax_refresh(): void {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Forbidden.', 'vms-span-checker' ) ), 403 );
+		}
+		check_ajax_referer( 'vms_span_checker_nonce', 'nonce' );
+
+		$force  = ! empty( $_POST['force'] );
+		$result = $this->refresh( (bool) $force );
+
+		if ( ! empty( $result['throttled'] ) ) {
+			wp_send_json_success(
+				array(
+					'valid'     => $this->is_pro_active(),
+					'throttled' => true,
+					'message'   => $result['message'],
+				)
+			);
+		}
+
+		if ( ! empty( $result['blocked'] ) || ! $result['success'] ) {
+			wp_send_json_success(
+				array(
+					'valid'   => false,
+					'blocked' => ! empty( $result['blocked'] ),
+					'message' => $result['message'],
+				)
+			);
+		}
+
+		wp_send_json_success(
+			array(
+				'valid'   => true,
+				'message' => $result['message'],
+			)
 		);
 	}
 
@@ -87,9 +139,6 @@ class License_Manager {
 	}
 
 	/**
-	 * Hook to `vms_span_checker_is_pro_active`. Returns true only if the
-	 * cached license record is valid (no Pro feature can run otherwise).
-	 *
 	 * @param bool $value Incoming filter value.
 	 */
 	public function filter_is_pro_active( $value ): bool {
@@ -100,8 +149,6 @@ class License_Manager {
 	}
 
 	/**
-	 * License info struct, or null when no license is cached.
-	 *
 	 * @return object|null
 	 */
 	public function get_info() {
@@ -109,39 +156,74 @@ class License_Manager {
 	}
 
 	/**
-	 * Activate a license.
-	 *
-	 * @param string $license_key Purchase key.
-	 * @param string $email       Optional email (defaults to admin email).
-	 * @return array{success:bool,message:string,info:?object}
+	 * @return array{success:bool,message:string,info:?object,blocked?:bool,throttled?:bool}
 	 */
 	public function activate( string $license_key, string $email = '' ): array {
 		$license_key = trim( $license_key );
 		if ( '' !== $email ) {
 			$this->base->set_email_address( $email );
 		}
-		$err    = '';
-		$resp   = null;
-		$ok     = $this->base->check_wp_plugin( $license_key, $err, $resp );
-		$this->is_valid_cache = null;
-		delete_transient( 'vms_span_checker_license_state' );
+
+		$block = $this->base->fetch_block_status( $license_key );
+		if ( ! empty( $block['blocked'] ) ) {
+			$this->clear_cache();
+			return array(
+				'success' => false,
+				'blocked' => true,
+				'message' => $this->format_blocked_notice( $block ),
+				'info'    => null,
+			);
+		}
+
+		$err  = '';
+		$resp = null;
+		$ok   = $this->base->check_wp_plugin( $license_key, $err, $resp, true );
+		$this->clear_cache();
+
+		if ( $ok ) {
+			$this->schedule_cron();
+			return array(
+				'success' => true,
+				'message' => __( 'License activated.', 'vms-span-checker' ),
+				'info'    => is_object( $resp ) ? $resp : null,
+			);
+		}
+
+		$strike = $this->base->report_strike( $license_key, $err ?: __( 'Activation failed in plugin settings.', 'vms-span-checker' ) );
+		if ( ! empty( $strike['blocked'] ) ) {
+			return array(
+				'success' => false,
+				'blocked' => true,
+				'message' => $this->format_blocked_notice( $strike ),
+				'info'    => null,
+			);
+		}
+
+		$strikes_left = isset( $strike['strikes_remaining'] ) ? (int) $strike['strikes_remaining'] : null;
+		$message      = $err ?: __( 'License activation failed.', 'vms-span-checker' );
+		if ( null !== $strikes_left && $strikes_left >= 0 ) {
+			$message .= ' ' . sprintf(
+				/* translators: %d: strikes remaining before block */
+				__( '(%d failed activation attempts remaining before automatic block.)', 'vms-span-checker' ),
+				$strikes_left
+			);
+		}
+
 		return array(
-			'success' => (bool) $ok,
-			'message' => $ok ? __( 'License activated.', 'vms-span-checker' ) : ( $err ?: __( 'License activation failed.', 'vms-span-checker' ) ),
-			'info'    => is_object( $resp ) ? $resp : null,
+			'success' => false,
+			'message' => $message,
+			'info'    => null,
 		);
 	}
 
 	/**
-	 * Deactivate the active license.
-	 *
 	 * @return array{success:bool,message:string}
 	 */
 	public function deactivate(): array {
 		$msg = '';
 		$ok  = $this->base->remove_license_key( $msg );
-		$this->is_valid_cache = null;
-		delete_transient( 'vms_span_checker_license_state' );
+		$this->clear_cache();
+		wp_clear_scheduled_hook( self::CRON_HOOK );
 		return array(
 			'success' => (bool) $ok,
 			'message' => $msg ?: ( $ok ? __( 'License deactivated.', 'vms-span-checker' ) : __( 'Could not deactivate license.', 'vms-span-checker' ) ),
@@ -149,11 +231,20 @@ class License_Manager {
 	}
 
 	/**
-	 * Force a fresh `verify` round-trip (used by the cron job).
+	 * Force a fresh validate round-trip.
 	 *
-	 * @return array{success:bool,message:string}
+	 * @return array{success:bool,message:string,throttled?:bool}
 	 */
 	public function verify(): array {
+		return $this->refresh( true );
+	}
+
+	/**
+	 * Validate license with optional force (respects 5-minute minimum interval).
+	 *
+	 * @return array{success:bool,message:string,throttled?:bool,blocked?:bool}
+	 */
+	public function refresh( bool $force = false ): array {
 		$info = $this->base->get_register_info();
 		if ( ! is_object( $info ) || empty( $info->license_key ) ) {
 			return array(
@@ -161,18 +252,95 @@ class License_Manager {
 				'message' => __( 'No license to verify.', 'vms-span-checker' ),
 			);
 		}
-		// Force re-check by clearing next_request.
-		$info->next_request = 0;
-		// Cannot mutate the cached record from here; let the next request hit
-		// the network naturally — re-activate to refresh.
-		return $this->activate( (string) $info->license_key );
+
+		if ( $force && ! $this->allow_forced_refresh() ) {
+			return array(
+				'success'   => $this->is_pro_active(),
+				'throttled' => true,
+				'message'   => sprintf(
+					/* translators: %d: minutes */
+					__( 'License was checked recently. Automatic checks run every %d minutes.', 'vms-span-checker' ),
+					(int) ( License_Base::REFRESH_INTERVAL / 60 )
+				),
+			);
+		}
+
+		$key   = (string) $info->license_key;
+		$block = $this->base->fetch_block_status( $key );
+		if ( ! empty( $block['blocked'] ) ) {
+			$discard = '';
+			$this->base->remove_license_key( $discard );
+			$this->clear_cache();
+			wp_clear_scheduled_hook( self::CRON_HOOK );
+			return array(
+				'success' => false,
+				'blocked' => true,
+				'message' => $this->format_blocked_notice( $block ),
+			);
+		}
+
+		$err  = '';
+		$resp = null;
+		$ok   = $this->base->validate_license( $key, $err, $resp, $force );
+		$this->clear_cache();
+
+		if ( ! $ok ) {
+			wp_clear_scheduled_hook( self::CRON_HOOK );
+			return array(
+				'success' => false,
+				'message' => $err ?: __( 'License is no longer valid for this site.', 'vms-span-checker' ),
+			);
+		}
+
+		$this->schedule_cron();
+		return array(
+			'success' => true,
+			'message' => __( 'License verified.', 'vms-span-checker' ),
+		);
 	}
 
 	/**
-	 * Convenience: human-readable status string for the admin UI.
+	 * WP-Cron: validate every 5 minutes while a license is stored.
 	 */
+	public function cron_refresh(): void {
+		$this->refresh( false );
+	}
+
+	/**
+	 * Schedule recurring validation when a license exists.
+	 */
+	public function ensure_cron_scheduled(): void {
+		if ( ! $this->get_info() ) {
+			return;
+		}
+		$this->schedule_cron();
+	}
+
+	private function schedule_cron(): void {
+		if ( ! wp_next_scheduled( self::CRON_HOOK ) ) {
+			wp_schedule_event( time() + License_Base::REFRESH_INTERVAL, 'vms_span_checker_five_minutes', self::CRON_HOOK );
+		}
+	}
+
+	/**
+	 * Throttle manual / AJAX forced checks to once per 5 minutes.
+	 */
+	private function allow_forced_refresh(): bool {
+		$key  = 'vms_span_checker_license_force_ts';
+		$last = (int) get_transient( $key );
+		if ( $last > 0 && ( time() - $last ) < License_Base::REFRESH_INTERVAL ) {
+			return false;
+		}
+		set_transient( $key, time(), License_Base::REFRESH_INTERVAL );
+		return true;
+	}
+
 	public function status_label(): string {
 		if ( ! $this->is_pro_active() ) {
+			$info = $this->get_info();
+			if ( is_object( $info ) && ! empty( $info->blocked ) ) {
+				return __( 'Blocked', 'vms-span-checker' );
+			}
 			return __( 'Inactive', 'vms-span-checker' );
 		}
 		$info = $this->get_info();
@@ -181,8 +349,42 @@ class License_Manager {
 			if ( 'no expiry' === $exp || 'unlimited' === $exp ) {
 				return __( 'Active (lifetime)', 'vms-span-checker' );
 			}
-			return sprintf( /* translators: %s: date */ __( 'Active (until %s)', 'vms-span-checker' ), $info->expire_date );
+			return sprintf(
+				/* translators: %s: date */
+				__( 'Active (until %s)', 'vms-span-checker' ),
+				$info->expire_date
+			);
 		}
 		return __( 'Active', 'vms-span-checker' );
+	}
+
+	/**
+	 * Whether admin heartbeat JS should run.
+	 */
+	public function should_run_admin_heartbeat(): bool {
+		return is_admin() && (bool) $this->get_info();
+	}
+
+	/**
+	 * @param array<string, mixed> $payload Block/strike API body.
+	 */
+	private function format_blocked_notice( array $payload ): string {
+		if ( ! empty( $payload['message'] ) ) {
+			return (string) $payload['message'];
+		}
+		if ( ! empty( $payload['blocked_reason'] ) ) {
+			return (string) $payload['blocked_reason'];
+		}
+		$contact = ! empty( $payload['contact'] ) ? (string) $payload['contact'] : 'support@vmselements.com';
+		return sprintf(
+			/* translators: %s: support email */
+			__( 'License blocked after 5 failed activation attempts. Contact %s to restore access.', 'vms-span-checker' ),
+			$contact
+		);
+	}
+
+	private function clear_cache(): void {
+		$this->is_valid_cache = null;
+		delete_transient( 'vms_span_checker_license_state' );
 	}
 }

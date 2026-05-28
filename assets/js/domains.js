@@ -1,12 +1,5 @@
-const wpSpanCheckerToast = Swal.mixin({
-    toast: true,
-    position: 'center',
-    showConfirmButton: false,
-    timer: 3000,
-    timerProgressBar: true,
-});
-
 jQuery(document).ready(function ($) {
+    const wpSpanCheckerToast = window.wpSpanCheckerToast;
     const I = (typeof WPSpanChecker !== 'undefined' && WPSpanChecker.i18n) ? WPSpanChecker.i18n : {};
     const wscT = function (key, fallback) {
         return (I[key] !== undefined && I[key] !== '') ? I[key] : fallback;

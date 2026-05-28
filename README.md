@@ -486,10 +486,10 @@ Go to **Disposable Domains** and add the domain to the custom list.
 
 ## Support
 
-- **Documentation:** [https://vmsuniverse.com/docs/vms-span-checker](https://vmsuniverse.com/docs/vms-span-checker)
+- **Documentation:** [https://vmselements.com](https://vmselements.com)
 - **Support Forum:** [WordPress.org Support](https://wordpress.org/support/plugin/vms-span-checker/)
-- **Email:** support@vmsuniverse.com
-- **GitHub Issues:** [Report a bug](https://github.com/vmsuniverse/vms-span-checker/issues)
+- **Email:** support@vmselements.com
+- **Pro:** [VMS Span Checker Pro](https://vmselements.com/product/vms-span-checker-pro)
 
 ---
 
@@ -501,7 +501,7 @@ VMS Span Checker is licensed under the GPL-2.0-or-later license. See [LICENSE](h
 
 ## Credits
 
-Developed by [VMS Universe](https://vmsuniverse.com)
+Developed by [VMS Elements](https://vmselements.com)
 
 **Third-party Services:**
 - [Google Web Risk API](https://cloud.google.com/web-risk)

@@ -39,8 +39,18 @@ class License_Admin {
 
 	/**
 	 * Hook into the existing top-level admin menu.
+	 *
+	 * The License page is only registered when the Pro plugin is installed and
+	 * active — the free plugin alone has nothing to license, so showing a
+	 * "License" menu would be misleading.
 	 */
 	public function register_menu(): void {
+		if ( function_exists( 'vms_span_checker_is_pro_plugin_loaded' )
+			&& ! vms_span_checker_is_pro_plugin_loaded()
+		) {
+			return;
+		}
+
 		// The parent slug must match Admin_Menu::register_admin_menu()'s top-level slug.
 		add_submenu_page(
 			'vms-span-checker',
@@ -106,10 +116,17 @@ class License_Admin {
 				break;
 		}
 
+		$notice_type = 'success';
+		if ( empty( $result['success'] ) ) {
+			$notice_type = ! empty( $result['blocked'] ) ? 'error' : 'error';
+		} elseif ( ! empty( $result['throttled'] ) ) {
+			$notice_type = 'warning';
+		}
+
 		set_transient(
 			self::NOTICE_KEY,
 			array(
-				'type'    => $result['success'] ? 'success' : 'error',
+				'type'    => $notice_type,
 				'message' => (string) $result['message'],
 			),
 			60
@@ -135,7 +152,8 @@ class License_Admin {
 			return;
 		}
 		delete_transient( self::NOTICE_KEY );
-		$class   = 'success' === ( $notice['type'] ?? 'error' ) ? 'notice-success' : 'notice-error';
+		$type    = (string) ( $notice['type'] ?? 'error' );
+		$class   = 'success' === $type ? 'notice-success' : ( 'warning' === $type ? 'notice-warning' : 'notice-error' );
 		$message = (string) $notice['message'];
 		printf(
 			'<div class="notice %1$s is-dismissible"><p>%2$s</p></div>',

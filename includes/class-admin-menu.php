@@ -63,7 +63,9 @@ class Admin_Menu {
 	 * True when Pro is installed *and* licensed.
 	 */
 	private function is_pro_active(): bool {
-		return (bool) apply_filters( 'vms_span_checker_is_pro_active', false );
+		return function_exists( 'vms_span_checker_pro_runtime_ready' )
+			? vms_span_checker_pro_runtime_ready()
+			: (bool) apply_filters( 'vms_span_checker_is_pro_active', false );
 	}
 
 	/**
@@ -216,15 +218,22 @@ class Admin_Menu {
 			'wsc-email-templates'                   => __( 'Email Templates', 'vms-span-checker' ),
 		);
 
+		// When licensed + Pro plugin is active, the Pro plugin registers these pages
+		// (see Pro_Loader::register_pro_menus). Registering stubs here would leave
+		// WordPress hooks pointing at the placeholder — remove_submenu_page() does
+		// not remove the original callback.
+		if ( $pro_active ) {
+			return;
+		}
+
 		foreach ( $pro_pages as $slug => $label ) {
-			$menu_label = $pro_active ? $label : $this->pro_label( $label );
 			add_submenu_page(
 				'vms-span-checker',
 				$label,
-				$menu_label,
+				$this->pro_label( $label ),
 				'manage_options',
 				$slug,
-				$pro_active ? array( $this, 'pro_active_placeholder_page' ) : array( $this, 'render_pro_stub' )
+				array( $this, 'render_pro_stub' )
 			);
 		}
 	}
@@ -244,15 +253,24 @@ class Admin_Menu {
 		if ( false === strpos( $id, 'vms-span-checker' ) && false === strpos( $id, 'wsc-' ) ) {
 			return;
 		}
-		$license_url = admin_url( 'admin.php?page=vms-span-checker-license' );
 		$upgrade_url = defined( 'VMS_SPAN_CHECKER_PRO_UPGRADE_URL' ) ? VMS_SPAN_CHECKER_PRO_UPGRADE_URL : '#';
+		$pro_loaded  = function_exists( 'vms_span_checker_is_pro_plugin_loaded' ) && vms_span_checker_is_pro_plugin_loaded();
+
+		$license_button = '';
+		if ( $pro_loaded ) {
+			$license_button = sprintf(
+				' <a href="%1$s" class="button" style="margin-left:4px;">%2$s</a>',
+				esc_url( admin_url( 'admin.php?page=vms-span-checker-license' ) ),
+				esc_html__( 'Enter license key', 'vms-span-checker' )
+			);
+		}
+
 		printf(
-			'<div class="notice notice-info" style="border-left-color:#d63638;"><p><span class="dashicons dashicons-lock" style="color:#d63638;vertical-align:text-bottom;"></span> %1$s <a href="%2$s" target="_blank" class="button button-primary" style="margin-left:8px;">%3$s</a> <a href="%4$s" class="button" style="margin-left:4px;">%5$s</a></p></div>',
+			'<div class="notice notice-info" style="border-left-color:#d63638;"><p><span class="dashicons dashicons-lock" style="color:#d63638;vertical-align:text-bottom;"></span> %1$s <a href="%2$s" target="_blank" class="button button-primary" style="margin-left:8px;">%3$s</a>%4$s</p></div>',
 			esc_html__( 'Unlock Form Guard, Contact Guard, Subscribe Guard, AI Summaries, Email Templates and more with VMS Span Checker Pro.', 'vms-span-checker' ),
 			esc_url( $upgrade_url ),
 			esc_html__( 'Upgrade to Pro', 'vms-span-checker' ),
-			esc_url( $license_url ),
-			esc_html__( 'Enter license key', 'vms-span-checker' )
+			$license_button // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Pre-escaped above.
 		);
 	}
 
@@ -291,16 +309,6 @@ class Admin_Menu {
 		$upgrade_url = defined( 'VMS_SPAN_CHECKER_PRO_UPGRADE_URL' ) ? VMS_SPAN_CHECKER_PRO_UPGRADE_URL : '#';
 		$license_url = admin_url( 'admin.php?page=vms-span-checker-license' );
 		include VMS_SPAN_CHECKER_DIR . 'templates/license-promo.php';
-	}
-
-	/**
-	 * Placeholder used when Pro is reportedly active but hasn't taken over the
-	 * page yet (timing edge case). Pro's `add_submenu_page` runs on
-	 * `vms_span_checker_loaded` which fires after our `admin_menu`, so this
-	 * callback never executes in practice.
-	 */
-	public function pro_active_placeholder_page(): void {
-		echo '<div class="wrap"><p>' . esc_html__( 'Loading Pro feature…', 'vms-span-checker' ) . '</p></div>';
 	}
 
 	/**

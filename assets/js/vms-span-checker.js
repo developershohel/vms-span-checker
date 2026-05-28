@@ -1,11 +1,3 @@
-const wpSpanCheckerToast = Swal.mixin({
-    toast: true,
-    position: 'center',
-    showConfirmButton: false,
-    timer: 3000,
-    timerProgressBar: true,
-});
-
 /**
  * Form Guard registry for tracking guarded forms.
  */
@@ -21,6 +13,7 @@ const wpSpanCheckerToast = Swal.mixin({
 })();
 
 jQuery(function ($) {
+    const wpSpanCheckerToast = window.wpSpanCheckerToast;
     console.log('[VMS Span Checker] Form Guard initializing...');
     
     const I = typeof WPSpanChecker !== 'undefined' && WPSpanChecker.i18n ? WPSpanChecker.i18n : {};
@@ -28,13 +21,14 @@ jQuery(function ($) {
         return I[key] !== undefined && I[key] !== '' ? I[key] : fallback;
     };
 
-    const settings = WPSpanChecker.settings || [];
-    const ajaxUrl = WPSpanChecker.ajaxUrl;
-    const nonce = WPSpanChecker.nonce;
-    const pageID = WPSpanChecker.pageID || 0;
-    const pageType = WPSpanChecker.pageType || 'common';
-    const bodyClasses = WPSpanChecker.bodyClasses || [];
-    const presetClasses = WPSpanChecker.presetClasses || {};
+    const settings = (typeof WPSpanChecker !== 'undefined' && WPSpanChecker.settings) ? WPSpanChecker.settings : [];
+    const ajaxUrl = (typeof WPSpanChecker !== 'undefined' && (WPSpanChecker.ajaxUrl || WPSpanChecker.ajaxurl))
+        || (typeof ajaxurl !== 'undefined' ? ajaxurl : '');
+    const nonce = (typeof WPSpanChecker !== 'undefined' && WPSpanChecker.nonce) ? WPSpanChecker.nonce : '';
+    const pageID = (typeof WPSpanChecker !== 'undefined' && WPSpanChecker.pageID) ? WPSpanChecker.pageID : 0;
+    const pageType = (typeof WPSpanChecker !== 'undefined' && WPSpanChecker.pageType) ? WPSpanChecker.pageType : 'common';
+    const bodyClasses = (typeof WPSpanChecker !== 'undefined' && WPSpanChecker.bodyClasses) ? WPSpanChecker.bodyClasses : [];
+    const presetClasses = (typeof WPSpanChecker !== 'undefined' && WPSpanChecker.presetClasses) ? WPSpanChecker.presetClasses : {};
 
     /**
      * Check if a form should be skipped (admin bar, wp-admin forms, etc.)

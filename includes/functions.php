@@ -1501,3 +1501,59 @@ function vms_span_checker_get_all_error_messages(): array {
 
 	return $messages;
 }
+
+/**
+ * Whether the Pro plugin bootstrap constant is loaded (plugin active).
+ */
+function vms_span_checker_is_pro_plugin_loaded(): bool {
+	return defined( 'VMS_SPAN_CHECKER_PRO_VERSION' ) || defined( 'VMS_SPAN_CHECKER_PRO_FILE' );
+}
+
+/**
+ * Licensed and Pro plugin present — Pro admin pages may register.
+ */
+function vms_span_checker_pro_runtime_ready(): bool {
+	if ( ! vms_span_checker_is_pro_plugin_loaded() ) {
+		return false;
+	}
+	return (bool) apply_filters( 'vms_span_checker_is_pro_active', false );
+}
+
+/**
+ * Base data passed to WPSpanChecker for script localizations.
+ *
+ * @param array<string, mixed> $extra Additional keys merged on top.
+ * @return array<string, mixed>
+ */
+function vms_span_checker_script_localize_data( array $extra = array() ): array {
+	$base = array(
+		'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+		'ajaxurl' => admin_url( 'admin-ajax.php' ),
+		'nonce'   => wp_create_nonce( 'vms_span_checker_nonce' ),
+	);
+	if ( function_exists( 'vms_span_checker_get_js_i18n' ) ) {
+		$base['i18n'] = vms_span_checker_get_js_i18n();
+	}
+	return array_merge( $base, $extra );
+}
+
+/**
+ * URL for a plugin-owned JS file (minified in production when .min.js exists).
+ *
+ * @param string $name Basename without extension, e.g. `vms-span-checker`.
+ */
+function vms_span_checker_js_asset( string $name ): string {
+	$name = preg_replace( '/\.(?:min\.)?js$/', '', $name );
+	$dir  = defined( 'VMS_SPAN_CHECKER_DIR' ) ? VMS_SPAN_CHECKER_DIR : '';
+	$base = defined( 'VMS_Span_Checker_ASSETS_URL' ) ? VMS_Span_Checker_ASSETS_URL : '';
+
+	$use_min = ( ! defined( 'SCRIPT_DEBUG' ) || ! SCRIPT_DEBUG )
+		&& '' !== $dir
+		&& is_readable( $dir . 'assets/js/' . $name . '.min.js' );
+
+	if ( $use_min ) {
+		return $base . 'js/' . $name . '.min.js';
+	}
+
+	return $base . 'js/' . $name . '.js';
+}

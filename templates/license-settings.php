@@ -183,7 +183,7 @@ $default_email  = (string) get_option( 'admin_email', '' );
 	<p style="max-width:780px;margin-top:16px;color:#646970;font-size:12px;">
 		<?php
 		echo wp_kses(
-			__( 'The license server is <code>license.vmselements.com</code>. Activation binds the license to this site URL. You can deactivate to free up the slot for another site.', 'vms-span-checker' ),
+			__( 'Licenses are managed at <code>vmselements.com</code>. Activation binds this site hostname to your key. Failed activation attempts are counted; after 5 failures the license is blocked until support clears it. The plugin re-validates every 5 minutes.', 'vms-span-checker' ),
 			array( 'code' => array() )
 		);
 		?>

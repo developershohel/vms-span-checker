@@ -6,8 +6,8 @@
  * Version:           1.0.0
  * Requires at least: 6.0
  * Requires PHP:      7.4
- * Author:            VMS Universe
- * Author URI:        https://vmsuniverse.com
+ * Author:            VMS Elements
+ * Author URI:        https://vmselements.com
  * License:           GPL-2.0-or-later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain:       vms-span-checker
@@ -26,14 +26,19 @@ define( 'VMS_SPAN_CHECKER_DIR', plugin_dir_path( __FILE__ ) );
 define( 'VMS_SPAN_CHECKER_URL', plugin_dir_url( __FILE__ ) );
 
 /*
- * License / Pro constants. The shared key MUST match the value compiled into
- * the Cloudflare Worker at license.vmselements.com. Treat as a secret.
+ * License API — VMS Elements (vmselements.com).
+ *
+ * @see LICENSE_INTEGRATION.md in the vmselements repository.
  */
+if ( ! defined( 'VMS_SPAN_CHECKER_LICENSE_API' ) ) {
+	define( 'VMS_SPAN_CHECKER_LICENSE_API', 'https://vmselements.com/api/licenses' );
+}
+/** @deprecated Legacy Worker shared key — used only to decrypt pre-migration local records. */
 if ( ! defined( 'VMS_SPAN_CHECKER_LICENSE_KEY' ) ) {
 	define( 'VMS_SPAN_CHECKER_LICENSE_KEY', 'Vms5pAn2026PrOK1' );
 }
-if ( ! defined( 'VMS_SPAN_CHECKER_LICENSE_HOST' ) ) {
-	define( 'VMS_SPAN_CHECKER_LICENSE_HOST', 'https://license.vmselements.com/api/' );
+if ( ! defined( 'VMS_SPAN_CHECKER_LICENSE_STORAGE_SALT' ) ) {
+	define( 'VMS_SPAN_CHECKER_LICENSE_STORAGE_SALT', 'vms_license_api_v1' );
 }
 if ( ! defined( 'VMS_SPAN_CHECKER_PRODUCT_ID' ) ) {
 	define( 'VMS_SPAN_CHECKER_PRODUCT_ID', 'vms-span-checker-pro' );
@@ -42,7 +47,7 @@ if ( ! defined( 'VMS_SPAN_CHECKER_PRODUCT_BASE' ) ) {
 	define( 'VMS_SPAN_CHECKER_PRODUCT_BASE', 'vms_span_checker_pro_options' );
 }
 if ( ! defined( 'VMS_SPAN_CHECKER_PRO_UPGRADE_URL' ) ) {
-	define( 'VMS_SPAN_CHECKER_PRO_UPGRADE_URL', 'https://vmselements.com/vms-span-checker-pro' );
+	define( 'VMS_SPAN_CHECKER_PRO_UPGRADE_URL', 'https://vmselements.com/product/vms-span-checker-pro' );
 }
 
 /** @deprecated Use VMS_SPAN_CHECKER_* constants; kept for backward compatibility with includes. */

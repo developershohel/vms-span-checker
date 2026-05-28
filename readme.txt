@@ -1,9 +1,9 @@
 === VMS Span Checker ===
 Contributors: developershohel
-Donate link: https://vmsuniverse.com/donate
+Donate link: https://vmselements.com/product/vms-span-checker-pro
 Tags: spam, email, disposable, anti-spam, validation
 Requires at least: 6.0
-Tested up to: 6.9
+Tested up to: 7.0
 Requires PHP: 7.4
 Stable tag: 1.0.0
 License: GPLv2 or later
@@ -14,6 +14,8 @@ Protect your WordPress forms from spam, fake emails, and malicious domains with 
 == Description ==
 
 **VMS Span Checker** is a comprehensive spam protection plugin that validates email domains, blocks disposable emails, and protects your forms from malicious submissions using multiple security layers.
+
+**[VMS Span Checker Pro](https://vmselements.com/product/vms-span-checker-pro)** adds Form Guard, Contact Guard, Subscribe Guard, AI summaries, email templates, and more.
 
 = Key Features =
 
@@ -89,10 +91,11 @@ Basic protection works without any API keys. For enhanced security:
 
 = Privacy & GDPR =
 
-* Only email domains are processed, not full email addresses
-* No personal data is stored externally
-* All API calls use domain-level data only
-* Full GDPR compliance
+* Only email domains are processed for validation, not full email addresses (unless you enable features that require them).
+* Data is sent to third-party services only when you enter API keys and enable those features.
+* License activation (Pro) sends your site URL and license key to the license server only when an administrator activates a license.
+* No personal data is stored on VMS servers by default.
+* Full GDPR compliance depends on your configuration and privacy policy.
 
 == Installation ==
 
@@ -132,7 +135,11 @@ VMS Span Checker works with any HTML form. It's tested with Contact Form 7, WPFo
 
 = Is it GDPR compliant? =
 
-Yes. The plugin only processes email domains, not full email addresses or personal data. No personal information is stored externally.
+The plugin only processes email domains for core validation, not full email addresses. Optional features may process more data depending on your settings. No personal information is stored on VMS servers by default. You are responsible for your site's privacy policy when using third-party APIs.
+
+= What data is sent to external services? =
+
+When configured, the plugin may send domain names (and related validation metadata) to Google Web Risk, VirusTotal, Google reCAPTCHA, and AI providers (OpenAI, Anthropic, Google Gemini, DeepSeek). Pro license activation sends your site URL and license key to the license server only when an administrator activates a license in the plugin settings.
 
 = How do I protect a custom form? =
 
@@ -164,6 +171,24 @@ The plugin includes over 10,000 known disposable email domains, and you can add 
 = Does it work with WooCommerce? =
 
 Yes! VMS Span Checker includes a dedicated Product Review Guard for WooCommerce and can protect checkout/registration forms.
+
+= What are the minimum requirements? =
+
+* WordPress 6.0 or higher
+* PHP 7.4 or higher
+* MySQL 5.6 or higher
+
+= What are the API rate limits? =
+
+* **Google Web Risk**: 100,000 requests/month (free with billing enabled)
+* **VirusTotal**: 500 requests/day per API key (add multiple keys for higher limits)
+* **OpenAI/Anthropic/Gemini/DeepSeek**: Pay-per-use, approximately $0.01 per AI check
+
+= Where can I get support? =
+
+* Documentation: https://vmselements.com
+* Support forum: https://wordpress.org/support/plugin/vms-span-checker/
+* Email: support@vmselements.com
 
 == Screenshots ==
 
@@ -208,35 +233,3 @@ Yes! VMS Span Checker includes a dedicated Product Review Guard for WooCommerce 
 
 = 1.0.0 =
 Initial release of VMS Span Checker. Install to protect your forms from spam and malicious submissions.
-
-== Additional Information ==
-
-= Minimum Requirements =
-
-* WordPress 6.0 or higher
-* PHP 7.4 or higher
-* MySQL 5.6 or higher
-
-= API Rate Limits =
-
-* **Google Web Risk**: 100,000 requests/month (free with billing enabled)
-* **VirusTotal**: 500 requests/day per API key (add multiple keys for higher limits)
-* **OpenAI/Anthropic/Gemini/DeepSeek**: Pay-per-use, approximately $0.01 per AI check
-
-= Support =
-
-* Documentation: [https://vmsuniverse.com/docs/vms-span-checker](https://vmsuniverse.com/docs/vms-span-checker)
-* Support Forum: [WordPress.org Support](https://wordpress.org/support/plugin/vms-span-checker/)
-* Email: support@vmsuniverse.com
-
-= Credits =
-
-Developed by [VMS Universe](https://vmsuniverse.com)
-
-This plugin integrates with third-party services:
-* [Google Web Risk API](https://cloud.google.com/web-risk)
-* [VirusTotal API](https://www.virustotal.com/)
-* [OpenAI API](https://openai.com/)
-* [Anthropic API](https://www.anthropic.com/)
-* [Google Gemini API](https://ai.google.dev/)
-* [DeepSeek API](https://www.deepseek.com/)

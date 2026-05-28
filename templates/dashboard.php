@@ -336,17 +336,6 @@ $quick_links = array(
 	</div>
 
 	<div class="wsc-dash__footer">
-		<span>
-			<?php
-			echo wp_kses_post(
-				sprintf(
-					/* translators: %s: linked "VMS Universe" */
-					__( 'Powered by %s', 'vms-span-checker' ),
-					'<a href="https://vmsuniverse.com" target="_blank" rel="noopener noreferrer">VMS Universe</a>'
-				)
-			);
-			?>
-		</span>
 		<span><?php esc_html_e( 'VMS Span Checker — domain intelligence for WordPress forms.', 'vms-span-checker' ); ?></span>
 	</div>
 </div>

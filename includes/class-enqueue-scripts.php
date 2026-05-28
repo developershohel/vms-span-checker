@@ -270,14 +270,17 @@ class Enqueue_Scripts {
 			VMS_Span_Checker_VERSION,
 			true
 		);
+		$this->enqueue_shared_toast();
 
 		wp_enqueue_script(
 			'wsc-admin-toast',
-			VMS_Span_Checker_ASSETS_URL . 'js/admin-toast.js',
+			vms_span_checker_js_asset( 'admin-toast' ),
 			array( 'jquery', 'vms-span-checker-sweetalert' ),
 			VMS_Span_Checker_VERSION,
 			true
 		);
+
+		$this->maybe_enqueue_admin_license_heartbeat( $hook_suffix );
 
 		$needs_datatables = (
 			false !== strpos( $hook_suffix, 'whitelist' )
@@ -293,7 +296,7 @@ class Enqueue_Scripts {
 		if ( $needs_ai_summary ) {
 			wp_enqueue_script(
 				'wsc-ai-admin',
-				VMS_Span_Checker_ASSETS_URL . 'js/ai-admin.js',
+				vms_span_checker_js_asset( 'ai-admin' ),
 				array( 'jquery', 'vms-span-checker-sweetalert' ),
 				VMS_Span_Checker_VERSION,
 				true
@@ -328,10 +331,7 @@ class Enqueue_Scripts {
 			wp_localize_script(
 				'wsc-admin-toast',
 				'WPSpanChecker',
-				array(
-					'ajaxurl' => admin_url( 'admin-ajax.php' ),
-					'nonce'   => wp_create_nonce( 'vms_span_checker_nonce' ),
-				)
+				vms_span_checker_script_localize_data()
 			);
 		}
 
@@ -344,8 +344,8 @@ class Enqueue_Scripts {
 
 		wp_enqueue_script(
 			'wp-span-domain-js',
-			VMS_Span_Checker_ASSETS_URL . 'js/domains.js',
-			array( 'jquery', 'vms-span-checker-sweetalert' ),
+			vms_span_checker_js_asset( 'domains' ),
+			array( 'jquery', 'vms-span-checker-sweetalert', 'wsc-shared-toast' ),
 			VMS_Span_Checker_VERSION,
 			true
 		);
@@ -355,12 +355,65 @@ class Enqueue_Scripts {
 		wp_localize_script(
 			'wp-span-domain-js',
 			'WPSpanChecker',
-			array(
-				'ajaxurl'          => admin_url( 'admin-ajax.php' ),
-				'nonce'            => wp_create_nonce( 'vms_span_checker_nonce' ),
-				'regexList'        => $this->regex_list,
-				'pageTargetLabels' => vms_span_checker_page_target_presets(),
-				'i18n'             => vms_span_checker_get_js_i18n(),
+			vms_span_checker_script_localize_data(
+				array(
+					'regexList'        => $this->regex_list,
+					'pageTargetLabels' => vms_span_checker_page_target_presets(),
+				)
+			)
+		);
+	}
+
+	/**
+	 * Shared SweetAlert toast singleton (avoids duplicate const across scripts).
+	 */
+	private function enqueue_shared_toast(): void {
+		wp_enqueue_script(
+			'wsc-shared-toast',
+			vms_span_checker_js_asset( 'wsc-shared-toast' ),
+			array( 'jquery', 'vms-span-checker-sweetalert' ),
+			VMS_Span_Checker_VERSION,
+			true
+		);
+	}
+
+	/**
+	 * Load the main script in wp-admin when a license is stored (heartbeat).
+	 *
+	 * @param string $hook_suffix Current admin page hook.
+	 */
+	private function maybe_enqueue_admin_license_heartbeat( string $hook_suffix ): void {
+		if ( ! class_exists( '\\VMS_Span_Checker\\Licensing\\License_Manager' ) ) {
+			return;
+		}
+		$manager = \VMS_Span_Checker\Licensing\License_Manager::instance();
+		if ( ! $manager->should_run_admin_heartbeat() ) {
+			return;
+		}
+
+		wp_enqueue_script(
+			'vms-span-checker-license-heartbeat',
+			vms_span_checker_js_asset( 'license-heartbeat' ),
+			array( 'jquery' ),
+			VMS_Span_Checker_VERSION,
+			true
+		);
+
+		wp_localize_script(
+			'vms-span-checker-license-heartbeat',
+			'WPSpanChecker',
+			vms_span_checker_script_localize_data(
+				array(
+					'license' => array(
+						'heartbeat'       => true,
+						'interval'        => \VMS_Span_Checker\Licensing\License_Base::REFRESH_INTERVAL,
+						'ajaxUrl'         => admin_url( 'admin-ajax.php' ),
+						'nonce'           => wp_create_nonce( 'vms_span_checker_nonce' ),
+						'licenseUrl'      => admin_url( 'admin.php?page=vms-span-checker-license' ),
+						'redirectDelayMs' => 1500,
+						'forceSelector'   => 'button[name="license_action"][value="verify"]',
+					),
+				)
 			)
 		);
 	}
@@ -403,12 +456,14 @@ class Enqueue_Scripts {
 		wp_enqueue_style( 'vms-span-checker-sweetalert', VMS_Span_Checker_ASSETS_URL . 'plugins/sweetalert2/sweetalert2.min.css', array(), VMS_Span_Checker_VERSION );
 		wp_enqueue_style( 'vms-span-checker-frontend', VMS_Span_Checker_ASSETS_URL . 'css/vms-span-checker.css', array( 'vms-span-checker-sweetalert' ), VMS_Span_Checker_VERSION );
 		wp_enqueue_script( 'vms-span-checker-sweetalert', VMS_Span_Checker_ASSETS_URL . 'plugins/sweetalert2/sweetalert2.all.min.js', array( 'jquery' ), VMS_Span_Checker_VERSION, true );
+		$this->enqueue_shared_toast();
 		wp_enqueue_script(
 			'vms-span-checker',
-			VMS_Span_Checker_ASSETS_URL . 'js/vms-span-checker.js',
+			vms_span_checker_js_asset( 'vms-span-checker' ),
 			array(
 				'jquery',
 				'vms-span-checker-sweetalert',
+				'wsc-shared-toast',
 			),
 			VMS_Span_Checker_VERSION,
 			true
@@ -431,17 +486,16 @@ class Enqueue_Scripts {
 		wp_localize_script(
 			'vms-span-checker',
 			'WPSpanChecker',
-			array(
-				'ajaxUrl'       => admin_url( 'admin-ajax.php' ),
-				'nonce'         => wp_create_nonce( 'vms_span_checker_nonce' ),
-				'pageID'        => $page_id,
-				'pageType'      => vms_span_checker_get_current_page_type(),
-				'bodyClasses'   => vms_span_checker_get_current_body_classes(),
-				'presetClasses' => vms_span_checker_preset_body_classes(),
-				'settings'      => $filtered,
-				'regexList'     => $this->regex_list,
-				'recaptcha'     => $recaptcha_data,
-				'i18n'          => vms_span_checker_get_js_i18n(),
+			vms_span_checker_script_localize_data(
+				array(
+					'pageID'        => $page_id,
+					'pageType'      => vms_span_checker_get_current_page_type(),
+					'bodyClasses'   => vms_span_checker_get_current_body_classes(),
+					'presetClasses' => vms_span_checker_preset_body_classes(),
+					'settings'      => $filtered,
+					'regexList'     => $this->regex_list,
+					'recaptcha'     => $recaptcha_data,
+				)
 			)
 		);
 
@@ -517,7 +571,7 @@ class Enqueue_Scripts {
 
 		wp_enqueue_script(
 			'wp-span-subscribe-guard',
-			VMS_Span_Checker_ASSETS_URL . 'js/subscribe-guard.js',
+			vms_span_checker_js_asset( 'subscribe-guard' ),
 			array( 'jquery', 'vms-span-checker-sweetalert', 'vms-span-checker' ),
 			VMS_Span_Checker_VERSION,
 			true
@@ -665,7 +719,7 @@ class Enqueue_Scripts {
 
 		wp_enqueue_script(
 			'wp-span-contact-guard',
-			VMS_Span_Checker_ASSETS_URL . 'js/contact-guard.js',
+			vms_span_checker_js_asset( 'contact-guard' ),
 			array( 'jquery', 'vms-span-checker-sweetalert', 'vms-span-checker' ),
 			VMS_Span_Checker_VERSION,
 			true
@@ -709,7 +763,7 @@ class Enqueue_Scripts {
 
 		wp_enqueue_script(
 			'wp-span-login-guard',
-			VMS_Span_Checker_ASSETS_URL . 'js/login-guard.js',
+			vms_span_checker_js_asset( 'login-guard' ),
 			array( 'jquery', 'vms-span-checker' ),
 			VMS_Span_Checker_VERSION,
 			true
@@ -743,7 +797,7 @@ class Enqueue_Scripts {
 
 		wp_enqueue_script(
 			'wp-span-registration-guard',
-			VMS_Span_Checker_ASSETS_URL . 'js/registration-guard.js',
+			vms_span_checker_js_asset( 'registration-guard' ),
 			array( 'jquery', 'vms-span-checker-sweetalert', 'vms-span-checker' ),
 			VMS_Span_Checker_VERSION,
 			true
@@ -812,7 +866,7 @@ class Enqueue_Scripts {
 		if ( $login_guard_enabled && $is_login ) {
 			wp_enqueue_script(
 				'wp-span-login-guard',
-				VMS_Span_Checker_ASSETS_URL . 'js/login-guard.js',
+				vms_span_checker_js_asset( 'login-guard' ),
 				array( 'jquery' ),
 				VMS_Span_Checker_VERSION,
 				true
@@ -840,7 +894,7 @@ class Enqueue_Scripts {
 
 			wp_enqueue_script(
 				'wp-span-registration-guard',
-				VMS_Span_Checker_ASSETS_URL . 'js/registration-guard.js',
+				vms_span_checker_js_asset( 'registration-guard' ),
 				array( 'jquery', 'vms-span-checker-sweetalert' ),
 				VMS_Span_Checker_VERSION,
 				true
@@ -926,7 +980,7 @@ class Enqueue_Scripts {
 
 		wp_enqueue_script(
 			'wsc-auth-forms',
-			VMS_Span_Checker_ASSETS_URL . 'js/auth-forms.js',
+			vms_span_checker_js_asset( 'auth-forms' ),
 			array( 'jquery' ),
 			VMS_Span_Checker_VERSION,
 			true

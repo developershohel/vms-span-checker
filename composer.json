@@ -14,10 +14,12 @@
 	"config": {
 		"allow-plugins": {
 			"dealerdirect/phpcodesniffer-composer-installer": true
-		}
+		},
+		"preferred-install": "dist",
+		"sort-packages": true
 	},
 	"scripts": {
-		"phpcs": "phpcs",
-		"phpcbf": "phpcbf"
+		"phpcs": "phpcs -ps . --standard=phpcs.xml.dist",
+		"phpcbf": "phpcbf -ps . --standard=phpcs.xml.dist"
 	}
 }

@@ -1,0 +1,14 @@
+/vendor/
+/node_modules/
+.git/
+.github/
+.gitignore
+composer.json
+composer.lock
+.phpcs.xml
+phpcs.xml
+phpcs.xml.dist
+AGENTS.md
+README.md
+*.map
+*.scss
