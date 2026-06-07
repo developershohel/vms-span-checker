@@ -1,13 +1,13 @@
 <?php
 /**
- * Shared helpers for VMS Span Checker.
+ * Shared helpers for VMS Elements Form Guard.
  *
  * Many helpers in this file query plugin-owned custom tables (form mappings,
  * activity logs, comment enforcement, etc.). Table identifiers are built from
  * `$wpdb->prefix` plus hardcoded suffixes, and values are always passed
  * through `$wpdb->prepare()` or the insert / update / delete helpers.
  *
- * @package VMS_Span_Checker
+ * @package VMS_Elements_Form_Guard
  *
  * phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
  * phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -27,7 +27,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @param string $file_path  Full path to save the SQL file.
  * @return string Success or error message.
  */
-function vms_span_checker_dump_table( $table_name, $file_path ) {
+function vms_elements_form_guard_dump_table( $table_name, $file_path ) {
 	global $wpdb;
 
 	$full_table_name = $wpdb->prefix . $table_name;
@@ -36,7 +36,7 @@ function vms_span_checker_dump_table( $table_name, $file_path ) {
 	$exists = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $full_table_name ) );
 	if ( ! $exists ) {
 		/* translators: %s: database table name */
-		return sprintf( __( 'Table %s does not exist.', 'vms-span-checker' ), $full_table_name );
+		return sprintf( __( 'Table %s does not exist.', 'vms-elements-form-guard' ), $full_table_name );
 	}
 
 	$db_name = DB_NAME;
@@ -64,11 +64,11 @@ function vms_span_checker_dump_table( $table_name, $file_path ) {
 
 	if ( 0 === $return_var ) {
 		/* translators: %s: export file path */
-		return sprintf( __( 'Table exported successfully to %s.', 'vms-span-checker' ), $file_path );
+		return sprintf( __( 'Table exported successfully to %s.', 'vms-elements-form-guard' ), $file_path );
 	}
 
 	/* translators: %d: shell exit code */
-	return sprintf( __( 'Export failed. Return code: %d', 'vms-span-checker' ), $return_var );
+	return sprintf( __( 'Export failed. Return code: %d', 'vms-elements-form-guard' ), $return_var );
 }
 
 /**
@@ -76,7 +76,7 @@ function vms_span_checker_dump_table( $table_name, $file_path ) {
  *
  * @return string
  */
-function vms_span_checker_get_user_ip() {
+function vms_elements_form_guard_get_user_ip() {
 	$ip_keys = array(
 		'HTTP_CF_CONNECTING_IP',
 		'HTTP_X_FORWARDED_FOR',
@@ -108,7 +108,7 @@ function vms_span_checker_get_user_ip() {
  * @param string $input Raw domain, email host, or URL.
  * @return string Lowercase hostname or empty string.
  */
-function vms_span_checker_normalize_domain_input( $input ) {
+function vms_elements_form_guard_normalize_domain_input( $input ) {
 	$input = is_string( $input ) ? trim( $input ) : '';
 	if ( '' === $input ) {
 		return '';
@@ -131,7 +131,7 @@ function vms_span_checker_normalize_domain_input( $input ) {
  * @param array $post Typically wp_unslash( $_POST ).
  * @return array{is_webrisk:bool,is_virustotal:bool}
  */
-function vms_span_checker_parse_validation_settings( array $post ) {
+function vms_elements_form_guard_parse_validation_settings( array $post ) {
 	$raw = isset( $post['settings'] ) ? $post['settings'] : array();
 	if ( is_array( $raw ) && isset( $raw[0] ) && is_array( $raw[0] ) ) {
 		$row = $raw[0];
@@ -152,7 +152,7 @@ function vms_span_checker_parse_validation_settings( array $post ) {
  *
  * @param string $raw Raw stored form_id value.
  */
-function vms_span_checker_form_guard_is_combined_selector( string $raw ): bool {
+function vms_elements_form_guard_form_guard_is_combined_selector( string $raw ): bool {
 	$raw = trim( $raw );
 	if ( '' === $raw ) {
 		return false;
@@ -166,7 +166,7 @@ function vms_span_checker_form_guard_is_combined_selector( string $raw ): bool {
  * @param string $pattern Delimited regex e.g. /^abc$/u .
  * @param string $value   Subject string.
  */
-function vms_span_checker_form_guard_preg_match_safe( string $pattern, string $value ): bool {
+function vms_elements_form_guard_form_guard_preg_match_safe( string $pattern, string $value ): bool {
 	$pattern = trim( $pattern );
 	if ( strlen( $pattern ) > 512 || strlen( $pattern ) < 3 ) {
 		return false;
@@ -184,7 +184,7 @@ function vms_span_checker_form_guard_preg_match_safe( string $pattern, string $v
  *
  * @return string[]
  */
-function vms_span_checker_form_guard_extract_urls( string $text ): array {
+function vms_elements_form_guard_form_guard_extract_urls( string $text ): array {
 	if ( '' === trim( $text ) ) {
 		return array();
 	}
@@ -209,7 +209,7 @@ function vms_span_checker_form_guard_extract_urls( string $text ): array {
  * @param array<string, mixed> $row   Full DB row.
  * @return array{is_webrisk:bool,is_virustotal:bool}
  */
-function vms_span_checker_form_guard_field_api_flags( array $field, array $row ): array {
+function vms_elements_form_guard_form_guard_field_api_flags( array $field, array $row ): array {
 	$wr = isset( $field['is_webrisk'] ) ? (int) $field['is_webrisk'] : null;
 	$vt = isset( $field['is_virustotal'] ) ? (int) $field['is_virustotal'] : null;
 
@@ -227,10 +227,10 @@ function vms_span_checker_form_guard_field_api_flags( array $field, array $row )
  * @param string $title Already-translated H1 text.
  * @param string $lede  Optional already-translated intro; pass '' to omit the lede paragraph.
  */
-function vms_span_checker_admin_page_header( $title, $lede = '' ) {
-	$wsc_header_title = (string) $title;
-	$wsc_header_lede  = (string) $lede;
-	require VMS_SPAN_CHECKER_DIR . 'templates/partials/admin-page-header.php';
+function vms_elements_form_guard_admin_page_header( $title, $lede = '' ) {
+	$vefg_header_title = (string) $title;
+	$vefg_header_lede  = (string) $lede;
+	require VMS_ELEMENTS_FORM_GUARD_DIR . 'templates/partials/admin-page-header.php';
 }
 
 /**
@@ -248,7 +248,7 @@ function vms_span_checker_admin_page_header( $title, $lede = '' ) {
  *     @type bool   $compact     Smaller track (dense lists).
  * }
  */
-function vms_span_checker_admin_switch( array $args ): void {
+function vms_elements_form_guard_admin_switch( array $args ): void {
 	$name = isset( $args['name'] ) ? (string) $args['name'] : '';
 	if ( $name === '' ) {
 		return;
@@ -263,15 +263,15 @@ function vms_span_checker_admin_switch( array $args ): void {
 	$wrapper     = isset( $args['wrapper_class'] ) ? trim( (string) $args['wrapper_class'] ) : '';
 	$compact     = ! empty( $args['compact'] );
 
-	$label_class = 'wsc-switch';
+	$label_class = 'vefg-switch';
 	if ( $compact ) {
-		$label_class .= ' wsc-switch--compact';
+		$label_class .= ' vefg-switch--compact';
 	}
 	if ( $wrapper !== '' ) {
 		$label_class .= ' ' . $wrapper;
 	}
 
-	$input_classes = trim( 'wsc-switch__input ' . $input_class );
+	$input_classes = trim( 'vefg-switch__input ' . $input_class );
 
 	echo '<label class="' . esc_attr( $label_class ) . '">';
 	echo '<input type="checkbox" class="' . esc_attr( $input_classes ) . '" name="' . esc_attr( $name ) . '" value="' . esc_attr( $value ) . '"';
@@ -280,15 +280,15 @@ function vms_span_checker_admin_switch( array $args ): void {
 	}
 	checked( $checked );
 	echo ' />';
-	echo '<span class="wsc-switch__track" aria-hidden="true"></span>';
+	echo '<span class="vefg-switch__track" aria-hidden="true"></span>';
 
 	if ( $label !== '' || $description !== '' ) {
-		echo '<span class="wsc-switch__body">';
+		echo '<span class="vefg-switch__body">';
 		if ( $label !== '' ) {
-			echo '<span class="wsc-switch__label">' . esc_html( $label ) . '</span>';
+			echo '<span class="vefg-switch__label">' . esc_html( $label ) . '</span>';
 		}
 		if ( $description !== '' ) {
-			echo '<span class="wsc-switch__desc">' . esc_html( $description ) . '</span>';
+			echo '<span class="vefg-switch__desc">' . esc_html( $description ) . '</span>';
 		}
 		echo '</span>';
 	}
@@ -305,7 +305,7 @@ function vms_span_checker_admin_switch( array $args ): void {
  *
  * @return array<string, \WP_Post_Type> Post type name => object, sorted by singular label.
  */
-function vms_span_checker_summary_selectable_post_types(): array {
+function vms_elements_form_guard_summary_selectable_post_types(): array {
 	static $cache = null;
 	if ( is_array( $cache ) ) {
 		return $cache;
@@ -356,7 +356,7 @@ function vms_span_checker_summary_selectable_post_types(): array {
 	 * @param array<int, string>           $exclude Internal slugs always omitted.
 	 */
 	// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Established hook name; renaming would break BC for existing filter consumers.
-	$cache = apply_filters( 'wsc_summary_selectable_post_types', $out, $exclude );
+	$cache = apply_filters( 'vefg_summary_selectable_post_types', $out, $exclude );
 
 	return is_array( $cache ) ? $cache : $out;
 }
@@ -366,19 +366,19 @@ function vms_span_checker_summary_selectable_post_types(): array {
  *
  * @return array<string, string> slug => translated label
  */
-function vms_span_checker_page_target_presets(): array {
+function vms_elements_form_guard_page_target_presets(): array {
 	return array(
-		'all-pages'        => __( 'Entire site (every page & view)', 'vms-span-checker' ),
-		'front-page'       => __( 'Front page', 'vms-span-checker' ),
-		'home-blog'        => __( 'Blog / posts index', 'vms-span-checker' ),
-		'singular-page'    => __( 'Any single page', 'vms-span-checker' ),
-		'singular-post'    => __( 'Any single post', 'vms-span-checker' ),
-		'singular-any'     => __( 'Any singular content', 'vms-span-checker' ),
-		'archive-any'      => __( 'Any archive', 'vms-span-checker' ),
-		'archive-category' => __( 'Category archives', 'vms-span-checker' ),
-		'archive-tag'      => __( 'Tag archives', 'vms-span-checker' ),
-		'search'           => __( 'Search results', 'vms-span-checker' ),
-		'404'              => __( '404 error page', 'vms-span-checker' ),
+		'all-pages'        => __( 'Entire site (every page & view)', 'vms-elements-form-guard' ),
+		'front-page'       => __( 'Front page', 'vms-elements-form-guard' ),
+		'home-blog'        => __( 'Blog / posts index', 'vms-elements-form-guard' ),
+		'singular-page'    => __( 'Any single page', 'vms-elements-form-guard' ),
+		'singular-post'    => __( 'Any single post', 'vms-elements-form-guard' ),
+		'singular-any'     => __( 'Any singular content', 'vms-elements-form-guard' ),
+		'archive-any'      => __( 'Any archive', 'vms-elements-form-guard' ),
+		'archive-category' => __( 'Category archives', 'vms-elements-form-guard' ),
+		'archive-tag'      => __( 'Tag archives', 'vms-elements-form-guard' ),
+		'search'           => __( 'Search results', 'vms-elements-form-guard' ),
+		'404'              => __( '404 error page', 'vms-elements-form-guard' ),
 	);
 }
 
@@ -387,8 +387,8 @@ function vms_span_checker_page_target_presets(): array {
  *
  * @return array<int, string>
  */
-function vms_span_checker_page_target_preset_slugs(): array {
-	return array_keys( vms_span_checker_page_target_presets() );
+function vms_elements_form_guard_page_target_preset_slugs(): array {
+	return array_keys( vms_elements_form_guard_page_target_presets() );
 }
 
 /**
@@ -396,7 +396,7 @@ function vms_span_checker_page_target_preset_slugs(): array {
  *
  * @return array<string, string> slug => body class
  */
-function vms_span_checker_preset_body_classes(): array {
+function vms_elements_form_guard_preset_body_classes(): array {
 	return array(
 		'all-pages'        => '',
 		'front-page'       => 'home',
@@ -418,7 +418,7 @@ function vms_span_checker_preset_body_classes(): array {
  * @param mixed $raw page_id column value.
  * @return array<int, string>
  */
-function vms_span_checker_normalize_page_targets( $raw ): array {
+function vms_elements_form_guard_normalize_page_targets( $raw ): array {
 	$raw = is_string( $raw ) ? trim( $raw ) : '';
 	if ( '' === $raw ) {
 		return array( 'all-pages' );
@@ -444,7 +444,7 @@ function vms_span_checker_normalize_page_targets( $raw ): array {
  *
  * @param string $target Preset slug or post ID string.
  */
-function vms_span_checker_current_request_matches_target( string $target ): bool {
+function vms_elements_form_guard_current_request_matches_target( string $target ): bool {
 	$target = trim( $target );
 	if ( '' === $target || 'all-pages' === $target ) {
 		return true;
@@ -496,10 +496,10 @@ function vms_span_checker_current_request_matches_target( string $target ): bool
  *
  * @param array<string, mixed> $row DB row.
  */
-function vms_span_checker_row_matches_current_request( array $row ): bool {
-	$targets = vms_span_checker_normalize_page_targets( $row['page_id'] ?? '' );
+function vms_elements_form_guard_row_matches_current_request( array $row ): bool {
+	$targets = vms_elements_form_guard_normalize_page_targets( $row['page_id'] ?? '' );
 	foreach ( $targets as $t ) {
-		if ( vms_span_checker_current_request_matches_target( (string) $t ) ) {
+		if ( vms_elements_form_guard_current_request_matches_target( (string) $t ) ) {
 			return true;
 		}
 	}
@@ -511,7 +511,7 @@ function vms_span_checker_row_matches_current_request( array $row ): bool {
  *
  * @return string page|post|common
  */
-function vms_span_checker_get_current_page_type(): string {
+function vms_elements_form_guard_get_current_page_type(): string {
 	if ( is_singular( 'page' ) ) {
 		return 'page';
 	}
@@ -526,9 +526,9 @@ function vms_span_checker_get_current_page_type(): string {
  *
  * @return array<int, string>
  */
-function vms_span_checker_get_current_body_classes(): array {
+function vms_elements_form_guard_get_current_body_classes(): array {
 	$classes = array();
-	
+
 	if ( is_front_page() ) {
 		$classes[] = 'home';
 	}
@@ -561,8 +561,56 @@ function vms_span_checker_get_current_body_classes(): array {
 	if ( is_404() ) {
 		$classes[] = 'error404';
 	}
-	
+
 	return $classes;
+}
+
+/**
+ * Sanitize a submitted field value based on its declared type.
+ *
+ * @param string $field_type email|url|textarea|username|text|etc.
+ * @param mixed  $value      Raw value from POST or decoded JSON.
+ */
+function vms_elements_form_guard_sanitize_field_value( string $field_type, $value ): string {
+	if ( ! is_scalar( $value ) ) {
+		return '';
+	}
+
+	$value = (string) $value;
+
+	switch ( $field_type ) {
+		case 'email':
+			return sanitize_email( $value );
+		case 'url':
+			return esc_url_raw( $value );
+		case 'textarea':
+			return sanitize_textarea_field( $value );
+		default:
+			return sanitize_text_field( $value );
+	}
+}
+
+/**
+ * Whitelist validation rule flags from decoded JSON.
+ *
+ * @param mixed $rules Decoded rules array.
+ * @return array<string, bool>
+ */
+function vms_elements_form_guard_sanitize_field_rules( $rules ): array {
+	if ( ! is_array( $rules ) ) {
+		return array();
+	}
+
+	$allowed = array( 'mx', 'disposable', 'webrisk', 'virustotal', 'dns', 'ai_spam', 'check_exists' );
+	$clean   = array();
+
+	foreach ( $allowed as $key ) {
+		if ( array_key_exists( $key, $rules ) ) {
+			$clean[ $key ] = ! empty( $rules[ $key ] );
+		}
+	}
+
+	return $clean;
 }
 
 /**
@@ -570,8 +618,8 @@ function vms_span_checker_get_current_body_classes(): array {
  *
  * @param mixed $raw POST pageId (JSON string or legacy scalar).
  */
-function vms_span_checker_sanitize_page_targets_param( $raw ): string {
-	$allowed = array_flip( vms_span_checker_page_target_preset_slugs() );
+function vms_elements_form_guard_sanitize_page_targets_param( $raw ): string {
+	$allowed = array_flip( vms_elements_form_guard_page_target_preset_slugs() );
 	$clean   = array();
 
 	if ( is_array( $raw ) ) {
@@ -616,20 +664,20 @@ function vms_span_checker_sanitize_page_targets_param( $raw ): string {
  *
  * @return array<string, string>
  */
-function vms_span_checker_get_js_i18n() {
-	$m = vms_span_checker_get_all_error_messages();
-	
+function vms_elements_form_guard_get_js_i18n() {
+	$m = vms_elements_form_guard_get_all_error_messages();
+
 	return array(
-		'formNotFound'             => __( 'Form not found. Check Form ID / class under VMS Span Checker Form Guard.', 'vms-span-checker' ),
+		'formNotFound'             => __( 'Form not found. Check Form ID / class under VMS Elements Form Guard Form Guard.', 'vms-elements-form-guard' ),
 		'emailInvalid'             => $m['email_invalid_format'],
 		'validationFailed'         => $m['validation_failed'],
 		'emailRequired'            => $m['email_invalid_format'],
 		'emailFieldRequired'       => $m['field_required'],
 		'passwordRequired'         => $m['field_required'],
-		'passwordRequirements'     => __( 'Password must meet all requirements.', 'vms-span-checker' ),
+		'passwordRequirements'     => __( 'Password must meet all requirements.', 'vms-elements-form-guard' ),
 		'urlRequired'              => $m['field_required'],
 		'urlNotValid'              => $m['url_invalid'],
-		'urlValid'                 => __( 'URL is valid', 'vms-span-checker' ),
+		'urlValid'                 => __( 'URL is valid', 'vms-elements-form-guard' ),
 		'fieldRequired'            => $m['field_required'],
 		'serverError'              => $m['server_error'],
 		'recaptchaRequired'        => $m['recaptcha_required'],
@@ -642,106 +690,106 @@ function vms_span_checker_get_js_i18n() {
 		'urlDnsFailed'             => $m['url_dns_failed'],
 		'urlWebriskFlagged'        => $m['url_webrisk_flagged'],
 		'urlVirustotalFlagged'     => $m['url_virustotal_flagged'],
-		'confirmDeleteDomain'      => __( 'Are you sure you want to delete this domain?', 'vms-span-checker' ),
-		'confirmDeleteDomainTitle' => __( 'Remove this domain?', 'vms-span-checker' ),
-		'confirmDeleteFormSetting' => __( 'Are you sure you want to delete this Form Guard mapping?', 'vms-span-checker' ),
-		'confirmDeleteFormTitle'   => __( 'Remove this Form Guard mapping?', 'vms-span-checker' ),
-		'cancel'                   => __( 'Cancel', 'vms-span-checker' ),
-		'domainAdded'              => __( 'Domain added.', 'vms-span-checker' ),
-		'domainRemoved'            => __( 'Domain removed.', 'vms-span-checker' ),
-		'formSettingRemoved'       => __( 'Form Guard mapping removed.', 'vms-span-checker' ),
-		'errorAddingDomain'        => __( 'Error adding domain.', 'vms-span-checker' ),
-		'errorDeletingDomain'      => __( 'Error deleting domain.', 'vms-span-checker' ),
-		'errorDeletingSetting'     => __( 'Could not delete Form Guard mapping.', 'vms-span-checker' ),
-		'saved'                    => __( 'Saved', 'vms-span-checker' ),
-		'delete'                   => __( 'Delete', 'vms-span-checker' ),
-		'edit'                     => __( 'Edit', 'vms-span-checker' ),
-		'copied'                   => __( 'Copied', 'vms-span-checker' ),
-		'copy'                     => __( 'Copy', 'vms-span-checker' ),
-		'examplePrefix'            => __( 'Example:', 'vms-span-checker' ),
-		'copyFailed'               => __( 'Could not copy.', 'vms-span-checker' ),
-		'requestFailed'            => __( 'Request failed', 'vms-span-checker' ),
-		'validating'               => __( 'Validating...', 'vms-span-checker' ),
-		'submitting'               => __( 'Submitting...', 'vms-span-checker' ),
-		'validationPassed'         => __( 'Validation passed', 'vms-span-checker' ),
-		'submit'                   => __( 'Submit', 'vms-span-checker' ),
-		'fieldType'                => __( 'Field type', 'vms-span-checker' ),
-		'fieldId'                  => __( 'Field ID', 'vms-span-checker' ),
-		'fieldClass'               => __( 'Field class', 'vms-span-checker' ),
-		'eventName'                => __( 'Event name', 'vms-span-checker' ),
-		'formField'                => __( 'Form field', 'vms-span-checker' ),
-		'javascriptEvent'          => __( 'JavaScript event', 'vms-span-checker' ),
-		'optionUrl'                => __( 'URL', 'vms-span-checker' ),
-		'optionEmail'              => __( 'Email', 'vms-span-checker' ),
-		'optionText'               => __( 'Text', 'vms-span-checker' ),
-		'optionUsername'           => __( 'Username', 'vms-span-checker' ),
-		'optionChange'             => __( 'Change', 'vms-span-checker' ),
-		'optionInput'              => __( 'Input', 'vms-span-checker' ),
-		'optionFormSubmit'         => __( 'Form submit', 'vms-span-checker' ),
-		'labelId'                  => __( 'ID', 'vms-span-checker' ),
-		'labelClass'               => __( 'Class', 'vms-span-checker' ),
-		'selectFieldType'          => __( 'Select field type', 'vms-span-checker' ),
-		'optionTextarea'           => __( 'Textarea', 'vms-span-checker' ),
-		'optionTel'                => __( 'Telephone', 'vms-span-checker' ),
-		'optionNumber'             => __( 'Number', 'vms-span-checker' ),
-		'optionPassword'           => __( 'Password', 'vms-span-checker' ),
-		'enable'                   => __( 'Enable', 'vms-span-checker' ),
-		'disable'                  => __( 'Disable', 'vms-span-checker' ),
-		'requiredField'            => __( 'Required field', 'vms-span-checker' ),
-		'requiredFieldHint'        => __( 'Mark the field as required in the browser.', 'vms-span-checker' ),
-		'requireValidation'        => __( 'Require validation', 'vms-span-checker' ),
-		'requireValidationHint'    => __( 'Run server-side validation for this field.', 'vms-span-checker' ),
-		'googleWebRisk'            => __( 'Google Web Risk', 'vms-span-checker' ),
-		'virusTotal'               => __( 'VirusTotal scanner', 'vms-span-checker' ),
-		'usernameTakenCheck'       => __( 'Reject if username exists (live check)', 'vms-span-checker' ),
-		'usernameTakenHint'        => __( 'Use for registration/login name inputs. When enabled, checks WordPress while typing (debounced) and on submit.', 'vms-span-checker' ),
-		'textareaAllowLinks'       => __( 'Allow links in message', 'vms-span-checker' ),
-		'textareaAiSpam'           => __( 'AI spam checker (textarea)', 'vms-span-checker' ),
-		'textareaAiSpamHint'       => __( 'Uses AI settings from VMS Span Checker → AI. Runs on the server when validation is enabled.', 'vms-span-checker' ),
-		'textAllowUrls'            => __( 'Allow URLs in value', 'vms-span-checker' ),
-		'textAllowUrlsHint'        => __( 'Disable to reject http(s) URLs typed into this single-line field.', 'vms-span-checker' ),
-		'customRegex'              => __( 'Custom regex (delimited)', 'vms-span-checker' ),
-		'customRegexHint'          => __( 'Optional. Must look like /pattern/flags. Checked on the server when validation is enabled.', 'vms-span-checker' ),
-		'presetRegex'              => __( 'Preset patterns', 'vms-span-checker' ),
-		'validExample'             => __( 'Valid', 'vms-span-checker' ),
-		'invalidExample'           => __( 'Invalid', 'vms-span-checker' ),
-		'usePattern'               => __( 'Use pattern', 'vms-span-checker' ),
-		'fgNeedOneField'           => __( 'Keep at least one field row.', 'vms-span-checker' ),
-		'mappedFieldTitle'         => __( 'Mapped form control', 'vms-span-checker' ),
-		'mappedFieldGuardsBlurb'   => __( 'Guards in this row apply only to this field’s ID/class. Use “Add field” for each separate input (10 fields → 10 rows).', 'vms-span-checker' ),
-		'fieldGuardsLegend'        => __( 'Guards for this field only', 'vms-span-checker' ),
-		'securityMethodsLegend'    => __( 'Protection methods (based on field type)', 'vms-span-checker' ),
-		'securityMethodsIntro'     => __( 'Email and URL rows show Web Risk and VirusTotal (Web Risk defaults ON when you switch to Email). Username rows show live “already registered” checks. Plain Text adds URL-in-value rules; textarea adds links + AI spam screening.', 'vms-span-checker' ),
-		'webriskEmailUrlOnly'      => __( 'Used when “Form field” is Email or URL and “Require validation” is enabled for domain checks.', 'vms-span-checker' ),
-		'vtEmailUrlOnly'           => __( 'Same as Web Risk: applies together with Email or URL domain validation.', 'vms-span-checker' ),
-		'securityMethodsOtherHint' => __( 'Email and URL rows use the reputation toggles here together with validation above.', 'vms-span-checker' ),
-		'validationRulesLegend'    => __( 'Validation rules', 'vms-span-checker' ),
-		'labelWebRiskShort'        => __( 'Web Risk', 'vms-span-checker' ),
-		'labelVtShort'             => __( 'VirusTotal', 'vms-span-checker' ),
-		'onShort'                  => __( 'On', 'vms-span-checker' ),
-		'offShort'                 => __( 'Off', 'vms-span-checker' ),
-		'usernameCheckShort'       => __( 'Username exists check', 'vms-span-checker' ),
-		'linksAllowedShort'        => __( 'Links allowed', 'vms-span-checker' ),
-		'aiSpamShort'              => __( 'AI spam check', 'vms-span-checker' ),
-		'textUrlsInFieldShort'     => __( 'URLs in text field', 'vms-span-checker' ),
-		'regexShort'               => __( 'Regex', 'vms-span-checker' ),
-		'locationRequired'         => __( 'Please select at least one location (Common locations, Specific pages, or Specific posts).', 'vms-span-checker' ),
-		'formSelectorRequired'     => __( 'Please enter a Form id/class or Submit button selector to identify the form.', 'vms-span-checker' ),
-		'formSelectorRequiredForEntireSite' => __( 'Form id/class is required when targeting the entire site.', 'vms-span-checker' ),
-		'autoMode'                 => __( 'Auto', 'vms-span-checker' ),
-		'manualMode'               => __( 'Manual', 'vms-span-checker' ),
-		'defaultRules'             => __( 'Default rules', 'vms-span-checker' ),
+		'confirmDeleteDomain'      => __( 'Are you sure you want to delete this domain?', 'vms-elements-form-guard' ),
+		'confirmDeleteDomainTitle' => __( 'Remove this domain?', 'vms-elements-form-guard' ),
+		'confirmDeleteFormSetting' => __( 'Are you sure you want to delete this Form Guard mapping?', 'vms-elements-form-guard' ),
+		'confirmDeleteFormTitle'   => __( 'Remove this Form Guard mapping?', 'vms-elements-form-guard' ),
+		'cancel'                   => __( 'Cancel', 'vms-elements-form-guard' ),
+		'domainAdded'              => __( 'Domain added.', 'vms-elements-form-guard' ),
+		'domainRemoved'            => __( 'Domain removed.', 'vms-elements-form-guard' ),
+		'formSettingRemoved'       => __( 'Form Guard mapping removed.', 'vms-elements-form-guard' ),
+		'errorAddingDomain'        => __( 'Error adding domain.', 'vms-elements-form-guard' ),
+		'errorDeletingDomain'      => __( 'Error deleting domain.', 'vms-elements-form-guard' ),
+		'errorDeletingSetting'     => __( 'Could not delete Form Guard mapping.', 'vms-elements-form-guard' ),
+		'saved'                    => __( 'Saved', 'vms-elements-form-guard' ),
+		'delete'                   => __( 'Delete', 'vms-elements-form-guard' ),
+		'edit'                     => __( 'Edit', 'vms-elements-form-guard' ),
+		'copied'                   => __( 'Copied', 'vms-elements-form-guard' ),
+		'copy'                     => __( 'Copy', 'vms-elements-form-guard' ),
+		'examplePrefix'            => __( 'Example:', 'vms-elements-form-guard' ),
+		'copyFailed'               => __( 'Could not copy.', 'vms-elements-form-guard' ),
+		'requestFailed'            => __( 'Request failed', 'vms-elements-form-guard' ),
+		'validating'               => __( 'Validating...', 'vms-elements-form-guard' ),
+		'submitting'               => __( 'Submitting...', 'vms-elements-form-guard' ),
+		'validationPassed'         => __( 'Validation passed', 'vms-elements-form-guard' ),
+		'submit'                   => __( 'Submit', 'vms-elements-form-guard' ),
+		'fieldType'                => __( 'Field type', 'vms-elements-form-guard' ),
+		'fieldId'                  => __( 'Field ID', 'vms-elements-form-guard' ),
+		'fieldClass'               => __( 'Field class', 'vms-elements-form-guard' ),
+		'eventName'                => __( 'Event name', 'vms-elements-form-guard' ),
+		'formField'                => __( 'Form field', 'vms-elements-form-guard' ),
+		'javascriptEvent'          => __( 'JavaScript event', 'vms-elements-form-guard' ),
+		'optionUrl'                => __( 'URL', 'vms-elements-form-guard' ),
+		'optionEmail'              => __( 'Email', 'vms-elements-form-guard' ),
+		'optionText'               => __( 'Text', 'vms-elements-form-guard' ),
+		'optionUsername'           => __( 'Username', 'vms-elements-form-guard' ),
+		'optionChange'             => __( 'Change', 'vms-elements-form-guard' ),
+		'optionInput'              => __( 'Input', 'vms-elements-form-guard' ),
+		'optionFormSubmit'         => __( 'Form submit', 'vms-elements-form-guard' ),
+		'labelId'                  => __( 'ID', 'vms-elements-form-guard' ),
+		'labelClass'               => __( 'Class', 'vms-elements-form-guard' ),
+		'selectFieldType'          => __( 'Select field type', 'vms-elements-form-guard' ),
+		'optionTextarea'           => __( 'Textarea', 'vms-elements-form-guard' ),
+		'optionTel'                => __( 'Telephone', 'vms-elements-form-guard' ),
+		'optionNumber'             => __( 'Number', 'vms-elements-form-guard' ),
+		'optionPassword'           => __( 'Password', 'vms-elements-form-guard' ),
+		'enable'                   => __( 'Enable', 'vms-elements-form-guard' ),
+		'disable'                  => __( 'Disable', 'vms-elements-form-guard' ),
+		'requiredField'            => __( 'Required field', 'vms-elements-form-guard' ),
+		'requiredFieldHint'        => __( 'Mark the field as required in the browser.', 'vms-elements-form-guard' ),
+		'requireValidation'        => __( 'Require validation', 'vms-elements-form-guard' ),
+		'requireValidationHint'    => __( 'Run server-side validation for this field.', 'vms-elements-form-guard' ),
+		'googleWebRisk'            => __( 'Google Web Risk', 'vms-elements-form-guard' ),
+		'virusTotal'               => __( 'VirusTotal scanner', 'vms-elements-form-guard' ),
+		'usernameTakenCheck'       => __( 'Reject if username exists (live check)', 'vms-elements-form-guard' ),
+		'usernameTakenHint'        => __( 'Use for registration/login name inputs. When enabled, checks WordPress while typing (debounced) and on submit.', 'vms-elements-form-guard' ),
+		'textareaAllowLinks'       => __( 'Allow links in message', 'vms-elements-form-guard' ),
+		'textareaAiSpam'           => __( 'AI spam checker (textarea)', 'vms-elements-form-guard' ),
+		'textareaAiSpamHint'       => __( 'Uses AI settings from VMS Elements Form Guard → AI. Runs on the server when validation is enabled.', 'vms-elements-form-guard' ),
+		'textAllowUrls'            => __( 'Allow URLs in value', 'vms-elements-form-guard' ),
+		'textAllowUrlsHint'        => __( 'Disable to reject http(s) URLs typed into this single-line field.', 'vms-elements-form-guard' ),
+		'customRegex'              => __( 'Custom regex (delimited)', 'vms-elements-form-guard' ),
+		'customRegexHint'          => __( 'Optional. Must look like /pattern/flags. Checked on the server when validation is enabled.', 'vms-elements-form-guard' ),
+		'presetRegex'              => __( 'Preset patterns', 'vms-elements-form-guard' ),
+		'validExample'             => __( 'Valid', 'vms-elements-form-guard' ),
+		'invalidExample'           => __( 'Invalid', 'vms-elements-form-guard' ),
+		'usePattern'               => __( 'Use pattern', 'vms-elements-form-guard' ),
+		'fgNeedOneField'           => __( 'Keep at least one field row.', 'vms-elements-form-guard' ),
+		'mappedFieldTitle'         => __( 'Mapped form control', 'vms-elements-form-guard' ),
+		'mappedFieldGuardsBlurb'   => __( 'Guards in this row apply only to this field’s ID/class. Use “Add field” for each separate input (10 fields → 10 rows).', 'vms-elements-form-guard' ),
+		'fieldGuardsLegend'        => __( 'Guards for this field only', 'vms-elements-form-guard' ),
+		'securityMethodsLegend'    => __( 'Protection methods (based on field type)', 'vms-elements-form-guard' ),
+		'securityMethodsIntro'     => __( 'Email and URL rows show Web Risk and VirusTotal (Web Risk defaults ON when you switch to Email). Username rows show live “already registered” checks. Plain Text adds URL-in-value rules; textarea adds links + AI spam screening.', 'vms-elements-form-guard' ),
+		'webriskEmailUrlOnly'      => __( 'Used when “Form field” is Email or URL and “Require validation” is enabled for domain checks.', 'vms-elements-form-guard' ),
+		'vtEmailUrlOnly'           => __( 'Same as Web Risk: applies together with Email or URL domain validation.', 'vms-elements-form-guard' ),
+		'securityMethodsOtherHint' => __( 'Email and URL rows use the reputation toggles here together with validation above.', 'vms-elements-form-guard' ),
+		'validationRulesLegend'    => __( 'Validation rules', 'vms-elements-form-guard' ),
+		'labelWebRiskShort'        => __( 'Web Risk', 'vms-elements-form-guard' ),
+		'labelVtShort'             => __( 'VirusTotal', 'vms-elements-form-guard' ),
+		'onShort'                  => __( 'On', 'vms-elements-form-guard' ),
+		'offShort'                 => __( 'Off', 'vms-elements-form-guard' ),
+		'usernameCheckShort'       => __( 'Username exists check', 'vms-elements-form-guard' ),
+		'linksAllowedShort'        => __( 'Links allowed', 'vms-elements-form-guard' ),
+		'aiSpamShort'              => __( 'AI spam check', 'vms-elements-form-guard' ),
+		'textUrlsInFieldShort'     => __( 'URLs in text field', 'vms-elements-form-guard' ),
+		'regexShort'               => __( 'Regex', 'vms-elements-form-guard' ),
+		'locationRequired'         => __( 'Please select at least one location (Common locations, Specific pages, or Specific posts).', 'vms-elements-form-guard' ),
+		'formSelectorRequired'     => __( 'Please enter a Form id/class or Submit button selector to identify the form.', 'vms-elements-form-guard' ),
+		'formSelectorRequiredForEntireSite' => __( 'Form id/class is required when targeting the entire site.', 'vms-elements-form-guard' ),
+		'autoMode'                 => __( 'Auto', 'vms-elements-form-guard' ),
+		'manualMode'               => __( 'Manual', 'vms-elements-form-guard' ),
+		'defaultRules'             => __( 'Default rules', 'vms-elements-form-guard' ),
 		'emailInvalidFormat'       => $m['email_invalid_format'],
 		'emailDisposableMsg'       => $m['email_disposable'],
 		'emailDomainInvalid'       => $m['email_mx_failed'],
 		'urlInvalidFormat'         => $m['url_invalid'],
-		'passwordWeak'             => __( 'Password is too weak. Use at least 8 characters with uppercase, lowercase, number, and symbol.', 'vms-span-checker' ),
-		'linksNotAllowed'          => __( 'Links are not allowed in this field.', 'vms-span-checker' ),
-		'urlsNotAllowed'           => __( 'URLs are not allowed in this field.', 'vms-span-checker' ),
+		'passwordWeak'             => __( 'Password is too weak. Use at least 8 characters with uppercase, lowercase, number, and symbol.', 'vms-elements-form-guard' ),
+		'linksNotAllowed'          => __( 'Links are not allowed in this field.', 'vms-elements-form-guard' ),
+		'urlsNotAllowed'           => __( 'URLs are not allowed in this field.', 'vms-elements-form-guard' ),
 		'usernameExists'           => $m['username_taken'],
 		'spamDetected'             => $m['spam_detected'],
 		'userBlocked'              => $m['user_blocked'],
-		'blocked'                  => __( 'Blocked', 'vms-span-checker' ),
+		'blocked'                  => __( 'Blocked', 'vms-elements-form-guard' ),
 	);
 }
 
@@ -751,7 +799,7 @@ function vms_span_checker_get_js_i18n() {
  * @param string $domain Domain to check.
  * @return bool True if MX records found.
  */
-function vms_span_checker_check_mx_record( string $domain ): bool {
+function vms_elements_form_guard_check_mx_record( string $domain ): bool {
 	if ( empty( $domain ) ) {
 		return false;
 	}
@@ -764,11 +812,11 @@ function vms_span_checker_check_mx_record( string $domain ): bool {
  * @param string $domain Domain to check.
  * @return bool True if A record found.
  */
-function vms_span_checker_check_domain_dns( string $domain ): bool {
+function vms_elements_form_guard_check_domain_dns( string $domain ): bool {
 	if ( empty( $domain ) ) {
 		return false;
 	}
-	
+
 	return (bool) checkdnsrr( $domain, 'A' );
 }
 
@@ -778,9 +826,9 @@ function vms_span_checker_check_domain_dns( string $domain ): bool {
  * @param string $domain Domain to check.
  * @return bool True if disposable.
  */
-function vms_span_checker_is_disposable_domain( string $domain ): bool {
+function vms_elements_form_guard_is_disposable_domain( string $domain ): bool {
 	global $wpdb;
-	$table = $wpdb->prefix . 'span_disposable_domains';
+	$table = $wpdb->prefix . 'vms_elements_form_guard_disposable_domains';
 	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 	$count = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE domain = %s", strtolower( $domain ) ) );
 	return (int) $count > 0;
@@ -792,10 +840,10 @@ function vms_span_checker_is_disposable_domain( string $domain ): bool {
  * @param string $domain Domain to check.
  * @return array|null Result array with 'threat' key, or null on error.
  */
-function vms_span_checker_check_webrisk( string $domain ) {
-	$google_config = get_option( 'wsc-google-config', array() );
+function vms_elements_form_guard_check_webrisk( string $domain ) {
+	$google_config = get_option( 'vefg-google-config', array() );
 	$api_key       = isset( $google_config['api_key'] ) ? $google_config['api_key'] : '';
-	
+
 	if ( empty( $api_key ) || empty( $domain ) ) {
 		return null;
 	}
@@ -828,15 +876,15 @@ function vms_span_checker_check_webrisk( string $domain ) {
  * @param string $domain Domain to check.
  * @return array|null Result array with 'malicious' count, or null on error.
  */
-function vms_span_checker_check_virustotal( string $domain ) {
-	$vt_config = get_option( 'wsc-virustotal-config', array() );
+function vms_elements_form_guard_check_virustotal( string $domain ) {
+	$vt_config = get_option( 'vefg-virustotal-config', array() );
 	$api_key   = '';
-	
+
 	// Get first available key
 	if ( ! empty( $vt_config['keys'] ) && is_array( $vt_config['keys'] ) ) {
 		$api_key = reset( $vt_config['keys'] );
 	}
-	
+
 	if ( empty( $api_key ) || empty( $domain ) ) {
 		return null;
 	}
@@ -877,11 +925,11 @@ function vms_span_checker_check_virustotal( string $domain ) {
  * @param string $guest_email Optional email for guest users.
  * @return array{blocked: bool, login_blocked: bool, strikes: int}
  */
-function vms_span_checker_record_strike( string $reason, string $source = 'form_guard', int $user_id = 0, string $guest_email = '' ): array {
+function vms_elements_form_guard_record_strike( string $reason, string $source = 'form_guard', int $user_id = 0, string $guest_email = '' ): array {
 	global $wpdb;
 
 	// Check if admin is exempt
-	$cfg = \VMS_Span_Checker\AI_Span_Config::get();
+	$cfg = \VMS_Elements_Form_Guard\AI_Span_Config::get();
 	if ( ! empty( $cfg['block_user_exempt_admins'] ) && current_user_can( 'manage_options' ) ) {
 		return array(
 			'blocked'       => false,
@@ -898,8 +946,8 @@ function vms_span_checker_record_strike( string $reason, string $source = 'form_
 		);
 	}
 
-	$table       = $wpdb->prefix . 'vms_span_checker_comment_enforcement';
-	$ip          = vms_span_checker_get_user_ip();
+	$table       = $wpdb->prefix . 'vms_elements_form_guard_comment_enforcement';
+	$ip          = vms_elements_form_guard_get_user_ip();
 	$max_strikes = (int) ( $cfg['block_user_max_strikes'] ?? 5 );
 	$expiry_days = (int) ( $cfg['block_user_strike_expiry_days'] ?? 30 );
 
@@ -971,7 +1019,7 @@ function vms_span_checker_record_strike( string $reason, string $source = 'form_
 
 		// Auto-logout if enabled and blocked
 		if ( $login_blocked && ! empty( $cfg['block_user_auto_logout'] ) && $user_id > 0 ) {
-			vms_span_checker_force_logout_user( $user_id );
+			vms_elements_form_guard_force_logout_user( $user_id );
 		}
 
 		return array(
@@ -1019,7 +1067,7 @@ function vms_span_checker_record_strike( string $reason, string $source = 'form_
  *
  * @param int $user_id User ID to logout.
  */
-function vms_span_checker_force_logout_user( int $user_id ): void {
+function vms_elements_form_guard_force_logout_user( int $user_id ): void {
 	if ( $user_id <= 0 ) {
 		return;
 	}
@@ -1033,16 +1081,16 @@ function vms_span_checker_force_logout_user( int $user_id ): void {
  * @param int $user_id Optional user ID.
  * @return bool
  */
-function vms_span_checker_is_login_blocked( int $user_id = 0 ): bool {
+function vms_elements_form_guard_is_login_blocked( int $user_id = 0 ): bool {
 	global $wpdb;
 
-	$cfg = \VMS_Span_Checker\AI_Span_Config::get();
+	$cfg = \VMS_Elements_Form_Guard\AI_Span_Config::get();
 	if ( ! $cfg['block_user_enabled'] || ! $cfg['block_user_login_block'] ) {
 		return false;
 	}
 
-	$table = $wpdb->prefix . 'vms_span_checker_comment_enforcement';
-	$ip    = vms_span_checker_get_user_ip();
+	$table = $wpdb->prefix . 'vms_elements_form_guard_comment_enforcement';
+	$ip    = vms_elements_form_guard_get_user_ip();
 
 	// Check by user ID
 	if ( $user_id > 0 ) {
@@ -1085,11 +1133,11 @@ function vms_span_checker_is_login_blocked( int $user_id = 0 ): bool {
  * @param int $user_id Optional user ID.
  * @return int
  */
-function vms_span_checker_get_strike_count( int $user_id = 0 ): int {
+function vms_elements_form_guard_get_strike_count( int $user_id = 0 ): int {
 	global $wpdb;
 
-	$table = $wpdb->prefix . 'vms_span_checker_comment_enforcement';
-	$ip    = vms_span_checker_get_user_ip();
+	$table = $wpdb->prefix . 'vms_elements_form_guard_comment_enforcement';
+	$ip    = vms_elements_form_guard_get_user_ip();
 
 	// Check by user ID
 	if ( $user_id > 0 ) {
@@ -1126,10 +1174,10 @@ function vms_span_checker_get_strike_count( int $user_id = 0 ): int {
  * @param int $user_id Optional user ID.
  * @return bool
  */
-function vms_span_checker_is_form_blocked( int $user_id = 0 ): bool {
+function vms_elements_form_guard_is_form_blocked( int $user_id = 0 ): bool {
 	global $wpdb;
 
-	$cfg = \VMS_Span_Checker\AI_Span_Config::get();
+	$cfg = \VMS_Elements_Form_Guard\AI_Span_Config::get();
 	if ( empty( $cfg['block_user_enabled'] ) ) {
 		return false;
 	}
@@ -1139,8 +1187,8 @@ function vms_span_checker_is_form_blocked( int $user_id = 0 ): bool {
 		return false;
 	}
 
-	$table = $wpdb->prefix . 'vms_span_checker_comment_enforcement';
-	$ip    = vms_span_checker_get_user_ip();
+	$table = $wpdb->prefix . 'vms_elements_form_guard_comment_enforcement';
+	$ip    = vms_elements_form_guard_get_user_ip();
 
 	// Check by user ID
 	if ( $user_id > 0 ) {
@@ -1182,19 +1230,19 @@ function vms_span_checker_is_form_blocked( int $user_id = 0 ): bool {
  * @param string $content Content to check.
  * @return array|null Result array with 'is_spam' key, or null on error.
  */
-function vms_span_checker_check_ai_spam( string $content, array $context = array() ) {
+function vms_elements_form_guard_check_ai_spam( string $content, array $context = array() ) {
 	if ( empty( trim( $content ) ) ) {
 		return null;
 	}
 
 	// Read from AI Span Config
-	$settings      = get_option( 'wsc-ai-span-config', array() );
+	$settings      = get_option( 'vefg-ai-span-config', array() );
 	$provider      = isset( $settings['provider'] ) ? $settings['provider'] : 'gemini';
 	$openai_key    = isset( $settings['openai_api_key'] ) ? $settings['openai_api_key'] : '';
 	$anthropic_key = isset( $settings['anthropic_api_key'] ) ? $settings['anthropic_api_key'] : '';
 	$gemini_key    = isset( $settings['gemini_api_key'] ) ? $settings['gemini_api_key'] : '';
 	$deepseek_key  = isset( $settings['deepseek_api_key'] ) ? $settings['deepseek_api_key'] : '';
-	
+
 	// Get configured models with defaults
 	$openai_model    = isset( $settings['openai_model'] ) && $settings['openai_model'] ? $settings['openai_model'] : 'gpt-4o-mini';
 	$anthropic_model = isset( $settings['anthropic_model'] ) && $settings['anthropic_model'] ? $settings['anthropic_model'] : 'claude-3-5-haiku-latest';
@@ -1257,7 +1305,10 @@ function vms_span_checker_check_ai_spam( string $content, array $context = array
 						array(
 							'model'      => $openai_model,
 							'messages'   => array(
-								array( 'role' => 'user', 'content' => $prompt ),
+								array(
+									'role' => 'user',
+									'content' => $prompt,
+								),
 							),
 							'max_tokens' => 150,
 						)
@@ -1281,7 +1332,10 @@ function vms_span_checker_check_ai_spam( string $content, array $context = array
 							'model'      => $anthropic_model,
 							'max_tokens' => 150,
 							'messages'   => array(
-								array( 'role' => 'user', 'content' => $prompt ),
+								array(
+									'role' => 'user',
+									'content' => $prompt,
+								),
 							),
 						)
 					),
@@ -1328,7 +1382,10 @@ function vms_span_checker_check_ai_spam( string $content, array $context = array
 						array(
 							'model'      => $deepseek_model,
 							'messages'   => array(
-								array( 'role' => 'user', 'content' => $prompt ),
+								array(
+									'role' => 'user',
+									'content' => $prompt,
+								),
 							),
 							'max_tokens' => 150,
 						)
@@ -1393,47 +1450,47 @@ function vms_span_checker_check_ai_spam( string $content, array $context = array
  *
  * @return array<string, string>
  */
-function vms_span_checker_get_default_error_messages(): array {
+function vms_elements_form_guard_get_default_error_messages(): array {
 	return array(
 		// Registration Guard Messages
-		'reg_blocked_title'      => __( 'Registration Blocked', 'vms-span-checker' ),
-		'reg_blocked_intro'      => __( 'We could not complete your registration due to security checks.', 'vms-span-checker' ),
-		'reg_dns_failed'         => __( 'The email domain does not appear to exist.', 'vms-span-checker' ),
-		'reg_mx_failed'          => __( 'The email domain cannot receive messages.', 'vms-span-checker' ),
-		'reg_disposable'         => __( 'Temporary email addresses are not permitted.', 'vms-span-checker' ),
-		'reg_rate_limit'         => __( 'Too many registration attempts. Please try again later.', 'vms-span-checker' ),
-		'reg_reputation_failed'  => __( 'This email domain did not pass our security screening.', 'vms-span-checker' ),
+		'reg_blocked_title'      => __( 'Registration Blocked', 'vms-elements-form-guard' ),
+		'reg_blocked_intro'      => __( 'We could not complete your registration due to security checks.', 'vms-elements-form-guard' ),
+		'reg_dns_failed'         => __( 'The email domain does not appear to exist.', 'vms-elements-form-guard' ),
+		'reg_mx_failed'          => __( 'The email domain cannot receive messages.', 'vms-elements-form-guard' ),
+		'reg_disposable'         => __( 'Temporary email addresses are not permitted.', 'vms-elements-form-guard' ),
+		'reg_rate_limit'         => __( 'Too many registration attempts. Please try again later.', 'vms-elements-form-guard' ),
+		'reg_reputation_failed'  => __( 'This email domain did not pass our security screening.', 'vms-elements-form-guard' ),
 		/* translators: 1: current attempt number, 2: max attempts allowed per day */
-		'reg_rate_limit_count'   => __( 'Attempt %1$d of %2$d for today.', 'vms-span-checker' ),
-		'reg_contact_admin'      => __( 'Contact the site administrator if you need assistance.', 'vms-span-checker' ),
+		'reg_rate_limit_count'   => __( 'Attempt %1$d of %2$d for today.', 'vms-elements-form-guard' ),
+		'reg_contact_admin'      => __( 'Contact the site administrator if you need assistance.', 'vms-elements-form-guard' ),
 
 		// Email Validation Messages
-		'email_invalid_format'   => __( 'Please enter a valid email address.', 'vms-span-checker' ),
-		'email_dns_failed'       => __( 'This email domain does not exist.', 'vms-span-checker' ),
-		'email_mx_failed'        => __( 'This email domain cannot receive messages.', 'vms-span-checker' ),
-		'email_disposable'       => __( 'Temporary email addresses are not allowed.', 'vms-span-checker' ),
-		'email_webrisk_flagged'  => __( 'This email domain has security issues.', 'vms-span-checker' ),
-		'email_virustotal_flagged' => __( 'This email domain may be unsafe.', 'vms-span-checker' ),
+		'email_invalid_format'   => __( 'Please enter a valid email address.', 'vms-elements-form-guard' ),
+		'email_dns_failed'       => __( 'This email domain does not exist.', 'vms-elements-form-guard' ),
+		'email_mx_failed'        => __( 'This email domain cannot receive messages.', 'vms-elements-form-guard' ),
+		'email_disposable'       => __( 'Temporary email addresses are not allowed.', 'vms-elements-form-guard' ),
+		'email_webrisk_flagged'  => __( 'This email domain has security issues.', 'vms-elements-form-guard' ),
+		'email_virustotal_flagged' => __( 'This email domain may be unsafe.', 'vms-elements-form-guard' ),
 
 		// URL Validation Messages
-		'url_invalid'            => __( 'Please enter a valid URL.', 'vms-span-checker' ),
-		'url_dns_failed'         => __( 'This URL cannot be reached.', 'vms-span-checker' ),
-		'url_webrisk_flagged'    => __( 'This URL has been flagged for security issues.', 'vms-span-checker' ),
-		'url_virustotal_flagged' => __( 'This URL may be unsafe.', 'vms-span-checker' ),
+		'url_invalid'            => __( 'Please enter a valid URL.', 'vms-elements-form-guard' ),
+		'url_dns_failed'         => __( 'This URL cannot be reached.', 'vms-elements-form-guard' ),
+		'url_webrisk_flagged'    => __( 'This URL has been flagged for security issues.', 'vms-elements-form-guard' ),
+		'url_virustotal_flagged' => __( 'This URL may be unsafe.', 'vms-elements-form-guard' ),
 
 		// Content & Spam Messages
-		'spam_detected'          => __( 'Your submission appears to be spam.', 'vms-span-checker' ),
-		'username_taken'         => __( 'This username is already in use.', 'vms-span-checker' ),
+		'spam_detected'          => __( 'Your submission appears to be spam.', 'vms-elements-form-guard' ),
+		'username_taken'         => __( 'This username is already in use.', 'vms-elements-form-guard' ),
 
 		// reCAPTCHA Messages
-		'recaptcha_required'     => __( 'Please complete the security verification.', 'vms-span-checker' ),
-		'recaptcha_failed'       => __( 'Security verification failed. Please try again.', 'vms-span-checker' ),
+		'recaptcha_required'     => __( 'Please complete the security verification.', 'vms-elements-form-guard' ),
+		'recaptcha_failed'       => __( 'Security verification failed. Please try again.', 'vms-elements-form-guard' ),
 
 		// General Messages
-		'user_blocked'           => __( 'Access denied due to repeated violations.', 'vms-span-checker' ),
-		'validation_failed'      => __( 'Validation failed. Please check your input.', 'vms-span-checker' ),
-		'field_required'         => __( 'This field is required.', 'vms-span-checker' ),
-		'server_error'           => __( 'A server error occurred. Please try again.', 'vms-span-checker' ),
+		'user_blocked'           => __( 'Access denied due to repeated violations.', 'vms-elements-form-guard' ),
+		'validation_failed'      => __( 'Validation failed. Please check your input.', 'vms-elements-form-guard' ),
+		'field_required'         => __( 'This field is required.', 'vms-elements-form-guard' ),
+		'server_error'           => __( 'A server error occurred. Please try again.', 'vms-elements-form-guard' ),
 	);
 }
 
@@ -1444,15 +1501,15 @@ function vms_span_checker_get_default_error_messages(): array {
  * @param array  $args    Optional sprintf arguments.
  * @return string
  */
-function vms_span_checker_get_error_message( string $key, array $args = array() ): string {
+function vms_elements_form_guard_get_error_message( string $key, array $args = array() ): string {
 	static $custom_messages = null;
 	static $defaults = null;
 
 	if ( null === $custom_messages ) {
-		$custom_messages = get_option( 'wsc-error-messages', array() );
+		$custom_messages = get_option( 'vefg-error-messages', array() );
 	}
 	if ( null === $defaults ) {
-		$defaults = vms_span_checker_get_default_error_messages();
+		$defaults = vms_elements_form_guard_get_default_error_messages();
 	}
 
 	$message = '';
@@ -1490,9 +1547,9 @@ function vms_span_checker_get_error_message( string $key, array $args = array() 
  *
  * @return array<string, string>
  */
-function vms_span_checker_get_all_error_messages(): array {
-	$defaults = vms_span_checker_get_default_error_messages();
-	$custom   = get_option( 'wsc-error-messages', array() );
+function vms_elements_form_guard_get_all_error_messages(): array {
+	$defaults = vms_elements_form_guard_get_default_error_messages();
+	$custom   = get_option( 'vefg-error-messages', array() );
 
 	$messages = array();
 	foreach ( $defaults as $key => $default ) {
@@ -1505,34 +1562,34 @@ function vms_span_checker_get_all_error_messages(): array {
 /**
  * Whether the Pro plugin bootstrap constant is loaded (plugin active).
  */
-function vms_span_checker_is_pro_plugin_loaded(): bool {
-	return defined( 'VMS_SPAN_CHECKER_PRO_VERSION' ) || defined( 'VMS_SPAN_CHECKER_PRO_FILE' );
+function vms_elements_form_guard_is_pro_plugin_loaded(): bool {
+	return defined( 'VMS_ELEMENTS_FORM_GUARD_PRO_VERSION' ) || defined( 'VMS_ELEMENTS_FORM_GUARD_PRO_FILE' );
 }
 
 /**
  * Licensed and Pro plugin present — Pro admin pages may register.
  */
-function vms_span_checker_pro_runtime_ready(): bool {
-	if ( ! vms_span_checker_is_pro_plugin_loaded() ) {
+function vms_elements_form_guard_pro_runtime_ready(): bool {
+	if ( ! vms_elements_form_guard_is_pro_plugin_loaded() ) {
 		return false;
 	}
-	return (bool) apply_filters( 'vms_span_checker_is_pro_active', false );
+	return (bool) apply_filters( 'vms_elements_form_guard_is_pro_active', false );
 }
 
 /**
- * Base data passed to WPSpanChecker for script localizations.
+ * Base data passed to VEFGChecker for script localizations.
  *
  * @param array<string, mixed> $extra Additional keys merged on top.
  * @return array<string, mixed>
  */
-function vms_span_checker_script_localize_data( array $extra = array() ): array {
+function vms_elements_form_guard_script_localize_data( array $extra = array() ): array {
 	$base = array(
 		'ajaxUrl' => admin_url( 'admin-ajax.php' ),
 		'ajaxurl' => admin_url( 'admin-ajax.php' ),
-		'nonce'   => wp_create_nonce( 'vms_span_checker_nonce' ),
+		'nonce'   => wp_create_nonce( 'vms_elements_form_guard_nonce' ),
 	);
-	if ( function_exists( 'vms_span_checker_get_js_i18n' ) ) {
-		$base['i18n'] = vms_span_checker_get_js_i18n();
+	if ( function_exists( 'vms_elements_form_guard_get_js_i18n' ) ) {
+		$base['i18n'] = vms_elements_form_guard_get_js_i18n();
 	}
 	return array_merge( $base, $extra );
 }
@@ -1540,12 +1597,12 @@ function vms_span_checker_script_localize_data( array $extra = array() ): array 
 /**
  * URL for a plugin-owned JS file (minified in production when .min.js exists).
  *
- * @param string $name Basename without extension, e.g. `vms-span-checker`.
+ * @param string $name Basename without extension, e.g. `vms-elements-form-guard`.
  */
-function vms_span_checker_js_asset( string $name ): string {
+function vms_elements_form_guard_js_asset( string $name ): string {
 	$name = preg_replace( '/\.(?:min\.)?js$/', '', $name );
-	$dir  = defined( 'VMS_SPAN_CHECKER_DIR' ) ? VMS_SPAN_CHECKER_DIR : '';
-	$base = defined( 'VMS_Span_Checker_ASSETS_URL' ) ? VMS_Span_Checker_ASSETS_URL : '';
+	$dir  = defined( 'VMS_ELEMENTS_FORM_GUARD_DIR' ) ? VMS_ELEMENTS_FORM_GUARD_DIR : '';
+	$base = defined( 'VMS_ELEMENTS_FORM_GUARD_ASSETS_URL' ) ? VMS_ELEMENTS_FORM_GUARD_ASSETS_URL : '';
 
 	$use_min = ( ! defined( 'SCRIPT_DEBUG' ) || ! SCRIPT_DEBUG )
 		&& '' !== $dir
@@ -1556,4 +1613,67 @@ function vms_span_checker_js_asset( string $name ): string {
 	}
 
 	return $base . 'js/' . $name . '.js';
+}
+
+/**
+ * Derive a 32-byte encryption key from the site's WordPress salts.
+ *
+ * @return string Raw 32-byte key.
+ */
+function vms_elements_form_guard_crypto_key(): string {
+	return hash( 'sha256', wp_salt( 'auth' ) . wp_salt( 'secure_auth' ), true );
+}
+
+/**
+ * Encrypt a short secret (e.g. a pending password) for temporary storage.
+ *
+ * Uses AES-256-CBC with a random IV and a key derived from the site salts.
+ * Returns the original value unchanged if the OpenSSL extension is unavailable
+ * so the calling flow keeps working.
+ *
+ * @param string $plaintext Value to encrypt.
+ * @return string Base64 "iv:ciphertext" payload, or the plaintext on failure.
+ */
+function vms_elements_form_guard_encrypt_secret( string $plaintext ): string {
+	if ( '' === $plaintext || ! function_exists( 'openssl_encrypt' ) ) {
+		return $plaintext;
+	}
+
+	$iv_length = (int) openssl_cipher_iv_length( 'aes-256-cbc' );
+	$iv        = openssl_random_pseudo_bytes( $iv_length );
+	$cipher    = openssl_encrypt( $plaintext, 'aes-256-cbc', vms_elements_form_guard_crypto_key(), OPENSSL_RAW_DATA, $iv );
+
+	if ( false === $cipher ) {
+		return $plaintext;
+	}
+
+	return 'vefg1:' . base64_encode( $iv . $cipher ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Encoding ciphertext, not obfuscation.
+}
+
+/**
+ * Decrypt a value produced by vms_elements_form_guard_encrypt_secret().
+ *
+ * @param string $payload Encrypted payload.
+ * @return string Decrypted plaintext, or the input unchanged if it was not encrypted.
+ */
+function vms_elements_form_guard_decrypt_secret( string $payload ): string {
+	if ( 0 !== strpos( $payload, 'vefg1:' ) || ! function_exists( 'openssl_decrypt' ) ) {
+		return $payload;
+	}
+
+	$raw = base64_decode( substr( $payload, 6 ), true ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode -- Decoding ciphertext, not obfuscation.
+	if ( false === $raw ) {
+		return '';
+	}
+
+	$iv_length = (int) openssl_cipher_iv_length( 'aes-256-cbc' );
+	if ( strlen( $raw ) <= $iv_length ) {
+		return '';
+	}
+
+	$iv     = substr( $raw, 0, $iv_length );
+	$cipher = substr( $raw, $iv_length );
+	$plain  = openssl_decrypt( $cipher, 'aes-256-cbc', vms_elements_form_guard_crypto_key(), OPENSSL_RAW_DATA, $iv );
+
+	return false === $plain ? '' : $plain;
 }

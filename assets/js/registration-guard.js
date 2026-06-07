@@ -1,15 +1,15 @@
 /**
- * VMS Span Checker - Registration Guard Frontend
+ * VMS Elements Form Guard - Registration Guard Frontend
  * Adds validation button and reCAPTCHA protection to WordPress registration forms.
  */
 (function($) {
     'use strict';
 
-    if (typeof WPSpanRegistrationGuard === 'undefined') {
+    if (typeof VEFGRegistrationGuard === 'undefined') {
         return;
     }
 
-    var config = WPSpanRegistrationGuard;
+    var config = VEFGRegistrationGuard;
     var ajaxUrl = config.ajaxUrl || '';
     var nonce = config.nonce || '';
     var frontendEnabled = config.frontendEnabled || false;
@@ -46,20 +46,20 @@
 
     function showFieldError($field, message) {
         clearFieldError($field);
-        $field.addClass('wsc-field-invalid');
-        var $error = $('<span class="wsc-field-error wsc-reg-error" style="color:#d63638;display:block;margin-top:5px;">' + message + '</span>');
+        $field.addClass('vefg-field-invalid');
+        var $error = $('<span class="vefg-field-error vefg-reg-error" style="color:#d63638;display:block;margin-top:5px;">' + message + '</span>');
         $field.after($error);
     }
 
     function clearFieldError($field) {
-        $field.removeClass('wsc-field-invalid');
-        $field.siblings('.wsc-reg-error').remove();
-        $field.parent().find('.wsc-reg-error').remove();
+        $field.removeClass('vefg-field-invalid');
+        $field.siblings('.vefg-reg-error').remove();
+        $field.parent().find('.vefg-reg-error').remove();
     }
 
     function clearAllErrors($form) {
-        $form.find('.wsc-field-invalid').removeClass('wsc-field-invalid');
-        $form.find('.wsc-reg-error').remove();
+        $form.find('.vefg-field-invalid').removeClass('vefg-field-invalid');
+        $form.find('.vefg-reg-error').remove();
     }
 
     function isButtonVisible($btn) {
@@ -174,7 +174,7 @@
     function validateRegistration(email, recaptchaToken) {
         return new Promise(function(resolve, reject) {
             var data = {
-                action: 'wsc_validate_registration',
+                action: 'vefg_validate_registration',
                 nonce: nonce,
                 email: email
             };
@@ -287,19 +287,19 @@
         }
 
         if (!$form || !$form.length) {
-            console.log('[VMS Span Checker] Registration Guard: No registration form found.');
+            console.log('[VMS Elements Form Guard] Registration Guard: No registration form found.');
             return;
         }
 
         var $thisForm = $form;
 
-        if ($thisForm.data('wsc-registration-guard')) {
+        if ($thisForm.data('vefg-registration-guard')) {
             return;
         }
 
         // Check if form is already protected by another guard
-        if ($thisForm.data('wsc-guard-protected')) {
-            console.log('[VMS Span Checker] Registration Guard: Form already protected by another guard, skipping');
+        if ($thisForm.data('vefg-guard-protected')) {
+            console.log('[VMS Elements Form Guard] Registration Guard: Form already protected by another guard, skipping');
             return;
         }
 
@@ -309,10 +309,10 @@
             return;
         }
 
-        $thisForm.data('wsc-registration-guard', true);
-        $thisForm.data('wsc-guard-protected', true); // Mark as protected
+        $thisForm.data('vefg-registration-guard', true);
+        $thisForm.data('vefg-guard-protected', true); // Mark as protected
         registrationGuardAttached = true;
-        console.log('[VMS Span Checker] Registration Guard attached to form:', $thisForm[0]);
+        console.log('[VMS Elements Form Guard] Registration Guard attached to form:', $thisForm[0]);
 
         if (!frontendEnabled) {
             if (recaptchaEnabled && recaptchaSiteKey) {
@@ -324,23 +324,23 @@
         var $originalSubmit = findSubmitButton($thisForm);
 
         if (!$originalSubmit.length) {
-            console.log('[VMS Span Checker] Registration Guard: No submit button found');
+            console.log('[VMS Elements Form Guard] Registration Guard: No submit button found');
             return;
         }
 
-        var $actionsWrap = $('<div class="wsc-guard-actions"></div>');
+        var $actionsWrap = $('<div class="vefg-guard-actions"></div>');
         $originalSubmit.after($actionsWrap);
 
         var submitText = $originalSubmit.val() || $originalSubmit.text() || t('register', 'Register');
-        var $validationBtn = $('<input type="button" class="wsc-validation-btn wsc-reg-validation-btn">');
+        var $validationBtn = $('<input type="button" class="vefg-validation-btn vefg-reg-validation-btn">');
         $validationBtn.val(submitText);
 
         copyButtonStyles($originalSubmit, $validationBtn);
         hideOriginalSubmit($originalSubmit);
 
         if (recaptchaEnabled && recaptchaSiteKey && recaptchaVersion === 'v2') {
-            var uniqueId = 'wsc-reg-recaptcha-' + Math.random().toString(36).substr(2, 9);
-            var recaptchaContainer = $('<div id="' + uniqueId + '" class="wsc-recaptcha-container" style="margin: 10px 0;"></div>');
+            var uniqueId = 'vefg-reg-recaptcha-' + Math.random().toString(36).substr(2, 9);
+            var recaptchaContainer = $('<div id="' + uniqueId + '" class="vefg-recaptcha-container" style="margin: 10px 0;"></div>');
             $actionsWrap.prepend(recaptchaContainer);
 
             $validationBtn.prop('disabled', true).css('opacity', '0.6');
@@ -405,9 +405,9 @@
                     $validationBtn.val(submitText).prop('disabled', false);
 
                     if (result.status) {
-                        console.log('[VMS Span Checker] Registration Guard: Validation passed');
+                        console.log('[VMS Elements Form Guard] Registration Guard: Validation passed');
 
-                        $thisForm.append('<input type="hidden" name="wsc_validation_token" value="' + (result.token || '') + '">');
+                        $thisForm.append('<input type="hidden" name="vefg_validation_token" value="' + (result.token || '') + '">');
 
                         $originalSubmit.css({
                             'display': '',
@@ -438,13 +438,13 @@
                 .catch(function(err) {
                     isValidating = false;
                     $validationBtn.val(submitText).prop('disabled', recaptchaEnabled && recaptchaVersion === 'v2');
-                    console.error('[VMS Span Checker] Registration Guard error:', err);
+                    console.error('[VMS Elements Form Guard] Registration Guard error:', err);
                     showToast('error', err.message || t('serverError', 'Validation error. Please try again.'));
                 });
         });
 
         $thisForm.on('submit', function(e) {
-            if ($thisForm.find('input[name="wsc_validation_token"]').length) {
+            if ($thisForm.find('input[name="vefg_validation_token"]').length) {
                 return true;
             }
 
@@ -459,16 +459,16 @@
         var $submitBtn = findSubmitButton($form);
         
         if (!$submitBtn.length) {
-            console.log('[VMS Span Checker] Registration Guard: No submit button found for reCAPTCHA');
+            console.log('[VMS Elements Form Guard] Registration Guard: No submit button found for reCAPTCHA');
             return;
         }
 
         if (recaptchaVersion === 'v2') {
-            var uniqueId = 'wsc-reg-recaptcha-only-' + Math.random().toString(36).substr(2, 9);
+            var uniqueId = 'vefg-reg-recaptcha-only-' + Math.random().toString(36).substr(2, 9);
             var $submitParent = $submitBtn.closest('p, .submit').first();
-            var $actionsWrap = $('<div class="wsc-guard-actions"></div>');
+            var $actionsWrap = $('<div class="vefg-guard-actions"></div>');
             $submitParent.before($actionsWrap);
-            var recaptchaContainer = $('<div id="' + uniqueId + '" class="wsc-recaptcha-container" style="margin: 10px 0;"></div>');
+            var recaptchaContainer = $('<div id="' + uniqueId + '" class="vefg-recaptcha-container" style="margin: 10px 0;"></div>');
             $actionsWrap.append(recaptchaContainer);
             $actionsWrap.append($submitParent.detach());
 
@@ -481,12 +481,12 @@
                             sitekey: recaptchaSiteKey,
                             callback: function(token) {
                                 $submitBtn.prop('disabled', false).css('opacity', '1');
-                                $form.find('input[name="wsc_recaptcha_token"]').remove();
-                                $form.append('<input type="hidden" name="wsc_recaptcha_token" value="' + token + '">');
+                                $form.find('input[name="vefg_recaptcha_token"]').remove();
+                                $form.append('<input type="hidden" name="vefg_recaptcha_token" value="' + token + '">');
                             },
                             'expired-callback': function() {
                                 $submitBtn.prop('disabled', true).css('opacity', '0.6');
-                                $form.find('input[name="wsc_recaptcha_token"]').remove();
+                                $form.find('input[name="vefg_recaptcha_token"]').remove();
                             }
                         });
                     } catch (e) {
@@ -499,7 +499,7 @@
             checkRecaptcha();
         } else if (recaptchaVersion === 'v3') {
             $form.on('submit', function(e) {
-                var $hiddenToken = $form.find('input[name="wsc_recaptcha_token"]');
+                var $hiddenToken = $form.find('input[name="vefg_recaptcha_token"]');
                 
                 if ($hiddenToken.length && $hiddenToken.val()) {
                     return true;
@@ -511,8 +511,8 @@
                     grecaptcha.ready(function() {
                         grecaptcha.execute(recaptchaSiteKey, { action: 'registration' })
                             .then(function(token) {
-                                $form.find('input[name="wsc_recaptcha_token"]').remove();
-                                $form.append('<input type="hidden" name="wsc_recaptcha_token" value="' + token + '">');
+                                $form.find('input[name="vefg_recaptcha_token"]').remove();
+                                $form.append('<input type="hidden" name="vefg_recaptcha_token" value="' + token + '">');
                                 $form[0].submit();
                             })
                             .catch(function(err) {

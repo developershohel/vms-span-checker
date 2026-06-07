@@ -2,11 +2,11 @@
 /**
  * Disposable domain repository.
  *
- * All queries target the plugin-owned `{$wpdb->prefix}span_disposable_domains`
+ * All queries target the plugin-owned `{$wpdb->prefix}vms_elements_form_guard_disposable_domains`
  * custom table; identifiers are hardcoded and values pass through
  * `$wpdb->prepare()` / insert / delete helpers.
  *
- * @package VMS_Span_Checker
+ * @package VMS_Elements_Form_Guard
  *
  * phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
  * phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -15,7 +15,7 @@
  * phpcs:disable PluginCheck.Security.DirectDB.UnescapedDBParameter
  */
 
-namespace VMS_Span_Checker;
+namespace VMS_Elements_Form_Guard;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -28,7 +28,7 @@ class Disposable {
 	public function __construct() {
 		global $wpdb;
 		$this->wpdb  = $wpdb;
-		$this->table = $this->wpdb->prefix . 'span_disposable_domains';
+		$this->table = $this->wpdb->prefix . 'vms_elements_form_guard_disposable_domains';
 	}
 
 	public function get_all(): array {
@@ -36,11 +36,11 @@ class Disposable {
 	}
 
 	public function add_domain( string $domain ): bool {
-		return (bool) $this->wpdb->insert( $this->table, [ 'domain' => sanitize_text_field( $domain ) ] );
+		return (bool) $this->wpdb->insert( $this->table, array( 'domain' => sanitize_text_field( $domain ) ) );
 	}
 
 	public function delete_domain( int $id ): bool {
-		return (bool) $this->wpdb->delete( $this->table, [ 'id' => $id ] );
+		return (bool) $this->wpdb->delete( $this->table, array( 'id' => $id ) );
 	}
 
 	public function count(): int {

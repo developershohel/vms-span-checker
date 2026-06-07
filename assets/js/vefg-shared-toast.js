@@ -3,13 +3,13 @@
  */
 (function (w) {
 	'use strict';
-	if (typeof w.wpSpanCheckerToast !== 'undefined') {
+	if (typeof w.vefgToast !== 'undefined') {
 		return;
 	}
 	if (typeof Swal === 'undefined') {
 		return;
 	}
-	w.wpSpanCheckerToast = Swal.mixin({
+	w.vefgToast = Swal.mixin({
 		toast: true,
 		position: 'center',
 		showConfirmButton: false,

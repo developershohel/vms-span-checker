@@ -2,14 +2,14 @@
 /**
  * Domain validation pipeline.
  *
- * @package VMS_Span_Checker
+ * @package VMS_Elements_Form_Guard
  */
 
-namespace VMS_Span_Checker\Services;
+namespace VMS_Elements_Form_Guard\Services;
 
-use VMS_Span_Checker\Disposable;
-use VMS_Span_Checker\Logger;
-use VMS_Span_Checker\Whitelist;
+use VMS_Elements_Form_Guard\Disposable;
+use VMS_Elements_Form_Guard\Logger;
+use VMS_Elements_Form_Guard\Whitelist;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -51,7 +51,7 @@ class Domain_Validator {
 	/**
 	 * Google Web Risk client.
 	 *
-	 * @var GoogleWebRisk
+	 * @var Google_Webrisk
 	 */
 	private $webrisk;
 
@@ -63,7 +63,7 @@ class Domain_Validator {
 		$this->disposable = new Disposable();
 		$this->logger     = new Logger();
 		$this->virustotal = new VirusTotal();
-		$this->webrisk    = new GoogleWebRisk();
+		$this->webrisk    = new Google_Webrisk();
 	}
 
 	/**
@@ -94,24 +94,24 @@ class Domain_Validator {
 
 		$whitelist_domains = array_column( $this->whitelist->get_all(), 'domain' );
 		if ( in_array( $domain, $whitelist_domains, true ) ) {
-			return $this->log_and_return( $type, $ip, $domain, 'success', __( 'Domain is whitelisted.', 'vms-span-checker' ), true );
+			return $this->log_and_return( $type, $ip, $domain, 'success', __( 'Domain is whitelisted.', 'vms-elements-form-guard' ), true );
 		}
 
 		$disposable_domains = array_column( $this->disposable->get_all(), 'domain' );
 		if ( in_array( $domain, $disposable_domains, true ) ) {
-			return $this->log_and_return( $type, $ip, $domain, 'failed', __( 'Disposable email or domain detected.', 'vms-span-checker' ), false );
+			return $this->log_and_return( $type, $ip, $domain, 'failed', __( 'Disposable email or domain detected.', 'vms-elements-form-guard' ), false );
 		}
 
 		// Check DNS A record (domain exists) - mandatory if API checks enabled OR if explicitly required
 		if ( $require_dns ) {
-			$has_a_record = vms_span_checker_check_domain_dns( $domain );
+			$has_a_record = vms_elements_form_guard_check_domain_dns( $domain );
 			if ( ! $has_a_record ) {
 				return $this->log_and_return(
 					$type,
 					$ip,
 					$domain,
 					'failed',
-					__( 'This email domain does not exist (no DNS A record found). Use an address at a real, active domain.', 'vms-span-checker' ),
+					__( 'This email domain does not exist (no DNS A record found). Use an address at a real, active domain.', 'vms-elements-form-guard' ),
 					false
 				);
 			}
@@ -126,7 +126,7 @@ class Domain_Validator {
 					$ip,
 					$domain,
 					'failed',
-					__( 'Email domain cannot receive emails (no MX record found). Use an address at a domain that can receive mail.', 'vms-span-checker' ),
+					__( 'Email domain cannot receive emails (no MX record found). Use an address at a domain that can receive mail.', 'vms-elements-form-guard' ),
 					false
 				);
 			}
@@ -154,7 +154,7 @@ class Domain_Validator {
 			}
 		}
 
-		return $this->log_and_return( $type, $ip, $domain, 'success', __( 'Domain is safe and valid.', 'vms-span-checker' ), true );
+		return $this->log_and_return( $type, $ip, $domain, 'success', __( 'Domain is safe and valid.', 'vms-elements-form-guard' ), true );
 	}
 
 	/**
@@ -220,7 +220,7 @@ class Domain_Validator {
 	private function is_https_available( $domain ) {
 		if ( '' === $domain ) {
 			return array(
-				'message' => __( 'No URL provided.', 'vms-span-checker' ),
+				'message' => __( 'No URL provided.', 'vms-elements-form-guard' ),
 				'status'  => false,
 			);
 		}
@@ -231,7 +231,7 @@ class Domain_Validator {
 
 		if ( empty( $url ) ) {
 			return array(
-				'message' => __( 'Invalid domain.', 'vms-span-checker' ),
+				'message' => __( 'Invalid domain.', 'vms-elements-form-guard' ),
 				'status'  => false,
 			);
 		}
@@ -248,7 +248,7 @@ class Domain_Validator {
 		if ( is_wp_error( $response ) ) {
 			return array(
 				/* translators: %s: WordPress error message */
-				'message' => sprintf( __( 'Request failed: %s', 'vms-span-checker' ), $response->get_error_message() ),
+				'message' => sprintf( __( 'Request failed: %s', 'vms-elements-form-guard' ), $response->get_error_message() ),
 				'status'  => false,
 			);
 		}
@@ -257,35 +257,35 @@ class Domain_Validator {
 
 		if ( $status >= 200 && $status < 300 ) {
 			return array(
-				'message' => __( 'Site responded successfully.', 'vms-span-checker' ),
+				'message' => __( 'Site responded successfully.', 'vms-elements-form-guard' ),
 				'status'  => true,
 			);
 		}
 		if ( $status >= 300 && $status < 400 ) {
 			return array(
 				/* translators: %d: HTTP status code */
-				'message' => sprintf( __( 'Redirect only (%d).', 'vms-span-checker' ), $status ),
+				'message' => sprintf( __( 'Redirect only (%d).', 'vms-elements-form-guard' ), $status ),
 				'status'  => false,
 			);
 		}
 		if ( $status >= 400 && $status < 500 ) {
 			return array(
 				/* translators: %d: HTTP status code */
-				'message' => sprintf( __( 'Client error (%d).', 'vms-span-checker' ), $status ),
+				'message' => sprintf( __( 'Client error (%d).', 'vms-elements-form-guard' ), $status ),
 				'status'  => false,
 			);
 		}
 		if ( $status >= 500 ) {
 			return array(
 				/* translators: %d: HTTP status code */
-				'message' => sprintf( __( 'Server error (%d).', 'vms-span-checker' ), $status ),
+				'message' => sprintf( __( 'Server error (%d).', 'vms-elements-form-guard' ), $status ),
 				'status'  => false,
 			);
 		}
 
 		return array(
 			/* translators: %d: HTTP status code */
-			'message' => sprintf( __( 'Unknown status (%d).', 'vms-span-checker' ), $status ),
+			'message' => sprintf( __( 'Unknown status (%d).', 'vms-elements-form-guard' ), $status ),
 			'status'  => false,
 		);
 	}
@@ -320,7 +320,7 @@ class Domain_Validator {
 	 */
 	public function validate_email( $email, $type = 'registration', $ip = '', $settings = array() ) {
 		if ( ! filter_var( $email, FILTER_VALIDATE_EMAIL ) ) {
-			return $this->log_and_return( $type, $ip, '', 'failed', __( 'Invalid email format.', 'vms-span-checker' ), false );
+			return $this->log_and_return( $type, $ip, '', 'failed', __( 'Invalid email format.', 'vms-elements-form-guard' ), false );
 		}
 
 		$domain = strtolower( substr( strrchr( $email, '@' ), 1 ) );

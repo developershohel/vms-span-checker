@@ -1,4 +1,4 @@
-# Agent instructions — VMS Span Checker
+# Agent instructions — VMS Elements Form Guard
 
 ## Runtime dependencies
 
@@ -31,6 +31,17 @@ Supporting packages (installed automatically with the above): `squizlabs/php_cod
 1. **Prefer local:** `vendor/bin/phpcs` and `vendor/bin/phpcbf` (run `composer install` if `vendor/` is missing).
 2. **Fallback:** global `phpcs` / `phpcbf` if installed on the machine.
 3. **Use** `phpcs.xml.dist` in the plugin root.
+
+### Plugin Check alignment
+
+`phpcs.xml.dist` is deliberately scoped to the rules the official
+[Plugin Check](https://wordpress.org/plugins/plugin-check/) tool enforces:
+`WordPress-Core` + `WordPress-Extra` + `PHPCompatibilityWP` minus a few pure
+style preferences (Yoda conditions, short ternary, inline-comment end-char).
+`WordPress-Docs` is **not** included because Plugin Check does not enforce
+docblock formatting and pulling it in adds hundreds of noisy violations that
+will never block a WP.org submission. Do not re-add `WordPress-Docs` or the
+excluded sniffs without a concrete reason.
 
 ### Commands (from plugin root)
 
@@ -73,24 +84,32 @@ One-time install:
 npm install -g terser
 ```
 
-After editing any source JS (especially `vms-span-checker.js` — keep license heartbeat logic in the **middle** of the file, not only at top/bottom):
+After editing any source JS:
 
 ```powershell
-cd path\to\vms-span-checker
+cd path\to\vms-elements-form-guard
 .\scripts\minify-js.ps1
 ```
 
 Or manually:
 
 ```bash
-terser assets/js/vms-span-checker.js -o assets/js/vms-span-checker.min.js -c -m --comments false
+terser assets/js/vms-elements-form-guard.js -o assets/js/vms-elements-form-guard.min.js -c -m --comments false
 ```
 
-Enqueue uses `vms_span_checker_js_asset( 'vms-span-checker' )` in `includes/functions.php`.
+Enqueue uses `vms_elements_form_guard_js_asset( 'vms-elements-form-guard' )` in `includes/functions.php`.
+
+## Licensing — Pro only (WP.org Trialware compliance)
+
+The free plugin **must not** contain any license-activation code, license validation, license storage, or license-gated features. All license handling lives exclusively in the Pro plugin (`../vms-elements-form-guard-pro/licensing/`).
+
+When Pro is not active, the free plugin shows one **Upgrade Now** admin page (no lock stubs, no license UI) that lists Pro features and links to `https://vmselements.com/product/vms-elements-form-guard-pro`. See `includes/class-pro-features.php` and `templates/upgrade-now.php`.
+
+Do not re-introduce a `licensing/` folder, a "License" admin page, license-heartbeat JS, or any `vms_elements_form_guard_license_*` constants in this repo.
 
 ## Project layout notes
 
 - `vendor/` is gitignored — developers generate it locally; production/plugin zip excludes it.
-- **Pro plugin** (`../vms-span-checker-pro/`) has no Composer at all; lint it via this repo’s `phpcs.xml.dist` (includes the Pro path).
+- **Pro plugin** (`../vms-elements-form-guard-pro/`) has no Composer at all; lint it via this repo’s `phpcs.xml.dist` (includes the Pro path).
 - `.distignore` excludes Composer and PHPCS config from WordPress.org zip builds.
 - Prefer minimal, focused diffs; match existing plugin naming and patterns.

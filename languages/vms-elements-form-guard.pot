@@ -2,8 +2,8 @@
 # This file is distributed under the GPL-2.0-or-later.
 msgid ""
 msgstr ""
-"Project-Id-Version: VMS Span Checker 1.0.0\n"
-"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/vms-span-checker\n"
+"Project-Id-Version: VMS Elements Form Guard 1.0.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/vms-elements-form-guard\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -12,34 +12,34 @@ msgstr ""
 "POT-Creation-Date: 2026-05-18T21:46:32+02:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
-"X-Domain: vms-span-checker\n"
+"X-Domain: vms-elements-form-guard\n"
 
 #. Plugin Name of the plugin
-#: vms-span-checker.php
+#: vms-elements-form-guard.php
 #: includes/class-admin-menu.php:83
 #: includes/class-admin-menu.php:84
 #: templates/auth-forms.php:563
 #: templates/partials/admin-page-header.php:33
-msgid "VMS Span Checker"
+msgid "VMS Elements Form Guard"
 msgstr ""
 
 #. Plugin URI of the plugin
-#: vms-span-checker.php
-msgid "https://wordpress.org/plugins/vms-span-checker"
+#: vms-elements-form-guard.php
+msgid "https://wordpress.org/plugins/vms-elements-form-guard"
 msgstr ""
 
 #. Description of the plugin
-#: vms-span-checker.php
+#: vms-elements-form-guard.php
 msgid "Validates email domains on front-end forms using disposable domain lists, HTTPS checks, and optional third-party safe-browsing APIs."
 msgstr ""
 
 #. Author of the plugin
-#: vms-span-checker.php
+#: vms-elements-form-guard.php
 msgid "VMS Universe"
 msgstr ""
 
 #. Author URI of the plugin
-#: vms-span-checker.php
+#: vms-elements-form-guard.php
 msgid "https://vmsuniverse.com"
 msgstr ""
 
@@ -171,7 +171,7 @@ msgid "Email Templates"
 msgstr ""
 
 #: includes/class-admin-menu.php:251
-msgid "Unlock Form Guard, Contact Guard, Subscribe Guard, AI Summaries, Email Templates and more with VMS Span Checker Pro."
+msgid "Unlock Form Guard, Contact Guard, Subscribe Guard, AI Summaries, Email Templates and more with VMS Elements Form Guard Pro."
 msgstr ""
 
 #: includes/class-admin-menu.php:253
@@ -189,7 +189,7 @@ msgid "Pro feature"
 msgstr ""
 
 #: includes/class-admin-menu.php:287
-msgid "This feature is available in VMS Span Checker Pro."
+msgid "This feature is available in VMS Elements Form Guard Pro."
 msgstr ""
 
 #: includes/class-admin-menu.php:303
@@ -539,7 +539,7 @@ msgstr ""
 #: includes/class-auth-forms.php:532
 #: includes/class-auth-forms.php:1103
 #: templates/auth-forms.php:913
-#: templates/emails/wsc-email-template-functions.php:214
+#: templates/emails/vefg-email-template-functions.php:214
 msgid "Reset Password"
 msgstr ""
 
@@ -611,7 +611,7 @@ msgid "Invalid verification request. Please check your email for the verificatio
 msgstr ""
 
 #: includes/class-auth-forms.php:646
-#: templates/emails/wsc-email-template-functions.php:43
+#: templates/emails/vefg-email-template-functions.php:43
 msgid "Verify Your Email"
 msgstr ""
 
@@ -842,7 +842,7 @@ msgid "Failed to send test email. Check your SMTP settings."
 msgstr ""
 
 #: includes/class-auth-forms.php:1325
-msgid "VMS Span Checker Auth Form"
+msgid "VMS Elements Form Guard Auth Form"
 msgstr ""
 
 #: includes/class-auth-forms.php:1343
@@ -1217,11 +1217,11 @@ msgid "Block"
 msgstr ""
 
 #: includes/class-users-list-actions.php:191
-msgid "Block (VMS Span Checker)"
+msgid "Block (VMS Elements Form Guard)"
 msgstr ""
 
 #: includes/class-users-list-actions.php:192
-msgid "Unblock (VMS Span Checker)"
+msgid "Unblock (VMS Elements Form Guard)"
 msgstr ""
 
 #: includes/class-users-list-actions.php:233
@@ -1386,7 +1386,7 @@ msgid "404 error page"
 msgstr ""
 
 #: includes/functions.php:623
-msgid "Form not found. Check Form ID / class under VMS Span Checker Form Guard."
+msgid "Form not found. Check Form ID / class under VMS Elements Form Guard Form Guard."
 msgstr ""
 
 #: includes/functions.php:629
@@ -1608,7 +1608,7 @@ msgid "AI spam checker (textarea)"
 msgstr ""
 
 #: includes/functions.php:700
-msgid "Uses AI settings from VMS Span Checker → AI. Runs on the server when validation is enabled."
+msgid "Uses AI settings from VMS Elements Form Guard → AI. Runs on the server when validation is enabled."
 msgstr ""
 
 #: includes/functions.php:701
@@ -2144,7 +2144,7 @@ msgid "Visual editor for every transactional email sent by Auth Forms and the Gu
 msgstr ""
 
 #: services/class-ai-span-completion.php:30
-msgid "AI VMS Span Checker is disabled."
+msgid "AI VMS Elements Form Guard is disabled."
 msgstr ""
 
 #: services/class-ai-span-completion.php:46
@@ -2355,7 +2355,7 @@ msgid "Choose one provider for summaries and comment moderation. Credentials for
 msgstr ""
 
 #: templates/ai-settings.php:86
-msgid "Enable AI VMS Span Checker"
+msgid "Enable AI VMS Elements Form Guard"
 msgstr ""
 
 #: templates/ai-settings.php:93
@@ -2876,7 +2876,7 @@ msgid "Verification Page"
 msgstr ""
 
 #: templates/auth-forms.php:407
-msgid "Verification page with [wsc_verify_form] shortcode. Users can verify via OTP code OR activation link."
+msgid "Verification page with [vefg_verify_form] shortcode. Users can verify via OTP code OR activation link."
 msgstr ""
 
 #: templates/auth-forms.php:411
@@ -3020,7 +3020,7 @@ msgid "Using the Page Editor Meta Box"
 msgstr ""
 
 #: templates/auth-forms.php:536
-msgid "When editing any page, you'll see a \"VMS Span Checker Auth Form\" meta box in the sidebar. Select a form type from the dropdown to indicate this page uses one of our auth forms. This helps with:"
+msgid "When editing any page, you'll see a \"VMS Elements Form Guard Auth Form\" meta box in the sidebar. Select a form type from the dropdown to indicate this page uses one of our auth forms. This helps with:"
 msgstr ""
 
 #: templates/auth-forms.php:538
@@ -3505,7 +3505,7 @@ msgid "Guest"
 msgstr ""
 
 #: templates/comment-blocks.php:423
-#: templates/emails/wsc-email-template-functions.php:282
+#: templates/emails/vefg-email-template-functions.php:282
 msgid "IP:"
 msgstr ""
 
@@ -3843,7 +3843,7 @@ msgid "Web Risk & VirusTotal keys"
 msgstr ""
 
 #: templates/dashboard.php:104
-msgid "AI VMS Span Checker"
+msgid "AI VMS Elements Form Guard"
 msgstr ""
 
 #: templates/dashboard.php:105
@@ -3899,7 +3899,7 @@ msgid "Total checks logged"
 msgstr ""
 
 #: templates/dashboard.php:174
-msgid "All validation events recorded by VMS Span Checker."
+msgid "All validation events recorded by VMS Elements Form Guard."
 msgstr ""
 
 #: templates/dashboard.php:177
@@ -4020,7 +4020,7 @@ msgid "Powered by %s"
 msgstr ""
 
 #: templates/dashboard.php:350
-msgid "VMS Span Checker — domain intelligence for WordPress forms."
+msgid "VMS Elements Form Guard — domain intelligence for WordPress forms."
 msgstr ""
 
 #: templates/disposable.php:21
@@ -4039,107 +4039,107 @@ msgstr ""
 msgid "Enter domain"
 msgstr ""
 
-#: templates/emails/wsc-email-template-functions.php:73
+#: templates/emails/vefg-email-template-functions.php:73
 msgid "Reset Your Password"
 msgstr ""
 
-#: templates/emails/wsc-email-template-functions.php:90
+#: templates/emails/vefg-email-template-functions.php:90
 msgid "Welcome"
 msgstr ""
 
-#: templates/emails/wsc-email-template-functions.php:106
+#: templates/emails/vefg-email-template-functions.php:106
 msgid "Account Notice"
 msgstr ""
 
-#: templates/emails/wsc-email-template-functions.php:124
+#: templates/emails/vefg-email-template-functions.php:124
 msgid "New Login Alert"
 msgstr ""
 
 #. translators: %s: recipient name
-#: templates/emails/wsc-email-template-functions.php:163
-#: templates/emails/wsc-email-template-functions.php:202
-#: templates/emails/wsc-email-template-functions.php:247
-#: templates/emails/wsc-email-template-functions.php:268
+#: templates/emails/vefg-email-template-functions.php:163
+#: templates/emails/vefg-email-template-functions.php:202
+#: templates/emails/vefg-email-template-functions.php:247
+#: templates/emails/vefg-email-template-functions.php:268
 #, php-format
 msgid "Hello %s,"
 msgstr ""
 
 #. translators: %s: recipient name
-#: templates/emails/wsc-email-template-functions.php:164
-#: templates/emails/wsc-email-template-functions.php:203
-#: templates/emails/wsc-email-template-functions.php:248
-#: templates/emails/wsc-email-template-functions.php:269
+#: templates/emails/vefg-email-template-functions.php:164
+#: templates/emails/vefg-email-template-functions.php:203
+#: templates/emails/vefg-email-template-functions.php:248
+#: templates/emails/vefg-email-template-functions.php:269
 msgid "Hello,"
 msgstr ""
 
-#: templates/emails/wsc-email-template-functions.php:174
+#: templates/emails/vefg-email-template-functions.php:174
 msgid "To complete your sign up, we need to verify your email address."
 msgstr ""
 
-#: templates/emails/wsc-email-template-functions.php:176
+#: templates/emails/vefg-email-template-functions.php:176
 msgid "Verify Email Address"
 msgstr ""
 
-#: templates/emails/wsc-email-template-functions.php:180
+#: templates/emails/vefg-email-template-functions.php:180
 msgid "OR VERIFY WITH CODE"
 msgstr ""
 
 #. translators: %d: number of minutes until OTP code expires
-#: templates/emails/wsc-email-template-functions.php:189
+#: templates/emails/vefg-email-template-functions.php:189
 #, php-format
 msgid "Code expires in %d minutes"
 msgstr ""
 
-#: templates/emails/wsc-email-template-functions.php:194
+#: templates/emails/vefg-email-template-functions.php:194
 msgid "If you did not create an account, please ignore this email."
 msgstr ""
 
-#: templates/emails/wsc-email-template-functions.php:213
+#: templates/emails/vefg-email-template-functions.php:213
 msgid "Click the button below to reset your password:"
 msgstr ""
 
 #. translators: %s: recipient name
-#: templates/emails/wsc-email-template-functions.php:222
+#: templates/emails/vefg-email-template-functions.php:222
 #, php-format
 msgid "Welcome %s!"
 msgstr ""
 
 #. translators: %s: recipient name
-#: templates/emails/wsc-email-template-functions.php:223
+#: templates/emails/vefg-email-template-functions.php:223
 msgid "Welcome!"
 msgstr ""
 
 #. translators: %s: site name
-#: templates/emails/wsc-email-template-functions.php:236
+#: templates/emails/vefg-email-template-functions.php:236
 #, php-format
 msgid "Your account has been created on %s."
 msgstr ""
 
-#: templates/emails/wsc-email-template-functions.php:239
+#: templates/emails/vefg-email-template-functions.php:239
 msgid "Log In Now"
 msgstr ""
 
-#: templates/emails/wsc-email-template-functions.php:258
+#: templates/emails/vefg-email-template-functions.php:258
 msgid "Your account has been blocked due to suspicious activity."
 msgstr ""
 
-#: templates/emails/wsc-email-template-functions.php:260
+#: templates/emails/vefg-email-template-functions.php:260
 msgid "Contact site support if you think this is a mistake."
 msgstr ""
 
-#: templates/emails/wsc-email-template-functions.php:279
+#: templates/emails/vefg-email-template-functions.php:279
 msgid "A new sign-in was detected on your account."
 msgstr ""
 
-#: templates/emails/wsc-email-template-functions.php:281
+#: templates/emails/vefg-email-template-functions.php:281
 msgid "Time:"
 msgstr ""
 
-#: templates/emails/wsc-email-template-functions.php:283
+#: templates/emails/vefg-email-template-functions.php:283
 msgid "Location:"
 msgstr ""
 
-#: templates/emails/wsc-email-template-functions.php:285
+#: templates/emails/vefg-email-template-functions.php:285
 msgid "If this was not you, please change your password immediately."
 msgstr ""
 
@@ -4319,7 +4319,7 @@ msgid "PRO"
 msgstr ""
 
 #: templates/license-promo.php:42
-msgid "Everything you get in VMS Span Checker Pro"
+msgid "Everything you get in VMS Elements Form Guard Pro"
 msgstr ""
 
 #: templates/license-promo.php:66
@@ -4355,7 +4355,7 @@ msgid "Priority email support"
 msgstr ""
 
 #: templates/license-settings.php:36
-msgid "Activate your VMS Span Checker Pro license to unlock advanced features."
+msgid "Activate your VMS Elements Form Guard Pro license to unlock advanced features."
 msgstr ""
 
 #: templates/license-settings.php:47
@@ -4791,11 +4791,11 @@ msgid "Loads bundled major email-provider domains from includes/data/whitelist.s
 msgstr ""
 
 #. translators: %d: number of days
-#: vms-span-checker.php:177
+#: vms-elements-form-guard.php:177
 #, php-format
 msgid "Your account has been temporarily blocked due to suspicious activity. Please try again after %d days or contact support."
 msgstr ""
 
-#: vms-span-checker.php:181
+#: vms-elements-form-guard.php:181
 msgid "Your account has been blocked due to suspicious activity. Please contact support."
 msgstr ""

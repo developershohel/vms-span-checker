@@ -1,7 +1,7 @@
 ( function ( $ ) {
 	'use strict';
 
-	var wscToast = typeof Swal !== 'undefined'
+	var vefgToast = typeof Swal !== 'undefined'
 		? Swal.mixin( {
 			toast: true,
 			position: 'top-end',
@@ -11,22 +11,22 @@
 		} )
 		: null;
 
-	function wscErr( msg ) {
-		if ( wscToast ) {
-			wscToast.fire( { icon: 'error', title: msg } );
+	function vefgErr( msg ) {
+		if ( vefgToast ) {
+			vefgToast.fire( { icon: 'error', title: msg } );
 		} else {
 			window.alert( msg );
 		}
 	}
 
-	function wscOk( msg ) {
-		if ( wscToast ) {
-			wscToast.fire( { icon: 'success', title: msg } );
+	function vefgOk( msg ) {
+		if ( vefgToast ) {
+			vefgToast.fire( { icon: 'success', title: msg } );
 		}
 	}
 
 	$( function () {
-		$( document ).on( 'click', '.wsc-ai-generate-summary', function () {
+		$( document ).on( 'click', '.vefg-ai-generate-summary', function () {
 			var $btn = $( this );
 			var id = parseInt( $btn.data( 'post-id' ), 10 );
 			if ( ! id ) {
@@ -34,27 +34,27 @@
 			}
 			$btn.prop( 'disabled', true );
 			$.post(
-				WSCAiAdmin.ajaxurl,
+				VEFGAiAdmin.ajaxurl,
 				{
-					action: 'wsc_ai_regenerate_summary',
-					nonce: WSCAiAdmin.nonce,
+					action: 'vefg_ai_regenerate_summary',
+					nonce: VEFGAiAdmin.nonce,
 					post_id: id,
 				}
 			)
 				.done( function ( res ) {
 					if ( res && res.success ) {
-						var ok = ( WSCAiAdmin.i18n && WSCAiAdmin.i18n.success ) ? WSCAiAdmin.i18n.success : 'OK';
-						wscOk( ok );
+						var ok = ( VEFGAiAdmin.i18n && VEFGAiAdmin.i18n.success ) ? VEFGAiAdmin.i18n.success : 'OK';
+						vefgOk( ok );
 						window.setTimeout( function () {
 							window.location.reload();
 						}, 650 );
 					} else {
-						wscErr( ( res && res.data && res.data.message ) ? res.data.message : WSCAiAdmin.i18n.error );
+						vefgErr( ( res && res.data && res.data.message ) ? res.data.message : VEFGAiAdmin.i18n.error );
 						$btn.prop( 'disabled', false );
 					}
 				} )
 				.fail( function () {
-					wscErr( WSCAiAdmin.i18n.error );
+					vefgErr( VEFGAiAdmin.i18n.error );
 					$btn.prop( 'disabled', false );
 				} );
 		} );

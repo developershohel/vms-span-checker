@@ -1,4 +1,4 @@
-# VMS Span Checker
+# VMS Elements Form Guard
 
 **Ultimate Spam Protection & Email Validation for WordPress**
 
@@ -84,7 +84,7 @@ Protect your WordPress forms from spam submissions, fake emails, and malicious d
 ### From WordPress Admin
 
 1. Go to **Plugins > Add New**
-2. Search for "VMS Span Checker"
+2. Search for "VMS Elements Form Guard"
 3. Click **Install Now** and then **Activate**
 
 ### Manual Installation
@@ -98,7 +98,7 @@ Protect your WordPress forms from spam submissions, fake emails, and malicious d
 
 ```bash
 cd wp-content/plugins/
-git clone https://github.com/yourusername/vms-span-checker.git
+git clone https://github.com/yourusername/vms-elements-form-guard.git
 ```
 
 Then activate from WordPress admin.
@@ -107,8 +107,8 @@ Then activate from WordPress admin.
 
 ## Quick Start
 
-1. **Activate the plugin** - Go to Plugins and activate VMS Span Checker
-2. **Navigate to VMS Span Checker** - Find it in your admin menu (shield icon)
+1. **Activate the plugin** - Go to Plugins and activate VMS Elements Form Guard
+2. **Navigate to VMS Elements Form Guard** - Find it in your admin menu (shield icon)
 3. **Add a Form Guard mapping** - Go to Form Guard and click "Add form guard mapping"
 4. **Configure your form** - Select form type, target pages, and validation options
 5. **Test your form** - Submit a test with a disposable email to verify protection
@@ -135,7 +135,7 @@ Form Guard is the main feature for protecting your forms.
 
 #### Adding a Form Mapping
 
-1. Go to **VMS Span Checker > Form Guard**
+1. Go to **VMS Elements Form Guard > Form Guard**
 2. Click **Add form guard mapping**
 3. Configure the following:
 
@@ -186,7 +186,7 @@ Form Guard is the main feature for protecting your forms.
 
 Always allow submissions from trusted domains.
 
-1. Go to **VMS Span Checker > Whitelist Domains**
+1. Go to **VMS Elements Form Guard > Whitelist Domains**
 2. Add domains one per line:
 
 ```
@@ -202,7 +202,7 @@ yourcompany.com
 
 Block known disposable/temporary email providers.
 
-1. Go to **VMS Span Checker > Disposable Domains**
+1. Go to **VMS Elements Form Guard > Disposable Domains**
 2. The plugin includes 10,000+ pre-loaded disposable domains
 3. Add custom domains to block:
 
@@ -222,13 +222,13 @@ Configure third-party security APIs for enhanced protection.
 2. Create a new project or select existing
 3. Enable the **Web Risk API**
 4. Create an API key
-5. Enter the key in **VMS Span Checker > API Settings > Google Web Risk**
+5. Enter the key in **VMS Elements Form Guard > API Settings > Google Web Risk**
 
 #### VirusTotal API
 
 1. Create a free account at [VirusTotal](https://www.virustotal.com/)
 2. Go to your profile and copy your API key
-3. Add the key in **VMS Span Checker > API Settings > VirusTotal**
+3. Add the key in **VMS Elements Form Guard > API Settings > VirusTotal**
 4. Configure thresholds:
    - **Max Malicious** - Block if malicious detections exceed this (default: 0)
    - **Max Suspicious** - Block if suspicious detections exceed this (optional)
@@ -241,7 +241,7 @@ Configure third-party security APIs for enhanced protection.
 2. Choose v2 ("I'm not a robot") or v3 (invisible)
 3. Add your domain
 4. Copy Site Key and Secret Key
-5. Enter in **VMS Span Checker > API Settings > reCAPTCHA**
+5. Enter in **VMS Elements Form Guard > API Settings > reCAPTCHA**
 
 ### AI Span Settings
 
@@ -258,8 +258,8 @@ Configure AI-powered spam detection and content generation.
 
 #### Setup
 
-1. Go to **VMS Span Checker > AI Span Settings**
-2. Enable AI VMS Span Checker
+1. Go to **VMS Elements Form Guard > AI Span Settings**
+2. Enable AI VMS Elements Form Guard
 3. Select your preferred provider
 4. Enter your API key
 5. Choose the model
@@ -277,7 +277,7 @@ Configure AI-powered spam detection and content generation.
 
 Protect WordPress user registration.
 
-1. Go to **VMS Span Checker > Registration Guard**
+1. Go to **VMS Elements Form Guard > Registration Guard**
 2. Enable the guard
 3. Configure validation options
 4. Customize error messages
@@ -286,7 +286,7 @@ Protect WordPress user registration.
 
 Add validation to WordPress login.
 
-1. Go to **VMS Span Checker > Login Guard**
+1. Go to **VMS Elements Form Guard > Login Guard**
 2. Enable protection
 3. Configure rate limiting (optional)
 
@@ -294,7 +294,7 @@ Add validation to WordPress login.
 
 Protect contact forms with frontend validation.
 
-1. Go to **VMS Span Checker > Contact Guard**
+1. Go to **VMS Elements Form Guard > Contact Guard**
 2. Enable the guard
 3. Configure which forms to protect
 4. Set validation rules
@@ -303,7 +303,7 @@ Protect contact forms with frontend validation.
 
 Protect newsletter subscription forms.
 
-1. Go to **VMS Span Checker > Subscribe Guard**
+1. Go to **VMS Elements Form Guard > Subscribe Guard**
 2. Enable protection
 3. Map to your subscription forms
 4. Compatible with Newsletter Plugin, Mailchimp, etc.
@@ -312,7 +312,7 @@ Protect newsletter subscription forms.
 
 Advanced comment spam protection.
 
-1. Go to **VMS Span Checker > Comment Guard**
+1. Go to **VMS Elements Form Guard > Comment Guard**
 2. Enable spam rules
 3. Configure:
    - Minimum comment length
@@ -324,7 +324,7 @@ Advanced comment spam protection.
 
 Protect WooCommerce product reviews.
 
-1. Go to **VMS Span Checker > Product Review Guard**
+1. Go to **VMS Elements Form Guard > Product Review Guard**
 2. Enable protection
 3. Configure validation for review forms
 
@@ -332,7 +332,7 @@ Protect WooCommerce product reviews.
 
 ## Supported Forms
 
-VMS Span Checker works with any HTML form. Pre-tested compatibility:
+VMS Elements Form Guard works with any HTML form. Pre-tested compatibility:
 
 | Plugin/Form | Compatibility |
 |-------------|---------------|
@@ -378,25 +378,25 @@ Responses are cached to reduce API calls:
 
 ```php
 // Modify disposable domain list
-add_filter('wsc_disposable_domains', function($domains) {
+add_filter('vefg_disposable_domains', function($domains) {
     $domains[] = 'custom-spam-domain.com';
     return $domains;
 });
 
 // Modify whitelist domains
-add_filter('wsc_whitelist_domains', function($domains) {
+add_filter('vefg_whitelist_domains', function($domains) {
     $domains[] = 'trusted-partner.com';
     return $domains;
 });
 
 // Custom validation logic
-add_filter('wsc_validate_email', function($is_valid, $email, $domain) {
+add_filter('vefg_validate_email', function($is_valid, $email, $domain) {
     // Your custom logic
     return $is_valid;
 }, 10, 3);
 
 // Modify error messages
-add_filter('wsc_error_messages', function($messages) {
+add_filter('vefg_error_messages', function($messages) {
     $messages['disposable'] = 'Please use a permanent email address.';
     return $messages;
 });
@@ -406,17 +406,17 @@ add_filter('wsc_error_messages', function($messages) {
 
 ```php
 // After successful validation
-add_action('wsc_validation_passed', function($email, $form_data) {
+add_action('vefg_validation_passed', function($email, $form_data) {
     // Log or process successful validation
 }, 10, 2);
 
 // After blocked validation
-add_action('wsc_validation_blocked', function($email, $reason, $form_data) {
+add_action('vefg_validation_blocked', function($email, $reason, $form_data) {
     // Log or alert on blocked attempt
 }, 10, 3);
 
 // After AI spam detection
-add_action('wsc_ai_spam_detected', function($comment_id, $score, $reason) {
+add_action('vefg_ai_spam_detected', function($comment_id, $score, $reason) {
     // Handle AI-detected spam
 }, 10, 3);
 ```
@@ -487,15 +487,15 @@ Go to **Disposable Domains** and add the domain to the custom list.
 ## Support
 
 - **Documentation:** [https://vmselements.com](https://vmselements.com)
-- **Support Forum:** [WordPress.org Support](https://wordpress.org/support/plugin/vms-span-checker/)
+- **Support Forum:** [WordPress.org Support](https://wordpress.org/support/plugin/vms-elements-form-guard/)
 - **Email:** support@vmselements.com
-- **Pro:** [VMS Span Checker Pro](https://vmselements.com/product/vms-span-checker-pro)
+- **Pro:** [VMS Elements Form Guard Pro](https://vmselements.com/product/vms-elements-form-guard-pro)
 
 ---
 
 ## License
 
-VMS Span Checker is licensed under the GPL-2.0-or-later license. See [LICENSE](https://www.gnu.org/licenses/gpl-2.0.html) for details.
+VMS Elements Form Guard is licensed under the GPL-2.0-or-later license. See [LICENSE](https://www.gnu.org/licenses/gpl-2.0.html) for details.
 
 ---
 

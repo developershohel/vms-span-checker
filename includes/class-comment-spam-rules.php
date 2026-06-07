@@ -2,12 +2,12 @@
 /**
  * Facade for heuristic comment anti-spam (delegates to Spam component pipeline).
  *
- * @package VMS_Span_Checker
+ * @package VMS_Elements_Form_Guard
  */
 
-namespace VMS_Span_Checker;
+namespace VMS_Elements_Form_Guard;
 
-use VMS_Span_Checker\Spam\Comment_Spam_Controller;
+use VMS_Elements_Form_Guard\Spam\Comment_Spam_Controller;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

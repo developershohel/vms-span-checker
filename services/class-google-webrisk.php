@@ -2,10 +2,10 @@
 /**
  * Google Web Risk API client.
  *
- * @package VMS_Span_Checker
+ * @package VMS_Elements_Form_Guard
  */
 
-namespace VMS_Span_Checker\Services;
+namespace VMS_Elements_Form_Guard\Services;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Minimal Web Risk lookup.
  */
-class GoogleWebRisk {
+class Google_Webrisk {
 
 	/**
 	 * API key (Web Risk `uris:search` uses the `key` query parameter only).
@@ -27,7 +27,7 @@ class GoogleWebRisk {
 	 * Load options.
 	 */
 	public function __construct() {
-		$config = get_option( 'wsc-google-config', array() );
+		$config = get_option( 'vefg-google-config', array() );
 
 		$this->api_key = ( is_array( $config ) && isset( $config['api_key'] ) ) ? (string) $config['api_key'] : '';
 	}
@@ -42,7 +42,7 @@ class GoogleWebRisk {
 		if ( empty( $this->api_key ) ) {
 			return array(
 				'status'  => false,
-				'message' => __( 'Google API key is required.', 'vms-span-checker' ),
+				'message' => __( 'Google API key is required.', 'vms-elements-form-guard' ),
 			);
 		}
 
@@ -67,7 +67,7 @@ class GoogleWebRisk {
 			return array(
 				'status'  => false,
 				/* translators: %s: WordPress error message */
-				'message' => sprintf( __( 'Web Risk API request failed: %s', 'vms-span-checker' ), $response->get_error_message() ),
+				'message' => sprintf( __( 'Web Risk API request failed: %s', 'vms-elements-form-guard' ), $response->get_error_message() ),
 			);
 		}
 
@@ -75,7 +75,7 @@ class GoogleWebRisk {
 		if ( ! $body ) {
 			return array(
 				'status'  => false,
-				'message' => __( 'Web Risk API returned an empty response.', 'vms-span-checker' ),
+				'message' => __( 'Web Risk API returned an empty response.', 'vms-elements-form-guard' ),
 			);
 		}
 
@@ -84,13 +84,13 @@ class GoogleWebRisk {
 		if ( isset( $data['threat'] ) ) {
 			return array(
 				'status'  => false,
-				'message' => __( 'Threat detected.', 'vms-span-checker' ),
+				'message' => __( 'Threat detected.', 'vms-elements-form-guard' ),
 			);
 		}
 
 		return array(
 			'status'  => true,
-			'message' => __( 'No threats detected.', 'vms-span-checker' ),
+			'message' => __( 'No threats detected.', 'vms-elements-form-guard' ),
 		);
 	}
 }

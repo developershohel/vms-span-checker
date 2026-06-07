@@ -2,10 +2,10 @@
 /**
  * Minimal AWS Signature Version 4 for Bedrock InvokeModel POST.
  *
- * @package VMS_Span_Checker
+ * @package VMS_Elements_Form_Guard
  */
 
-namespace VMS_Span_Checker\Services;
+namespace VMS_Elements_Form_Guard\Services;
 
 use WP_Error;
 

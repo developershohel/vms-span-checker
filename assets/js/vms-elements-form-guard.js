@@ -5,7 +5,7 @@
     if (typeof window === 'undefined') {
         return;
     }
-    var g = (window.wpSpanCheckerFormGuard = window.wpSpanCheckerFormGuard || {});
+    var g = (window.vefgFormGuardState = window.vefgFormGuardState || {});
     if (!g.registry) {
         g.registry =
             typeof WeakMap !== 'undefined' ? new WeakMap() : typeof Map !== 'undefined' ? new Map() : null;
@@ -13,27 +13,27 @@
 })();
 
 jQuery(function ($) {
-    const wpSpanCheckerToast = window.wpSpanCheckerToast;
-    console.log('[VMS Span Checker] Form Guard initializing...');
+    const vefgToast = window.vefgToast;
+    console.log('[VMS Elements Form Guard] Form Guard initializing...');
     
-    const I = typeof WPSpanChecker !== 'undefined' && WPSpanChecker.i18n ? WPSpanChecker.i18n : {};
+    const I = typeof VEFGChecker !== 'undefined' && VEFGChecker.i18n ? VEFGChecker.i18n : {};
     const t = function (key, fallback) {
         return I[key] !== undefined && I[key] !== '' ? I[key] : fallback;
     };
 
-    const settings = (typeof WPSpanChecker !== 'undefined' && WPSpanChecker.settings) ? WPSpanChecker.settings : [];
-    const ajaxUrl = (typeof WPSpanChecker !== 'undefined' && (WPSpanChecker.ajaxUrl || WPSpanChecker.ajaxurl))
+    const settings = (typeof VEFGChecker !== 'undefined' && VEFGChecker.settings) ? VEFGChecker.settings : [];
+    const ajaxUrl = (typeof VEFGChecker !== 'undefined' && (VEFGChecker.ajaxUrl || VEFGChecker.ajaxurl))
         || (typeof ajaxurl !== 'undefined' ? ajaxurl : '');
-    const nonce = (typeof WPSpanChecker !== 'undefined' && WPSpanChecker.nonce) ? WPSpanChecker.nonce : '';
-    const pageID = (typeof WPSpanChecker !== 'undefined' && WPSpanChecker.pageID) ? WPSpanChecker.pageID : 0;
-    const pageType = (typeof WPSpanChecker !== 'undefined' && WPSpanChecker.pageType) ? WPSpanChecker.pageType : 'common';
-    const bodyClasses = (typeof WPSpanChecker !== 'undefined' && WPSpanChecker.bodyClasses) ? WPSpanChecker.bodyClasses : [];
-    const presetClasses = (typeof WPSpanChecker !== 'undefined' && WPSpanChecker.presetClasses) ? WPSpanChecker.presetClasses : {};
+    const nonce = (typeof VEFGChecker !== 'undefined' && VEFGChecker.nonce) ? VEFGChecker.nonce : '';
+    const pageID = (typeof VEFGChecker !== 'undefined' && VEFGChecker.pageID) ? VEFGChecker.pageID : 0;
+    const pageType = (typeof VEFGChecker !== 'undefined' && VEFGChecker.pageType) ? VEFGChecker.pageType : 'common';
+    const bodyClasses = (typeof VEFGChecker !== 'undefined' && VEFGChecker.bodyClasses) ? VEFGChecker.bodyClasses : [];
+    const presetClasses = (typeof VEFGChecker !== 'undefined' && VEFGChecker.presetClasses) ? VEFGChecker.presetClasses : {};
 
     /**
      * Check if a form should be skipped (admin bar, wp-admin forms, etc.)
      */
-    function wscShouldSkipForm($form) {
+    function vefgShouldSkipForm($form) {
         if (!$form.length) return true;
         
         // Skip admin bar search form
@@ -54,45 +54,45 @@ jQuery(function ($) {
     }
 
     /**
-     * Check if a form is already protected by any VMS Span Checker guard.
+     * Check if a form is already protected by any VMS Elements Form Guard guard.
      * This prevents multiple guards from applying to the same form.
      */
-    function wscIsFormAlreadyProtected($form) {
+    function vefgIsFormAlreadyProtected($form) {
         if (!$form.length) return false;
-        return $form.data('wsc-guard-protected') === true;
+        return $form.data('vefg-guard-protected') === true;
     }
 
     /**
-     * Mark a form as protected by VMS Span Checker.
+     * Mark a form as protected by VMS Elements Form Guard.
      */
-    function wscMarkFormAsProtected($form) {
+    function vefgMarkFormAsProtected($form) {
         if ($form.length) {
-            $form.data('wsc-guard-protected', true);
+            $form.data('vefg-guard-protected', true);
         }
     }
 
     /**
      * Get all content forms (excluding admin bar and wp-admin forms)
      */
-    function wscGetContentForms() {
+    function vefgGetContentForms() {
         return $('form').filter(function() {
-            return !wscShouldSkipForm($(this));
+            return !vefgShouldSkipForm($(this));
         });
     }
 
-    console.log('WPSpanChecker', WPSpanChecker);
+    console.log('VEFGChecker', VEFGChecker);
     console.log('ajaxUrl', ajaxUrl);
     console.log('nonce', nonce);
     console.log('pageType', pageType);
     console.log('bodyClasses', bodyClasses);
-    console.log('[VMS Span Checker] Settings loaded:', settings.length, 'mapping(s)');
+    console.log('[VMS Elements Form Guard] Settings loaded:', settings.length, 'mapping(s)');
 
-    function wscBodyHasClass(className) {
+    function vefgBodyHasClass(className) {
         if (!className) return false;
         return $('body').hasClass(className) || bodyClasses.indexOf(className) !== -1;
     }
 
-    function wscNormalizePageTargets(raw) {
+    function vefgNormalizePageTargets(raw) {
         if (!raw) return [];
         if (Array.isArray(raw)) return raw.map(String).filter(Boolean);
         const s = String(raw).trim();
@@ -104,8 +104,8 @@ jQuery(function ($) {
         return [s];
     }
 
-    function wscSettingMatchesCurrentPage(setting) {
-        const targets = wscNormalizePageTargets(setting.page_id);
+    function vefgSettingMatchesCurrentPage(setting) {
+        const targets = vefgNormalizePageTargets(setting.page_id);
         const formSelector = String(setting.form_id || '').trim();
         
         if (targets.length === 0) {
@@ -117,7 +117,7 @@ jQuery(function ($) {
             
             if (target === 'all-pages') {
                 if (!formSelector) {
-                    console.log('[VMS Span Checker] Entire site target requires form selector');
+                    console.log('[VMS Elements Form Guard] Entire site target requires form selector');
                     return { matches: false, requiresFormSelector: true };
                 }
                 return { matches: true, requiresFormSelector: true };
@@ -125,31 +125,31 @@ jQuery(function ($) {
             
             if (/^\d+$/.test(target)) {
                 const targetId = parseInt(target, 10);
-                if (pageType === 'page' && wscBodyHasClass('page-id-' + targetId)) {
-                    console.log('[VMS Span Checker] Matched page ID:', targetId);
+                if (pageType === 'page' && vefgBodyHasClass('page-id-' + targetId)) {
+                    console.log('[VMS Elements Form Guard] Matched page ID:', targetId);
                     return { matches: true, requiresFormSelector: false };
                 }
-                if (pageType === 'post' && wscBodyHasClass('postid-' + targetId)) {
-                    console.log('[VMS Span Checker] Matched post ID:', targetId);
+                if (pageType === 'post' && vefgBodyHasClass('postid-' + targetId)) {
+                    console.log('[VMS Elements Form Guard] Matched post ID:', targetId);
                     return { matches: true, requiresFormSelector: false };
                 }
                 if (targetId === pageID) {
-                    console.log('[VMS Span Checker] Matched by pageID:', targetId);
+                    console.log('[VMS Elements Form Guard] Matched by pageID:', targetId);
                     return { matches: true, requiresFormSelector: false };
                 }
                 continue;
             }
             
             const presetClass = presetClasses[target];
-            if (presetClass && wscBodyHasClass(presetClass)) {
-                console.log('[VMS Span Checker] Matched preset:', target, 'via class:', presetClass);
+            if (presetClass && vefgBodyHasClass(presetClass)) {
+                console.log('[VMS Elements Form Guard] Matched preset:', target, 'via class:', presetClass);
                 return { matches: true, requiresFormSelector: false };
             }
             
-            if (target === 'front-page' && wscBodyHasClass('home')) {
+            if (target === 'front-page' && vefgBodyHasClass('home')) {
                 return { matches: true, requiresFormSelector: false };
             }
-            if (target === 'home-blog' && wscBodyHasClass('blog')) {
+            if (target === 'home-blog' && vefgBodyHasClass('blog')) {
                 return { matches: true, requiresFormSelector: false };
             }
             if (target === 'singular-page' && pageType === 'page') {
@@ -158,22 +158,22 @@ jQuery(function ($) {
             if (target === 'singular-post' && pageType === 'post') {
                 return { matches: true, requiresFormSelector: false };
             }
-            if (target === 'singular-any' && (pageType === 'page' || pageType === 'post' || wscBodyHasClass('singular'))) {
+            if (target === 'singular-any' && (pageType === 'page' || pageType === 'post' || vefgBodyHasClass('singular'))) {
                 return { matches: true, requiresFormSelector: false };
             }
-            if (target === 'archive-any' && wscBodyHasClass('archive')) {
+            if (target === 'archive-any' && vefgBodyHasClass('archive')) {
                 return { matches: true, requiresFormSelector: false };
             }
-            if (target === 'archive-category' && wscBodyHasClass('category')) {
+            if (target === 'archive-category' && vefgBodyHasClass('category')) {
                 return { matches: true, requiresFormSelector: false };
             }
-            if (target === 'archive-tag' && wscBodyHasClass('tag')) {
+            if (target === 'archive-tag' && vefgBodyHasClass('tag')) {
                 return { matches: true, requiresFormSelector: false };
             }
-            if (target === 'search' && wscBodyHasClass('search')) {
+            if (target === 'search' && vefgBodyHasClass('search')) {
                 return { matches: true, requiresFormSelector: false };
             }
-            if (target === '404' && wscBodyHasClass('error404')) {
+            if (target === '404' && vefgBodyHasClass('error404')) {
                 return { matches: true, requiresFormSelector: false };
             }
         }
@@ -191,7 +191,7 @@ jQuery(function ($) {
         url: ['url', 'website', 'web', 'site', 'link', 'homepage', 'webpage', 'your-url', 'your-website']
     };
 
-    function wscDetectFieldType($field) {
+    function vefgDetectFieldType($field) {
         const type = ($field.attr('type') || '').toLowerCase();
         const name = ($field.attr('name') || '').toLowerCase();
         const tagName = ($field.prop('tagName') || '').toLowerCase();
@@ -220,11 +220,11 @@ jQuery(function ($) {
         return null;
     }
 
-    function wscAutoDetectFormFields($form, autoRules) {
+    function vefgAutoDetectFormFields($form, autoRules) {
         const fields = [];
         const rules = autoRules || {};
         
-        console.log('[VMS Span Checker] Auto-detecting fields with rules:', rules);
+        console.log('[VMS Elements Form Guard] Auto-detecting fields with rules:', rules);
         
         $form.find('input, textarea, select').each(function() {
             const $field = $(this);
@@ -241,7 +241,7 @@ jQuery(function ($) {
                 return;
             }
             
-            const detectedType = wscDetectFieldType($field);
+            const detectedType = vefgDetectFieldType($field);
             if (!detectedType) return;
             
             const isRequired = $field.prop('required') || $field.attr('required') !== undefined;
@@ -265,7 +265,7 @@ jQuery(function ($) {
                             virustotal: !!rules.email.virustotal
                         };
                     }
-                    console.log('[VMS Span Checker] Email field:', $field.attr('name'), 'required:', isRequired, 'rules:', fieldConfig.rules);
+                    console.log('[VMS Elements Form Guard] Email field:', $field.attr('name'), 'required:', isRequired, 'rules:', fieldConfig.rules);
                     break;
                 case 'url':
                     // URL fields should allow URLs - apply URL validation rules, NOT block_urls
@@ -276,7 +276,7 @@ jQuery(function ($) {
                             virustotal: !!rules.url.virustotal
                         };
                     }
-                    console.log('[VMS Span Checker] URL/Website field:', $field.attr('name'), 'required:', isRequired, 'rules:', fieldConfig.rules);
+                    console.log('[VMS Elements Form Guard] URL/Website field:', $field.attr('name'), 'required:', isRequired, 'rules:', fieldConfig.rules);
                     break;
                 case 'textarea':
                     if (rules.textarea) {
@@ -285,7 +285,7 @@ jQuery(function ($) {
                             ai_spam: !!rules.textarea.ai_spam
                         };
                     }
-                    console.log('[VMS Span Checker] Textarea field:', $field.attr('name'), 'required:', isRequired, 'rules:', fieldConfig.rules, 'autoRules.textarea:', rules.textarea);
+                    console.log('[VMS Elements Form Guard] Textarea field:', $field.attr('name'), 'required:', isRequired, 'rules:', fieldConfig.rules, 'autoRules.textarea:', rules.textarea);
                     break;
                 case 'username':
                     if (rules.username) {
@@ -293,7 +293,7 @@ jQuery(function ($) {
                             check_exists: !!rules.username.check_exists
                         };
                     }
-                    console.log('[VMS Span Checker] Username field:', $field.attr('name'), 'required:', isRequired, 'rules:', fieldConfig.rules);
+                    console.log('[VMS Elements Form Guard] Username field:', $field.attr('name'), 'required:', isRequired, 'rules:', fieldConfig.rules);
                     break;
                 case 'password':
                     if (rules.password) {
@@ -301,7 +301,7 @@ jQuery(function ($) {
                             strength: !!rules.password.strength
                         };
                     }
-                    console.log('[VMS Span Checker] Password field:', $field.attr('name'), 'required:', isRequired, 'rules:', fieldConfig.rules);
+                    console.log('[VMS Elements Form Guard] Password field:', $field.attr('name'), 'required:', isRequired, 'rules:', fieldConfig.rules);
                     break;
                 case 'text':
                     // Only apply block_urls to generic text fields, NOT to URL-type fields
@@ -310,21 +310,21 @@ jQuery(function ($) {
                             block_urls: !!rules.text.block_urls
                         };
                     }
-                    console.log('[VMS Span Checker] Text field:', $field.attr('name'), 'required:', isRequired, 'rules:', fieldConfig.rules, 'rules.text:', rules.text);
+                    console.log('[VMS Elements Form Guard] Text field:', $field.attr('name'), 'required:', isRequired, 'rules:', fieldConfig.rules, 'rules.text:', rules.text);
                     break;
             }
             
             fields.push(fieldConfig);
         });
         
-        console.log('[VMS Span Checker] Total fields detected:', fields.length);
+        console.log('[VMS Elements Form Guard] Total fields detected:', fields.length);
         return fields;
     }
 
     /**
      * Detect common spam patterns in text (client-side).
      */
-    function wscDetectSpamPatterns(text) {
+    function vefgDetectSpamPatterns(text) {
         if (!text || typeof text !== 'string') {
             return { isSpam: false };
         }
@@ -406,7 +406,7 @@ jQuery(function ($) {
     /**
      * Get a readable label for a field (for error messages).
      */
-    function wscGetFieldLabel($field) {
+    function vefgGetFieldLabel($field) {
         // Try to find associated label
         const id = $field.attr('id');
         if (id) {
@@ -434,13 +434,13 @@ jQuery(function ($) {
     /**
      * Show inline error message below a field.
      */
-    function wscShowFieldError($field, message) {
-        wscClearFieldError($field);
+    function vefgShowFieldError($field, message) {
+        vefgClearFieldError($field);
         
         if (!message) return;
         
-        const $error = $('<span class="wsc-field-error">' + message + '</span>');
-        $field.addClass('wsc-field-invalid');
+        const $error = $('<span class="vefg-field-error">' + message + '</span>');
+        $field.addClass('vefg-field-invalid');
         
         // Try to find the best place to insert error
         const $parent = $field.parent();
@@ -456,23 +456,23 @@ jQuery(function ($) {
     /**
      * Clear inline error message from a field.
      */
-    function wscClearFieldError($field) {
-        $field.removeClass('wsc-field-invalid');
+    function vefgClearFieldError($field) {
+        $field.removeClass('vefg-field-invalid');
         
         const $parent = $field.parent();
-        $parent.find('.wsc-field-error').remove();
-        $field.siblings('.wsc-field-error').remove();
+        $parent.find('.vefg-field-error').remove();
+        $field.siblings('.vefg-field-error').remove();
     }
     
     /**
      * Clear all field errors in a form.
      */
-    function wscClearAllFieldErrors($form) {
-        $form.find('.wsc-field-invalid').removeClass('wsc-field-invalid');
-        $form.find('.wsc-field-error').remove();
+    function vefgClearAllFieldErrors($form) {
+        $form.find('.vefg-field-invalid').removeClass('vefg-field-invalid');
+        $form.find('.vefg-field-error').remove();
     }
 
-    function wscValidateAutoField(fieldConfig) {
+    function vefgValidateAutoField(fieldConfig) {
         const $field = fieldConfig.$el;
         const value = String($field.val() || '').trim();
         const rules = fieldConfig.rules;
@@ -480,7 +480,7 @@ jQuery(function ($) {
         
         // Check required fields first
         if (isRequired && !value) {
-            const fieldName = wscGetFieldLabel($field);
+            const fieldName = vefgGetFieldLabel($field);
             return { valid: false, message: t('fieldRequired', 'This field is required.'), $field: $field };
         }
         
@@ -521,14 +521,14 @@ jQuery(function ($) {
                 }
                 // Basic client-side spam detection (before AI check)
                 if (rules.ai_spam) {
-                    const spamResult = wscDetectSpamPatterns(value);
+                    const spamResult = vefgDetectSpamPatterns(value);
                     if (spamResult.isSpam) {
                         return { valid: false, message: spamResult.message || t('spamDetected', 'Your message appears to be spam.'), $field: $field };
                     }
                 }
                 break;
             case 'text':
-                console.log('[VMS Span Checker] Validating text field, block_urls:', rules.block_urls, 'value:', value);
+                console.log('[VMS Elements Form Guard] Validating text field, block_urls:', rules.block_urls, 'value:', value);
                 if (rules.block_urls) {
                     // Match URLs: http(s)://, www., or domain.ext patterns
                     const urlPatterns = [
@@ -538,11 +538,11 @@ jQuery(function ($) {
                     ];
                     const hasUrl = urlPatterns.some(function(pattern) {
                         const matches = pattern.test(value);
-                        if (matches) console.log('[VMS Span Checker] URL pattern matched:', pattern);
+                        if (matches) console.log('[VMS Elements Form Guard] URL pattern matched:', pattern);
                         return matches;
                     });
                     if (hasUrl) {
-                        console.log('[VMS Span Checker] URL detected in text field, blocking');
+                        console.log('[VMS Elements Form Guard] URL detected in text field, blocking');
                         return { valid: false, message: t('urlsNotAllowed', 'URLs are not allowed in this field.'), $field: $field };
                     }
                 }
@@ -555,7 +555,7 @@ jQuery(function ($) {
     /**
      * Single AJAX call to validate ALL fields at once.
      */
-    function wscValidateAllFieldsServer(fields, recaptchaToken) {
+    function vefgValidateAllFieldsServer(fields, recaptchaToken) {
         return new Promise(function(resolve, reject) {
             if (!fields || fields.length === 0) {
                 resolve({ status: true });
@@ -576,7 +576,7 @@ jQuery(function ($) {
             });
             
             var requestData = {
-                action: 'validateAllFields',
+                action: 'vefg_validate_all_fields',
                 nonce: nonce,
                 fields: JSON.stringify(fieldsData)
             };
@@ -598,20 +598,20 @@ jQuery(function ($) {
                     }
                 },
                 error: function(xhr, status, error) {
-                    console.error('[VMS Span Checker] AJAX error:', error);
+                    console.error('[VMS Elements Form Guard] AJAX error:', error);
                     reject(new Error(t('serverError', 'Server error. Please try again.')));
                 }
             });
         });
     }
 
-    function wscAutoValidateServer(mappingId, fieldConfig, value) {
+    function vefgAutoValidateServer(mappingId, fieldConfig, value) {
         return new Promise(function(resolve, reject) {
             $.ajax({
                 url: ajaxUrl,
                 type: 'POST',
                 data: {
-                    action: 'validateAutoField',
+                    action: 'vefg_validate_auto_field',
                     nonce: nonce,
                     mappingId: mappingId,
                     fieldType: fieldConfig.type,
@@ -636,19 +636,19 @@ jQuery(function ($) {
         });
     }
 
-    function wscFindFormForSetting(setting, matchResult) {
+    function vefgFindFormForSetting(setting, matchResult) {
         const formSelector = String(setting.form_id || '').trim();
         const submitSelector = String(setting.submit_selector || '').trim();
         
         // If form selector is provided, ONLY use that selector - no fallback
         if (formSelector) {
             const $form = resolveForm$(formSelector, setting.form_class);
-            if ($form.length && !wscShouldSkipForm($form)) {
-                console.log('[VMS Span Checker] Form found by selector:', formSelector);
+            if ($form.length && !vefgShouldSkipForm($form)) {
+                console.log('[VMS Elements Form Guard] Form found by selector:', formSelector);
                 return $form;
             }
             // Form selector was specified but not found - do NOT fall back
-            console.log('[VMS Span Checker] Form not found for selector:', formSelector, '- NOT falling back to auto-detection');
+            console.log('[VMS Elements Form Guard] Form not found for selector:', formSelector, '- NOT falling back to auto-detection');
             return $();
         }
         
@@ -658,20 +658,20 @@ jQuery(function ($) {
                 const $submitBtn = $(submitSelector).first();
                 if ($submitBtn.length) {
                     const $form = $submitBtn.closest('form');
-                    if ($form.length && !wscShouldSkipForm($form)) {
-                        console.log('[VMS Span Checker] Form found via submit selector');
+                    if ($form.length && !vefgShouldSkipForm($form)) {
+                        console.log('[VMS Elements Form Guard] Form found via submit selector');
                         return $form;
                     }
                 }
             }
             
-            const $forms = wscGetContentForms();
+            const $forms = vefgGetContentForms();
             if ($forms.length === 1) {
-                console.log('[VMS Span Checker] Single content form found on page');
+                console.log('[VMS Elements Form Guard] Single content form found on page');
                 return $forms.first();
             }
             if ($forms.length > 1) {
-                console.log('[VMS Span Checker] Multiple content forms found, returning first one');
+                console.log('[VMS Elements Form Guard] Multiple content forms found, returning first one');
                 return $forms.first();
             }
         }
@@ -679,7 +679,7 @@ jQuery(function ($) {
         return $();
     }
 
-    function wscLooksCombinedSelector(fid) {
+    function vefgLooksCombinedSelector(fid) {
         const s = String(fid || '').trim();
         return (
             s !== '' &&
@@ -687,7 +687,7 @@ jQuery(function ($) {
         );
     }
 
-    function wscEscapeSel(seg) {
+    function vefgEscapeSel(seg) {
         if (typeof $.escapeSelector === 'function') {
             return $.escapeSelector(seg);
         }
@@ -698,50 +698,50 @@ jQuery(function ($) {
         const fid = String(formId || '').trim();
         const fcls = String(formClass || '').trim();
         
-        console.log('[VMS Span Checker] resolveForm$ called with formId:', fid, 'formClass:', fcls);
+        console.log('[VMS Elements Form Guard] resolveForm$ called with formId:', fid, 'formClass:', fcls);
         
         // Check if it's a combined/complex CSS selector (contains #, ., [, or space for descendant)
-        if (wscLooksCombinedSelector(fid) || fid.indexOf(' ') !== -1) {
-            console.log('[VMS Span Checker] Trying combined selector:', fid);
+        if (vefgLooksCombinedSelector(fid) || fid.indexOf(' ') !== -1) {
+            console.log('[VMS Elements Form Guard] Trying combined selector:', fid);
             
             try {
                 const $hit = $(fid);
-                console.log('[VMS Span Checker] Selector matched elements:', $hit.length);
+                console.log('[VMS Elements Form Guard] Selector matched elements:', $hit.length);
                 
                 if ($hit.length) {
-                    console.log('[VMS Span Checker] Matched element(s) tagName(s):', $hit.toArray().map(el => el.tagName).join(', '));
+                    console.log('[VMS Elements Form Guard] Matched element(s) tagName(s):', $hit.toArray().map(el => el.tagName).join(', '));
                 }
                 
                 if (!$hit.length) {
-                    console.log('[VMS Span Checker] No elements found for selector:', fid);
+                    console.log('[VMS Elements Form Guard] No elements found for selector:', fid);
                     return $();
                 }
                 
                 // If the selector directly returns form elements
                 const $formHit = $hit.filter('form').first();
                 if ($formHit.length) {
-                    console.log('[VMS Span Checker] Found form via filter, form id:', $formHit.attr('id'), 'class:', $formHit.attr('class'));
+                    console.log('[VMS Elements Form Guard] Found form via filter, form id:', $formHit.attr('id'), 'class:', $formHit.attr('class'));
                     return $formHit;
                 }
                 
                 // If the selector returns a wrapper, find the form inside it
                 const $innerForm = $hit.find('form').first();
                 if ($innerForm.length) {
-                    console.log('[VMS Span Checker] Found form inside matched element, form id:', $innerForm.attr('id'), 'class:', $innerForm.attr('class'));
+                    console.log('[VMS Elements Form Guard] Found form inside matched element, form id:', $innerForm.attr('id'), 'class:', $innerForm.attr('class'));
                     return $innerForm;
                 }
                 
                 // If the selector returns an element inside a form, find the parent form
                 const $inForm = $hit.closest('form').first();
                 if ($inForm.length) {
-                    console.log('[VMS Span Checker] Found form as ancestor, form id:', $inForm.attr('id'), 'class:', $inForm.attr('class'));
+                    console.log('[VMS Elements Form Guard] Found form as ancestor, form id:', $inForm.attr('id'), 'class:', $inForm.attr('class'));
                     return $inForm;
                 }
                 
-                console.log('[VMS Span Checker] No form found for selector:', fid);
+                console.log('[VMS Elements Form Guard] No form found for selector:', fid);
                 return $();
             } catch (e) {
-                console.error('[VMS Span Checker] Error with selector:', fid, e);
+                console.error('[VMS Elements Form Guard] Error with selector:', fid, e);
                 return $();
             }
         }
@@ -753,10 +753,10 @@ jQuery(function ($) {
             return c.replace(/^\./, '');
         });
         if (id && classes.length) {
-            return $('#' + wscEscapeSel(id) + '.' + classes.join('.'));
+            return $('#' + vefgEscapeSel(id) + '.' + classes.join('.'));
         }
         if (id) {
-            return $('#' + wscEscapeSel(id));
+            return $('#' + vefgEscapeSel(id));
         }
         if (classes.length) {
             return $('.' + classes.join('.'));
@@ -820,12 +820,12 @@ jQuery(function ($) {
                 for (var i = 0; i < $btn.length; i++) {
                     var $b = $btn.eq(i);
                     if (isButtonVisible($b)) {
-                        console.log('[VMS Span Checker] Found visible submit button with custom selector:', raw);
+                        console.log('[VMS Elements Form Guard] Found visible submit button with custom selector:', raw);
                         return $b;
                     }
                 }
                 // Fallback to first if none visible
-                console.log('[VMS Span Checker] Found submit button with custom selector (no visible check):', raw);
+                console.log('[VMS Elements Form Guard] Found submit button with custom selector (no visible check):', raw);
                 return $btn.first();
             }
         }
@@ -833,49 +833,49 @@ jQuery(function ($) {
         // 1. input[type="submit"] - standard submit input (usually visible)
         let $btn = findVisibleSubmit($form, 'input[type="submit"]');
         if ($btn.length) {
-            console.log('[VMS Span Checker] Found visible input[type="submit"]');
+            console.log('[VMS Elements Form Guard] Found visible input[type="submit"]');
             return $btn;
         }
         
         // 2. button[type="submit"] - explicit submit button (filter hidden ones like quform-default-submit)
         $btn = findVisibleSubmit($form, 'button[type="submit"]:not(.quform-default-submit)');
         if ($btn.length) {
-            console.log('[VMS Span Checker] Found visible button[type="submit"]');
+            console.log('[VMS Elements Form Guard] Found visible button[type="submit"]');
             return $btn;
         }
         
         // 3. Common submit button classes (visible ones)
         $btn = findVisibleSubmit($form, '.quform-submit:not(.quform-default-submit), .wpcf7-submit, .sib-default-btn, .tnp-submit, .mc4wp-submit, .wpforms-submit');
         if ($btn.length) {
-            console.log('[VMS Span Checker] Found visible button by common submit class');
+            console.log('[VMS Elements Form Guard] Found visible button by common submit class');
             return $btn;
         }
         
         // 4. Any element with type="submit" (visible)
         $btn = findVisibleSubmit($form, '[type="submit"]');
         if ($btn.length) {
-            console.log('[VMS Span Checker] Found visible [type="submit"]');
+            console.log('[VMS Elements Form Guard] Found visible [type="submit"]');
             return $btn;
         }
         
         // 5. Button without type attribute (defaults to submit in HTML) - visible
         $btn = findVisibleSubmit($form, 'button:not([type]):not([aria-hidden="true"])');
         if ($btn.length) {
-            console.log('[VMS Span Checker] Found visible button without type (defaults to submit)');
+            console.log('[VMS Elements Form Guard] Found visible button without type (defaults to submit)');
             return $btn;
         }
         
         // 6. Button that is not explicitly button or reset type - visible
         $btn = findVisibleSubmit($form, 'button:not([type="button"]):not([type="reset"]):not([aria-hidden="true"])');
         if ($btn.length) {
-            console.log('[VMS Span Checker] Found visible button (not button/reset type)');
+            console.log('[VMS Elements Form Guard] Found visible button (not button/reset type)');
             return $btn;
         }
         
         // 7. Generic submit classes - visible
         $btn = findVisibleSubmit($form, '.submit, .btn-submit, .form-submit');
         if ($btn.length) {
-            console.log('[VMS Span Checker] Found visible button by generic submit class');
+            console.log('[VMS Elements Form Guard] Found visible button by generic submit class');
             return $btn;
         }
         
@@ -884,7 +884,7 @@ jQuery(function ($) {
         for (var i = $allButtons.length - 1; i >= 0; i--) {
             var $b = $allButtons.eq(i);
             if (isButtonVisible($b)) {
-                console.log('[VMS Span Checker] Found last visible button as fallback');
+                console.log('[VMS Elements Form Guard] Found last visible button as fallback');
                 return $b;
             }
         }
@@ -892,11 +892,11 @@ jQuery(function ($) {
         // 9. Last input[type="button"] that might act as submit
         $btn = $form.find('input[type="button"]').last();
         if ($btn.length && isButtonVisible($btn)) {
-            console.log('[VMS Span Checker] Found last visible input[type="button"] as fallback');
+            console.log('[VMS Elements Form Guard] Found last visible input[type="button"] as fallback');
             return $btn;
         }
         
-        console.log('[VMS Span Checker] No submit button found in form');
+        console.log('[VMS Elements Form Guard] No submit button found in form');
         return $();
     }
 
@@ -907,15 +907,15 @@ jQuery(function ($) {
             return c.replace(/^\./, '');
         });
 
-        if (wscLooksCombinedSelector(id)) {
+        if (vefgLooksCombinedSelector(id)) {
             const $h = $form.find(id);
             return $h.length ? $h : $(id);
         }
         if (id && classes.length) {
-            return $form.find('#' + wscEscapeSel(id) + '.' + classes.join('.'));
+            return $form.find('#' + vefgEscapeSel(id) + '.' + classes.join('.'));
         }
         if (id) {
-            return $form.find('#' + wscEscapeSel(id));
+            return $form.find('#' + vefgEscapeSel(id));
         }
         if (classes.length) {
             return $form.find('.' + classes.join('.'));
@@ -996,7 +996,7 @@ jQuery(function ($) {
                 url: ajaxUrl,
                 type: 'POST',
                 data: {
-                    action: 'validateDomainName',
+                    action: 'vefg_validate_domain_name',
                     domain: domain,
                     type: type || 'unknown',
                     settings: apiSettings,
@@ -1026,7 +1026,7 @@ jQuery(function ($) {
                 url: ajaxUrl,
                 type: 'POST',
                 data: {
-                    action: 'validateFormGuardField',
+                    action: 'vefg_validate_form_guard_field',
                     nonce: nonce,
                     mappingId: mappingId,
                     fieldIndex: fieldIndex,
@@ -1106,7 +1106,7 @@ jQuery(function ($) {
                 return;
             }
             if (!isValidUrl(inputVal)) {
-                wpSpanCheckerToast.fire({
+                vefgToast.fire({
                     icon: 'error',
                     title: t('urlNotValid', 'URL not valid'),
                 });
@@ -1119,13 +1119,13 @@ jQuery(function ($) {
             validateUrlServer(inputVal, 'url', apiSettings)
                 .then(function (result) {
                     if (result.status) {
-                        wpSpanCheckerToast.fire({
+                        vefgToast.fire({
                             icon: 'success',
                             title: result.message || t('urlValid', 'URL is valid'),
                         });
                         enableSubmitButton(submitButton);
                     } else {
-                        wpSpanCheckerToast.fire({
+                        vefgToast.fire({
                             icon: 'error',
                             title: result.message || t('urlNotValid', 'URL not valid'),
                         });
@@ -1133,7 +1133,7 @@ jQuery(function ($) {
                     }
                 })
                 .catch(function (err) {
-                    wpSpanCheckerToast.fire({
+                    vefgToast.fire({
                         icon: 'error',
                         title: err.message || t('validationFailed', 'Validation failed'),
                     });
@@ -1151,7 +1151,7 @@ jQuery(function ($) {
             }
             if (fieldType === 'email') {
                 if (!isValidEmail(inputVal)) {
-                    wpSpanCheckerToast.fire({
+                    vefgToast.fire({
                         icon: 'error',
                         title: t('emailInvalid', 'Email address is invalid'),
                     });
@@ -1160,7 +1160,7 @@ jQuery(function ($) {
                 }
                 const domainName = getDomainFromEmail(inputVal);
                 if (!domainName) {
-                    wpSpanCheckerToast.fire({
+                    vefgToast.fire({
                         icon: 'error',
                         title: t('emailInvalid', 'Email address is invalid'),
                     });
@@ -1170,13 +1170,13 @@ jQuery(function ($) {
                 validateUrlServer(domainName, 'email', apiSettings)
                     .then(function (result) {
                         if (result.status) {
-                            wpSpanCheckerToast.fire({
+                            vefgToast.fire({
                                 icon: 'success',
                                 title: result.message,
                             });
                             enableSubmitButton(submitButton);
                         } else {
-                            wpSpanCheckerToast.fire({
+                            vefgToast.fire({
                                 icon: 'error',
                                 title: result.message || t('emailInvalid', 'Email address is invalid'),
                             });
@@ -1184,7 +1184,7 @@ jQuery(function ($) {
                         }
                     })
                     .catch(function (err) {
-                        wpSpanCheckerToast.fire({
+                        vefgToast.fire({
                             icon: 'error',
                             title: err.message || t('validationFailed', 'Validation failed'),
                         });
@@ -1238,7 +1238,7 @@ jQuery(function ($) {
                         } else {
                             disableSubmitButton(submitButton);
                             if (data && data.message) {
-                                wpSpanCheckerToast.fire({
+                                vefgToast.fire({
                                     icon: 'error',
                                     title: data.message,
                                 });
@@ -1247,14 +1247,14 @@ jQuery(function ($) {
                     })
                     .catch(function (err) {
                         disableSubmitButton(submitButton);
-                        wpSpanCheckerToast.fire({
+                        vefgToast.fire({
                             icon: 'error',
                             title: err.message || t('validationFailed', 'Validation failed'),
                         });
                     });
             }, 450);
         }
-        field$.off('.wscUsernameLive').on('input.wscUsernameLive change.wscUsernameLive', function () {
+        field$.off('.vefgUsernameLive').on('input.vefgUsernameLive change.vefgUsernameLive', function () {
             schedule($(this).val());
         });
     }
@@ -1262,12 +1262,12 @@ jQuery(function ($) {
     /**
      * Form Guard registry lives on window.
      */
-    function wscGuardRegistry() {
-        return window.wpSpanCheckerFormGuard && window.wpSpanCheckerFormGuard.registry;
+    function vefgGuardRegistry() {
+        return window.vefgFormGuardState && window.vefgFormGuardState.registry;
     }
 
-    function wscGetFormGuardEntry(formEl) {
-        const reg = wscGuardRegistry();
+    function vefgGetFormGuardEntry(formEl) {
+        const reg = vefgGuardRegistry();
         if (!formEl || !reg) {
             return null;
         }
@@ -1286,8 +1286,8 @@ jQuery(function ($) {
         return entry;
     }
 
-    function wscRegisterFormGuardConfig(formEl, config) {
-        const entry = wscGetFormGuardEntry(formEl);
+    function vefgRegisterFormGuardConfig(formEl, config) {
+        const entry = vefgGetFormGuardEntry(formEl);
         if (!entry) {
             return;
         }
@@ -1300,7 +1300,7 @@ jQuery(function ($) {
     var recaptchaLoaded = false;
     var recaptchaCallbacks = [];
     
-    function wscLoadRecaptchaScript(callback) {
+    function vefgLoadRecaptchaScript(callback) {
         if (recaptchaLoaded && typeof grecaptcha !== 'undefined') {
             if (callback) callback();
             return;
@@ -1310,31 +1310,31 @@ jQuery(function ($) {
             recaptchaCallbacks.push(callback);
         }
         
-        if (document.getElementById('wsc-recaptcha-script')) {
+        if (document.getElementById('vefg-recaptcha-script')) {
             return;
         }
         
-        var recaptchaConfig = WPSpanChecker.recaptcha || {};
+        var recaptchaConfig = VEFGChecker.recaptcha || {};
         if (!recaptchaConfig.siteKey) return;
         
         var script = document.createElement('script');
-        script.id = 'wsc-recaptcha-script';
-        script.src = 'https://www.google.com/recaptcha/api.js?onload=wscRecaptchaReady&render=' + 
+        script.id = 'vefg-recaptcha-script';
+        script.src = 'https://www.google.com/recaptcha/api.js?onload=vefgRecaptchaReady&render=' + 
             (recaptchaConfig.version === 'v3' ? recaptchaConfig.siteKey : 'explicit');
         script.async = true;
         script.defer = true;
         document.head.appendChild(script);
     }
     
-    window.wscRecaptchaReady = function() {
+    window.vefgRecaptchaReady = function() {
         recaptchaLoaded = true;
-        console.log('[VMS Span Checker] reCAPTCHA loaded');
+        console.log('[VMS Elements Form Guard] reCAPTCHA loaded');
         recaptchaCallbacks.forEach(function(cb) { cb(); });
         recaptchaCallbacks = [];
     };
     
-    function wscRenderRecaptcha($form, entry, callback) {
-        var recaptchaConfig = WPSpanChecker.recaptcha || {};
+    function vefgRenderRecaptcha($form, entry, callback) {
+        var recaptchaConfig = VEFGChecker.recaptcha || {};
         if (!recaptchaConfig.siteKey) {
             if (callback) callback(null);
             return;
@@ -1353,8 +1353,8 @@ jQuery(function ($) {
         }
         
         // Create reCAPTCHA container
-        var containerId = 'wsc-recaptcha-' + Math.random().toString(36).substr(2, 9);
-        var $container = $('<div id="' + containerId + '" class="wsc-recaptcha-container" style="margin: 10px 0;"></div>');
+        var containerId = 'vefg-recaptcha-' + Math.random().toString(36).substr(2, 9);
+        var $container = $('<div id="' + containerId + '" class="vefg-recaptcha-container" style="margin: 10px 0;"></div>');
         $container.insertBefore($submitBtn);
         
         if (recaptchaConfig.version === 'v3') {
@@ -1364,7 +1364,7 @@ jQuery(function ($) {
             if (callback) callback(null);
         } else {
             // v2 checkbox
-            wscLoadRecaptchaScript(function() {
+            vefgLoadRecaptchaScript(function() {
                 try {
                     var widgetId = grecaptcha.render(containerId, {
                         sitekey: recaptchaConfig.siteKey,
@@ -1374,7 +1374,7 @@ jQuery(function ($) {
                             if (entry.$validationBtn) {
                                 entry.$validationBtn.prop('disabled', false);
                             }
-                            console.log('[VMS Span Checker] reCAPTCHA v2 verified');
+                            console.log('[VMS Elements Form Guard] reCAPTCHA v2 verified');
                         },
                         'expired-callback': function() {
                             entry.recaptchaToken = null;
@@ -1393,15 +1393,15 @@ jQuery(function ($) {
                     }
                     if (callback) callback(widgetId);
                 } catch (e) {
-                    console.error('[VMS Span Checker] reCAPTCHA render error:', e);
+                    console.error('[VMS Elements Form Guard] reCAPTCHA render error:', e);
                     if (callback) callback(null);
                 }
             });
         }
     }
     
-    function wscGetRecaptchaToken(entry, callback) {
-        var recaptchaConfig = WPSpanChecker.recaptcha || {};
+    function vefgGetRecaptchaToken(entry, callback) {
+        var recaptchaConfig = VEFGChecker.recaptcha || {};
         
         if (!recaptchaConfig.siteKey || !entry.recaptchaRendered) {
             callback(null);
@@ -1427,16 +1427,16 @@ jQuery(function ($) {
      * 2. Create a validation button that looks identical
      * 3. On click: run validation first, then click original submit if passed
      */
-    function wscSetupFormValidation($form, $originalSubmit, entry, enableRecaptcha) {
+    function vefgSetupFormValidation($form, $originalSubmit, entry, enableRecaptcha) {
         const formEl = $form.get(0);
         
         if (entry.validationBtnCreated) {
-            console.log('[VMS Span Checker] Validation button already created');
+            console.log('[VMS Elements Form Guard] Validation button already created');
             return;
         }
         
         if (!$originalSubmit.length) {
-            console.log('[VMS Span Checker] No submit button found');
+            console.log('[VMS Elements Form Guard] No submit button found');
             return;
         }
         
@@ -1462,7 +1462,7 @@ jQuery(function ($) {
             .replace(/\bwpcf7-submit\b/g, '')
             .replace(/\bsubmit\b/g, '')
             .trim();
-        $validationBtn.attr('class', originalClasses + ' wsc-validation-btn');
+        $validationBtn.attr('class', originalClasses + ' vefg-validation-btn');
         
         // Copy inline styles
         const inlineStyle = $originalSubmit.attr('style') || '';
@@ -1487,7 +1487,7 @@ jQuery(function ($) {
                 }
             });
         } catch(e) {
-            console.log('[VMS Span Checker] Could not copy computed styles');
+            console.log('[VMS Elements Form Guard] Could not copy computed styles');
         }
         
         // Make sure validation button is visible
@@ -1517,12 +1517,12 @@ jQuery(function ($) {
         entry.$validationBtn = $validationBtn;
         entry.enableRecaptcha = enableRecaptcha;
         
-        console.log('[VMS Span Checker] Validation button created:', btnText, 'reCAPTCHA:', enableRecaptcha);
+        console.log('[VMS Elements Form Guard] Validation button created:', btnText, 'reCAPTCHA:', enableRecaptcha);
         
         // Render reCAPTCHA if enabled
-        if (enableRecaptcha && WPSpanChecker.recaptcha && WPSpanChecker.recaptcha.siteKey) {
-            wscRenderRecaptcha($form, entry, function(widgetId) {
-                console.log('[VMS Span Checker] reCAPTCHA rendered, widget:', widgetId);
+        if (enableRecaptcha && VEFGChecker.recaptcha && VEFGChecker.recaptcha.siteKey) {
+            vefgRenderRecaptcha($form, entry, function(widgetId) {
+                console.log('[VMS Elements Form Guard] reCAPTCHA rendered, widget:', widgetId);
             });
         }
         
@@ -1531,16 +1531,16 @@ jQuery(function ($) {
             e.preventDefault();
             e.stopPropagation();
             
-            console.log('[VMS Span Checker] Validation button clicked');
+            console.log('[VMS Elements Form Guard] Validation button clicked');
             
             if (entry.validating) {
-                console.log('[VMS Span Checker] Already validating, ignoring');
+                console.log('[VMS Elements Form Guard] Already validating, ignoring');
                 return false;
             }
             
             // Check reCAPTCHA v2 first (must be verified before proceeding)
             if (entry.enableRecaptcha && entry.recaptchaVersion === 'v2' && !entry.recaptchaVerified) {
-                wpSpanCheckerToast.fire({
+                vefgToast.fire({
                     icon: 'warning',
                     title: t('recaptchaRequired', 'Please complete the reCAPTCHA verification.'),
                 });
@@ -1548,16 +1548,16 @@ jQuery(function ($) {
             }
             
             // Run validation
-            wscRunValidation(formEl, entry);
+            vefgRunValidation(formEl, entry);
             
             return false;
         });
         
         // Prevent Enter key from submitting form directly - must go through validation
-        $form.on('keypress.wscValidation', function(e) {
+        $form.on('keypress.vefgValidation', function(e) {
             if (e.which === 13 && !$(e.target).is('textarea')) {
                 e.preventDefault();
-                console.log('[VMS Span Checker] Enter key pressed, triggering validation');
+                console.log('[VMS Elements Form Guard] Enter key pressed, triggering validation');
                 $validationBtn.click();
                 return false;
             }
@@ -1567,17 +1567,17 @@ jQuery(function ($) {
     /**
      * Run validation for all configured fields, then submit if valid.
      */
-    function wscRunValidation(formEl, entry) {
+    function vefgRunValidation(formEl, entry) {
         entry.validating = true;
         const $validationBtn = entry.$validationBtn;
         const originalBtnText = entry.originalBtnText || t('submit', 'Submit');
         const validatingText = t('validating', 'Validating...');
 
-        console.log('[VMS Span Checker] ========== STARTING VALIDATION ==========');
-        console.log('[VMS Span Checker] Configs count:', entry.configs.length);
+        console.log('[VMS Elements Form Guard] ========== STARTING VALIDATION ==========');
+        console.log('[VMS Elements Form Guard] Configs count:', entry.configs.length);
 
         // Clear all previous field errors
-        wscClearAllFieldErrors($(formEl));
+        vefgClearAllFieldErrors($(formEl));
 
         // Show validating state on validation button
         if ($validationBtn && $validationBtn.length) {
@@ -1589,13 +1589,13 @@ jQuery(function ($) {
             $validationBtn.prop('disabled', true);
         }
 
-        const before = new CustomEvent('vms_span_checker:guard_before_validate', {
+        const before = new CustomEvent('vms_elements_form_guard:guard_before_validate', {
             cancelable: true,
             bubbles: true,
             detail: { form: formEl },
         });
         if (!formEl.dispatchEvent(before)) {
-            wscResetValidationBtn(entry);
+            vefgResetValidationBtn(entry);
             return;
         }
 
@@ -1605,7 +1605,7 @@ jQuery(function ($) {
         entry.configs.forEach(function (cfg) {
             const mappingId = cfg.mappingId;
             
-            console.log('[VMS Span Checker] Config - isAuto:', cfg.isAuto, 'autoFields:', cfg.autoFields ? cfg.autoFields.length : 0);
+            console.log('[VMS Elements Form Guard] Config - isAuto:', cfg.isAuto, 'autoFields:', cfg.autoFields ? cfg.autoFields.length : 0);
             
             if (cfg.isAuto && cfg.autoFields) {
                 cfg.autoFields.forEach(function(fieldConfig) {
@@ -1615,12 +1615,12 @@ jQuery(function ($) {
                     const rules = fieldConfig.rules || {};
                     const isRequired = fieldConfig.required;
                     
-                    console.log('[VMS Span Checker] Field:', fieldType, 'name:', fieldConfig.name, 'required:', isRequired, 'value:', val ? '"' + val.substring(0, 30) + '..."' : '(empty)');
-                    console.log('[VMS Span Checker] Rules:', JSON.stringify(rules));
+                    console.log('[VMS Elements Form Guard] Field:', fieldType, 'name:', fieldConfig.name, 'required:', isRequired, 'value:', val ? '"' + val.substring(0, 30) + '..."' : '(empty)');
+                    console.log('[VMS Elements Form Guard] Rules:', JSON.stringify(rules));
                     
                     // Client-side validation (includes required check)
-                    const clientResult = wscValidateAutoField(fieldConfig);
-                    console.log('[VMS Span Checker] Client validation result:', clientResult);
+                    const clientResult = vefgValidateAutoField(fieldConfig);
+                    console.log('[VMS Elements Form Guard] Client validation result:', clientResult);
                     
                     if (!clientResult.valid) {
                         autoJobs.push({
@@ -1634,7 +1634,7 @@ jQuery(function ($) {
                     
                     // Skip server validation if field is empty (and not required - already checked above)
                     if (!val) {
-                        console.log('[VMS Span Checker] Skipping server validation for empty non-required field');
+                        console.log('[VMS Elements Form Guard] Skipping server validation for empty non-required field');
                         return;
                     }
                     
@@ -1644,9 +1644,9 @@ jQuery(function ($) {
                                        (fieldType === 'textarea' && rules.ai_spam) ||
                                        (fieldType === 'username' && rules.check_exists);
                     
-                    console.log('[VMS Span Checker] Server validation check - fieldType:', fieldType, 'rules:', rules, 'needsServer:', needsServer);
+                    console.log('[VMS Elements Form Guard] Server validation check - fieldType:', fieldType, 'rules:', rules, 'needsServer:', needsServer);
                     if (fieldType === 'textarea') {
-                        console.log('[VMS Span Checker] Textarea ai_spam rule:', rules.ai_spam);
+                        console.log('[VMS Elements Form Guard] Textarea ai_spam rule:', rules.ai_spam);
                     }
                     
                     if (needsServer) {
@@ -1676,32 +1676,32 @@ jQuery(function ($) {
         // Check for client-side errors first - show inline errors
         const clientErrors = autoJobs.filter(function(j) { return j.clientError; });
         if (clientErrors.length > 0) {
-            console.log('[VMS Span Checker] CLIENT VALIDATION FAILED - errors:', clientErrors.length);
+            console.log('[VMS Elements Form Guard] CLIENT VALIDATION FAILED - errors:', clientErrors.length);
             
             // Show inline error for each field
             clientErrors.forEach(function(err) {
                 if (err.fieldConfig && err.fieldConfig.$el) {
-                    wscShowFieldError(err.fieldConfig.$el, err.clientError);
+                    vefgShowFieldError(err.fieldConfig.$el, err.clientError);
                 }
             });
             
             // Show summary toast
-            wpSpanCheckerToast.fire({
+            vefgToast.fire({
                 icon: 'error',
                 title: t('validationErrors', 'Please review the highlighted fields and try again.'),
             });
-            wscResetValidationBtn(entry);
+            vefgResetValidationBtn(entry);
             return;
         }
         
         const serverAutoJobs = autoJobs.filter(function(j) { return j.needsServer; });
 
-        console.log('[VMS Span Checker] Jobs - manual:', jobs.length, ', auto-server:', serverAutoJobs.length);
+        console.log('[VMS Elements Form Guard] Jobs - manual:', jobs.length, ', auto-server:', serverAutoJobs.length);
 
         // If no server validation needed, proceed to submit
         if (jobs.length === 0 && serverAutoJobs.length === 0) {
-            console.log('[VMS Span Checker] No server validation needed, proceeding to submit');
-            wscProceedWithSubmit(formEl, entry);
+            console.log('[VMS Elements Form Guard] No server validation needed, proceeding to submit');
+            vefgProceedWithSubmit(formEl, entry);
             return;
         }
 
@@ -1730,27 +1730,27 @@ jQuery(function ($) {
             });
         });
         
-        console.log('[VMS Span Checker] Sending', allServerJobs.length, 'fields for server validation');
+        console.log('[VMS Elements Form Guard] Sending', allServerJobs.length, 'fields for server validation');
         
         // Get reCAPTCHA token if enabled
         var doValidation = function(recaptchaToken) {
-            wscValidateAllFieldsServer(allServerJobs, recaptchaToken)
+            vefgValidateAllFieldsServer(allServerJobs, recaptchaToken)
             .then(function(result) {
                 if (result.status) {
-                    console.log('[VMS Span Checker] ========== ALL VALIDATIONS PASSED ==========');
+                    console.log('[VMS Elements Form Guard] ========== ALL VALIDATIONS PASSED ==========');
                     formEl.dispatchEvent(
-                        new CustomEvent('vms_span_checker:guard_validated', {
+                        new CustomEvent('vms_elements_form_guard:guard_validated', {
                             bubbles: true,
                             detail: { form: formEl },
                         })
                     );
-                    wscProceedWithSubmit(formEl, entry);
+                    vefgProceedWithSubmit(formEl, entry);
                 } else {
-                    console.log('[VMS Span Checker] ========== VALIDATION FAILED ==========');
+                    console.log('[VMS Elements Form Guard] ========== VALIDATION FAILED ==========');
                     
                     // Check if user is blocked
                     if (result.blocked) {
-                        console.log('[VMS Span Checker] User is BLOCKED');
+                        console.log('[VMS Elements Form Guard] User is BLOCKED');
                         var blockMessage = result.strike_message || t('userBlocked', 'You have been blocked due to repeated violations. Please contact support.');
                         
                         // Disable the validation button
@@ -1793,39 +1793,39 @@ jQuery(function ($) {
                             }
                             
                             if ($field) {
-                                wscShowFieldError($field, err.message);
+                                vefgShowFieldError($field, err.message);
                             }
                         });
                         
                         // Show first error as toast
-                        wpSpanCheckerToast.fire({
+                        vefgToast.fire({
                             icon: 'error',
                             title: result.errors[0].message || t('validationErrors', 'Please review the highlighted fields and try again.'),
                         });
                     } else {
-                        wpSpanCheckerToast.fire({
+                        vefgToast.fire({
                             icon: 'error',
                             title: result.message || t('validationErrors', 'Please review the highlighted fields and try again.'),
                         });
                     }
                     
-                    wscResetValidationBtn(entry);
+                    vefgResetValidationBtn(entry);
                 }
             })
             .catch(function(err) {
-                console.log('[VMS Span Checker] Server validation error:', err);
-                wpSpanCheckerToast.fire({
+                console.log('[VMS Elements Form Guard] Server validation error:', err);
+                vefgToast.fire({
                     icon: 'error',
                     title: t('validationFailed', 'Validation failed. Please try again.'),
                 });
-                wscResetValidationBtn(entry);
+                vefgResetValidationBtn(entry);
             });
         };
         
         // Get reCAPTCHA token if enabled, then run validation
         if (entry.enableRecaptcha && entry.recaptchaRendered) {
-            wscGetRecaptchaToken(entry, function(token) {
-                console.log('[VMS Span Checker] reCAPTCHA token obtained:', token ? 'yes' : 'no');
+            vefgGetRecaptchaToken(entry, function(token) {
+                console.log('[VMS Elements Form Guard] reCAPTCHA token obtained:', token ? 'yes' : 'no');
                 doValidation(token);
             });
         } else {
@@ -1837,7 +1837,7 @@ jQuery(function ($) {
      * Proceed with form submission after validation passes.
      * Click the ORIGINAL submit button to trigger CF7/other plugin handlers.
      */
-    function wscProceedWithSubmit(formEl, entry) {
+    function vefgProceedWithSubmit(formEl, entry) {
         const $validationBtn = entry.$validationBtn;
         const $originalSubmit = entry.$originalSubmit;
         const originalBtnText = entry.originalBtnText;
@@ -1853,7 +1853,7 @@ jQuery(function ($) {
             $validationBtn.prop('disabled', true);
         }
 
-        console.log('[VMS Span Checker] Validation PASSED! Now clicking original submit button...');
+        console.log('[VMS Elements Form Guard] Validation PASSED! Now clicking original submit button...');
 
         entry.validating = false;
 
@@ -1866,7 +1866,7 @@ jQuery(function ($) {
                 });
                 
                 // Click the ORIGINAL submit button - this triggers CF7/other plugin handlers
-                console.log('[VMS Span Checker] Clicking original submit button');
+                console.log('[VMS Elements Form Guard] Clicking original submit button');
                 $originalSubmit[0].click();
                 
                 // Hide it again after click
@@ -1877,13 +1877,13 @@ jQuery(function ($) {
                 }, 100);
             } else {
                 // Fallback to native form submit
-                console.log('[VMS Span Checker] No original submit, using native form submit');
+                console.log('[VMS Elements Form Guard] No original submit, using native form submit');
                 HTMLFormElement.prototype.submit.call(formEl);
             }
 
             // Reset validation button after delay
             setTimeout(function() {
-                wscResetValidationBtn(entry);
+                vefgResetValidationBtn(entry);
             }, 3000);
         }, 50);
     }
@@ -1891,7 +1891,7 @@ jQuery(function ($) {
     /**
      * Reset validation button to original state.
      */
-    function wscResetValidationBtn(entry) {
+    function vefgResetValidationBtn(entry) {
         const $validationBtn = entry.$validationBtn;
         const originalBtnText = entry.originalBtnText;
         
@@ -1906,8 +1906,8 @@ jQuery(function ($) {
         entry.validating = false;
     }
 
-    console.log('[VMS Span Checker] Total settings to process:', settings.length);
-    console.log('[VMS Span Checker] All settings:', JSON.stringify(settings.map(s => ({id: s.id, form_id: s.form_id, page_id: s.page_id})), null, 2));
+    console.log('[VMS Elements Form Guard] Total settings to process:', settings.length);
+    console.log('[VMS Elements Form Guard] All settings:', JSON.stringify(settings.map(s => ({id: s.id, form_id: s.form_id, page_id: s.page_id})), null, 2));
     
     settings.forEach(function (setting) {
         const mappingId = parseInt(setting.id, 10) || 0;
@@ -1920,7 +1920,7 @@ jQuery(function ($) {
         const rawSettings = setting.settings ? setting.settings : '{}';
         let formSettingData;
         
-        console.log('[VMS Span Checker] Processing setting:', {
+        console.log('[VMS Elements Form Guard] Processing setting:', {
             mappingId: mappingId,
             form_id: form_id,
             form_class: form_class,
@@ -1936,19 +1936,19 @@ jQuery(function ($) {
             formSettingData = [];
         }
 
-        const matchResult = wscSettingMatchesCurrentPage(setting);
+        const matchResult = vefgSettingMatchesCurrentPage(setting);
         if (!matchResult.matches) {
-            console.log('[VMS Span Checker] Skipping mapping ID:', mappingId, '- page does not match targets');
+            console.log('[VMS Elements Form Guard] Skipping mapping ID:', mappingId, '- page does not match targets');
             return;
         }
         
-        console.log('[VMS Span Checker] Processing mapping ID:', mappingId, 'requiresFormSelector:', matchResult.requiresFormSelector);
+        console.log('[VMS Elements Form Guard] Processing mapping ID:', mappingId, 'requiresFormSelector:', matchResult.requiresFormSelector);
 
-        let $form = wscFindFormForSetting(setting, matchResult);
+        let $form = vefgFindFormForSetting(setting, matchResult);
         
         if (!$form.length) {
             if (matchResult.requiresFormSelector) {
-                console.log('[VMS Span Checker] Form not found - required for entire site mapping ID:', mappingId);
+                console.log('[VMS Elements Form Guard] Form not found - required for entire site mapping ID:', mappingId);
                 return;
             }
             
@@ -1957,30 +1957,30 @@ jQuery(function ($) {
             
             if (hasFormSelector) {
                 $form = resolveForm$(form_id, form_class);
-                if (!$form.length || wscShouldSkipForm($form)) {
-                    console.log('[VMS Span Checker] Form not found or should be skipped for selector:', form_id || form_class);
+                if (!$form.length || vefgShouldSkipForm($form)) {
+                    console.log('[VMS Elements Form Guard] Form not found or should be skipped for selector:', form_id || form_class);
                     return;
                 }
-                console.log('[VMS Span Checker] Form found by form selector for mapping ID:', mappingId);
+                console.log('[VMS Elements Form Guard] Form found by form selector for mapping ID:', mappingId);
             } else if (hasSubmitSelector) {
                 const $submitBtn = $(submit_selector).first();
                 if (!$submitBtn.length) {
-                    console.log('[VMS Span Checker] Submit button not found for selector:', submit_selector);
+                    console.log('[VMS Elements Form Guard] Submit button not found for selector:', submit_selector);
                     return;
                 }
                 $form = $submitBtn.closest('form');
-                if (!$form.length || wscShouldSkipForm($form)) {
-                    console.log('[VMS Span Checker] No form found or should be skipped for submit button:', submit_selector);
+                if (!$form.length || vefgShouldSkipForm($form)) {
+                    console.log('[VMS Elements Form Guard] No form found or should be skipped for submit button:', submit_selector);
                     return;
                 }
-                console.log('[VMS Span Checker] Form found by submit selector for mapping ID:', mappingId);
+                console.log('[VMS Elements Form Guard] Form found by submit selector for mapping ID:', mappingId);
             } else {
-                const $forms = wscGetContentForms();
+                const $forms = vefgGetContentForms();
                 if ($forms.length >= 1) {
                     $form = $forms.first();
-                    console.log('[VMS Span Checker] Content form found on page for mapping ID:', mappingId, '(forms on page:', $forms.length, ')');
+                    console.log('[VMS Elements Form Guard] Content form found on page for mapping ID:', mappingId, '(forms on page:', $forms.length, ')');
                 } else {
-                    console.log('[VMS Span Checker] No content forms found on page for mapping ID:', mappingId);
+                    console.log('[VMS Elements Form Guard] No content forms found on page for mapping ID:', mappingId);
                     return;
                 }
             }
@@ -1990,19 +1990,19 @@ jQuery(function ($) {
 
         const formEl = $form.get(0);
         if (!formEl || formEl.tagName !== 'FORM') {
-            console.log('[VMS Span Checker] Element is not a FORM, skipping');
+            console.log('[VMS Elements Form Guard] Element is not a FORM, skipping');
             return;
         }
 
         // Check if form is already protected by another guard
-        if (wscIsFormAlreadyProtected($form)) {
-            console.log('[VMS Span Checker] Form already protected by another guard, skipping mapping ID:', mappingId);
+        if (vefgIsFormAlreadyProtected($form)) {
+            console.log('[VMS Elements Form Guard] Form already protected by another guard, skipping mapping ID:', mappingId);
             return;
         }
 
         // Mark form as protected
-        wscMarkFormAsProtected($form);
-        console.log('[VMS Span Checker] Marked form as protected for mapping ID:', mappingId);
+        vefgMarkFormAsProtected($form);
+        console.log('[VMS Elements Form Guard] Marked form as protected for mapping ID:', mappingId);
 
         const isAutoValidation = parseInt(setting.auto_validation, 10) === 1 || setting.auto_validation === true || setting.auto_validation === '1';
         let autoRules = {};
@@ -2016,11 +2016,11 @@ jQuery(function ($) {
         }
 
         if (isAutoValidation) {
-            const autoFields = wscAutoDetectFormFields($form, autoRules);
-            console.log('[VMS Span Checker] Auto-detected fields:', autoFields.length, 'for mapping ID:', mappingId);
-            console.log('[VMS Span Checker] Auto rules:', autoRules);
+            const autoFields = vefgAutoDetectFormFields($form, autoRules);
+            console.log('[VMS Elements Form Guard] Auto-detected fields:', autoFields.length, 'for mapping ID:', mappingId);
+            console.log('[VMS Elements Form Guard] Auto rules:', autoRules);
             
-            wscRegisterFormGuardConfig(formEl, {
+            vefgRegisterFormGuardConfig(formEl, {
                 mappingId: mappingId,
                 isAuto: true,
                 autoRules: autoRules,
@@ -2028,9 +2028,9 @@ jQuery(function ($) {
                 formSettingData: [],
             });
             
-            const entry = wscGetFormGuardEntry(formEl);
-            console.log('[VMS Span Checker] Setting up form validation interceptor for auto-validation, reCAPTCHA:', enableRecaptcha);
-            wscSetupFormValidation($form, submitButton, entry, enableRecaptcha);
+            const entry = vefgGetFormGuardEntry(formEl);
+            console.log('[VMS Elements Form Guard] Setting up form validation interceptor for auto-validation, reCAPTCHA:', enableRecaptcha);
+            vefgSetupFormValidation($form, submitButton, entry, enableRecaptcha);
             
             // Add real-time validation feedback on field change - show inline errors
             autoFields.forEach(function(fieldConfig) {
@@ -2040,96 +2040,96 @@ jQuery(function ($) {
                 const isRequired = fieldConfig.required;
                 
                 // Clear error on focus
-                $field.on('focus.wscAuto', function() {
-                    wscClearFieldError($(this));
+                $field.on('focus.vefgAuto', function() {
+                    vefgClearFieldError($(this));
                 });
                 
                 // Required field validation on blur
                 if (isRequired) {
-                    $field.on('blur.wscRequired', function() {
+                    $field.on('blur.vefgRequired', function() {
                         const val = String($(this).val() || '').trim();
                         if (!val) {
-                            wscShowFieldError($(this), t('fieldRequired', 'This field is required.'));
+                            vefgShowFieldError($(this), t('fieldRequired', 'This field is required.'));
                         }
                     });
                 }
                 
                 if (fieldType === 'email' && rules.validate) {
-                    $field.on('blur.wscAuto change.wscAuto', function() {
+                    $field.on('blur.vefgAuto change.vefgAuto', function() {
                         const val = String($(this).val() || '').trim();
                         if (!val) {
-                            wscClearFieldError($(this));
+                            vefgClearFieldError($(this));
                             return;
                         }
-                        const result = wscValidateAutoField(fieldConfig);
+                        const result = vefgValidateAutoField(fieldConfig);
                         if (!result.valid) {
-                            wscShowFieldError($(this), result.message);
+                            vefgShowFieldError($(this), result.message);
                         } else {
-                            wscClearFieldError($(this));
+                            vefgClearFieldError($(this));
                         }
                     });
                 }
                 
                 if (fieldType === 'url' && rules.validate) {
-                    $field.on('blur.wscAuto change.wscAuto', function() {
+                    $field.on('blur.vefgAuto change.vefgAuto', function() {
                         const val = String($(this).val() || '').trim();
                         if (!val) {
-                            wscClearFieldError($(this));
+                            vefgClearFieldError($(this));
                             return;
                         }
-                        const result = wscValidateAutoField(fieldConfig);
+                        const result = vefgValidateAutoField(fieldConfig);
                         if (!result.valid) {
-                            wscShowFieldError($(this), result.message);
+                            vefgShowFieldError($(this), result.message);
                         } else {
-                            wscClearFieldError($(this));
+                            vefgClearFieldError($(this));
                         }
                     });
                 }
                 
                 if (fieldType === 'textarea' && rules.block_links) {
-                    $field.on('blur.wscAuto change.wscAuto', function() {
+                    $field.on('blur.vefgAuto change.vefgAuto', function() {
                         const val = String($(this).val() || '').trim();
                         if (!val) {
-                            wscClearFieldError($(this));
+                            vefgClearFieldError($(this));
                             return;
                         }
-                        const result = wscValidateAutoField(fieldConfig);
+                        const result = vefgValidateAutoField(fieldConfig);
                         if (!result.valid) {
-                            wscShowFieldError($(this), result.message);
+                            vefgShowFieldError($(this), result.message);
                         } else {
-                            wscClearFieldError($(this));
+                            vefgClearFieldError($(this));
                         }
                     });
                 }
                 
                 if (fieldType === 'text' && rules.block_urls) {
-                    $field.on('blur.wscAuto change.wscAuto', function() {
+                    $field.on('blur.vefgAuto change.vefgAuto', function() {
                         const val = String($(this).val() || '').trim();
                         if (!val) {
-                            wscClearFieldError($(this));
+                            vefgClearFieldError($(this));
                             return;
                         }
-                        const result = wscValidateAutoField(fieldConfig);
+                        const result = vefgValidateAutoField(fieldConfig);
                         if (!result.valid) {
-                            wscShowFieldError($(this), result.message);
+                            vefgShowFieldError($(this), result.message);
                         } else {
-                            wscClearFieldError($(this));
+                            vefgClearFieldError($(this));
                         }
                     });
                 }
                 
                 if (fieldType === 'password' && rules.strength) {
-                    $field.on('blur.wscAuto change.wscAuto', function() {
+                    $field.on('blur.vefgAuto change.vefgAuto', function() {
                         const val = String($(this).val() || '').trim();
                         if (!val) {
-                            wscClearFieldError($(this));
+                            vefgClearFieldError($(this));
                             return;
                         }
-                        const result = wscValidateAutoField(fieldConfig);
+                        const result = vefgValidateAutoField(fieldConfig);
                         if (!result.valid) {
-                            wscShowFieldError($(this), result.message);
+                            vefgShowFieldError($(this), result.message);
                         } else {
-                            wscClearFieldError($(this));
+                            vefgClearFieldError($(this));
                         }
                     });
                 }
@@ -2138,16 +2138,16 @@ jQuery(function ($) {
             return;
         }
 
-        wscRegisterFormGuardConfig(formEl, {
+        vefgRegisterFormGuardConfig(formEl, {
             mappingId: mappingId,
             isAuto: false,
             formSettingData: formSettingData,
         });
 
-        const entry = wscGetFormGuardEntry(formEl);
+        const entry = vefgGetFormGuardEntry(formEl);
 
-        console.log('[VMS Span Checker] Setting up form validation interceptor for manual validation, reCAPTCHA:', enableRecaptcha);
-        wscSetupFormValidation($form, submitButton, entry, enableRecaptcha);
+        console.log('[VMS Elements Form Guard] Setting up form validation interceptor for manual validation, reCAPTCHA:', enableRecaptcha);
+        vefgSetupFormValidation($form, submitButton, entry, enableRecaptcha);
 
         formSettingData.forEach(function (formSetting, fieldIndex) {
             const eventType = formSetting.event;
@@ -2203,15 +2203,15 @@ jQuery(function ($) {
             const getEmail = $email.val().trim();
             const password = $password.val().trim();
             if (getEmail === '') {
-                wpSpanCheckerToast.fire({ icon: 'error', title: t('emailFieldRequired', 'Email is required') });
+                vefgToast.fire({ icon: 'error', title: t('emailFieldRequired', 'Email is required') });
                 return;
             }
             if (password === '') {
-                wpSpanCheckerToast.fire({ icon: 'error', title: t('passwordRequired', 'Password is required') });
+                vefgToast.fire({ icon: 'error', title: t('passwordRequired', 'Password is required') });
                 return;
             }
             if (!isPasswordStrong(password)) {
-                wpSpanCheckerToast.fire({
+                vefgToast.fire({
                     icon: 'error',
                     title: t('passwordRequirements', 'Password must meet all requirements.'),
                 });
@@ -2219,7 +2219,7 @@ jQuery(function ($) {
             }
             const regDomain = getDomainFromEmail(getEmail);
             if (!regDomain) {
-                wpSpanCheckerToast.fire({
+                vefgToast.fire({
                     icon: 'error',
                     title: t('emailInvalid', 'Email address is invalid'),
                 });
@@ -2228,20 +2228,20 @@ jQuery(function ($) {
             validateUrlServer(regDomain, 'registration', [{ is_webrisk: 0, is_virustotal: 0 }])
                 .then(function (res) {
                     if (res.status) {
-                        wpSpanCheckerToast.fire({
+                        vefgToast.fire({
                             icon: 'success',
                             title: res.message,
                             timer: 2000,
                         });
                     } else {
-                        wpSpanCheckerToast.fire({
+                        vefgToast.fire({
                             icon: 'error',
                             title: res.message || t('emailInvalid', 'Email address is invalid'),
                         });
                     }
                 })
                 .catch(function (err) {
-                    wpSpanCheckerToast.fire({
+                    vefgToast.fire({
                         icon: 'error',
                         title: err.message || t('validationFailed', 'Validation failed'),
                     });
@@ -2259,7 +2259,7 @@ jQuery(function ($) {
             const url = $urlInput.val().trim();
             if (url === '') {
                 $createShortLinkButton.prop('disabled', true);
-                wpSpanCheckerToast.fire({
+                vefgToast.fire({
                     icon: 'error',
                     title: t('urlRequired', 'URL is required'),
                 });
@@ -2267,7 +2267,7 @@ jQuery(function ($) {
             }
             $createShortLinkButton.prop('disabled', true);
             if (!isValidUrl(url)) {
-                wpSpanCheckerToast.fire({
+                vefgToast.fire({
                     icon: 'error',
                     title: t('urlNotValid', 'URL not valid'),
                 });
@@ -2281,7 +2281,7 @@ jQuery(function ($) {
                 const res = await validateUrlServer(toCheck, 'url', [{ is_webrisk: 0, is_virustotal: 0 }]);
                 if (res.status === true) {
                     $createShortLinkButton.prop('disabled', false);
-                    wpSpanCheckerToast.fire({
+                    vefgToast.fire({
                         icon: 'success',
                         title: t('urlValid', 'URL is valid'),
                     });
@@ -2290,7 +2290,7 @@ jQuery(function ($) {
                     }
                 } else {
                     $createShortLinkButton.prop('disabled', true);
-                    wpSpanCheckerToast.fire({
+                    vefgToast.fire({
                         icon: 'error',
                         title: res.message || t('urlNotValid', 'URL not valid'),
                     });
@@ -2300,7 +2300,7 @@ jQuery(function ($) {
                 }
             } catch (err) {
                 $createShortLinkButton.prop('disabled', true);
-                wpSpanCheckerToast.fire({
+                vefgToast.fire({
                     icon: 'error',
                     title: err.message || String(err),
                 });
@@ -2315,7 +2315,7 @@ jQuery(function ($) {
             const urlStatus = $urlValidation.length ? parseInt($('#urlValidation').val(), 10) : 0;
             let urlValue = $urlInput.val().trim();
             if (!isValidUrl(urlValue)) {
-                wpSpanCheckerToast.fire({
+                vefgToast.fire({
                     icon: 'error',
                     title: t('urlNotValid', 'URL not valid'),
                 });
@@ -2331,7 +2331,7 @@ jQuery(function ($) {
                         $(this).parent().closest('form').trigger('submit');
                     } else {
                         $createShortLinkButton.prop('disabled', true);
-                        wpSpanCheckerToast.fire({
+                        vefgToast.fire({
                             icon: 'error',
                             title: res.message || 'URL not valid',
                         });
@@ -2346,16 +2346,16 @@ jQuery(function ($) {
     }
 });
 
-jQuery(document).on('wscFormSubmit', function () {});
+jQuery(document).on('vefgFormSubmit', function () {});
 
-function wscStopFormSubmit(payload) {
+function vefgStopFormSubmit(payload) {
     payload.originalEvent.preventDefault();
     payload.originalEvent.stopImmediatePropagation();
 }
 
 jQuery(document).on('click', '.quform-submit', function (e) {
     const $form = jQuery(this).closest('form');
-    jQuery(document).trigger('wscFormSubmit', {
+    jQuery(document).trigger('vefgFormSubmit', {
         originalEvent: e,
         formId: $form.attr('id'),
         action: $form.attr('action'),

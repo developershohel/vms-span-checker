@@ -2,7 +2,7 @@
 /**
  * Bundled SEO / promo spam phrases (English). Enable via Comment moderation settings.
  *
- * @package VMS_Span_Checker
+ * @package VMS_Elements_Form_Guard
  */
 
 if ( ! defined( 'ABSPATH' ) ) {

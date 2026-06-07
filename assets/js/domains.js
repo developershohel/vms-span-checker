@@ -1,10 +1,10 @@
 jQuery(document).ready(function ($) {
-    const wpSpanCheckerToast = window.wpSpanCheckerToast;
-    const I = (typeof WPSpanChecker !== 'undefined' && WPSpanChecker.i18n) ? WPSpanChecker.i18n : {};
-    const wscT = function (key, fallback) {
+    const vefgToast = window.vefgToast;
+    const I = (typeof VEFGChecker !== 'undefined' && VEFGChecker.i18n) ? VEFGChecker.i18n : {};
+    const vefgT = function (key, fallback) {
         return (I[key] !== undefined && I[key] !== '') ? I[key] : fallback;
     };
-    const wscAjaxErr = function (data, fallback) {
+    const vefgAjaxErr = function (data, fallback) {
         if (data && typeof data === 'object' && data.message) {
             return data.message;
         }
@@ -13,16 +13,16 @@ jQuery(document).ready(function ($) {
         }
         return fallback;
     };
-    const wscErrToast = function (msg) {
-        wpSpanCheckerToast.fire({ icon: 'error', title: msg });
+    const vefgErrToast = function (msg) {
+        vefgToast.fire({ icon: 'error', title: msg });
     };
-    const wscOkToast = function (msg) {
-        wpSpanCheckerToast.fire({ icon: 'success', title: msg });
+    const vefgOkToast = function (msg) {
+        vefgToast.fire({ icon: 'success', title: msg });
     };
 
-    const pageTargetLabels = (typeof WPSpanChecker !== 'undefined' && WPSpanChecker.pageTargetLabels) ? WPSpanChecker.pageTargetLabels : {};
+    const pageTargetLabels = (typeof VEFGChecker !== 'undefined' && VEFGChecker.pageTargetLabels) ? VEFGChecker.pageTargetLabels : {};
 
-    function wscNormalizePageTargetsRaw(raw) {
+    function vefgNormalizePageTargetsRaw(raw) {
         if (raw === null || raw === undefined) {
             return [];
         }
@@ -44,24 +44,24 @@ jQuery(document).ready(function ($) {
         return [s];
     }
 
-    function wscCollectPageTargetsArray() {
+    function vefgCollectPageTargetsArray() {
         const out = [];
         
-        $('.wsc-page-target:checked:not(:disabled)').each(function () {
+        $('.vefg-page-target:checked:not(:disabled)').each(function () {
             const v = $(this).val();
             if (v) {
                 out.push(String(v));
             }
         });
         
-        if (!$('#wsc-panel-pages').hasClass('wsc-target-panel--disabled')) {
-            wscSelectedPages.forEach((title, id) => {
+        if (!$('#vefg-panel-pages').hasClass('vefg-target-panel--disabled')) {
+            vefgSelectedPages.forEach((title, id) => {
                 out.push(String(id));
             });
         }
         
-        if (!$('#wsc-panel-posts').hasClass('wsc-target-panel--disabled')) {
-            wscSelectedPosts.forEach((title, id) => {
+        if (!$('#vefg-panel-posts').hasClass('vefg-target-panel--disabled')) {
+            vefgSelectedPosts.forEach((title, id) => {
                 out.push(String(id));
             });
         }
@@ -75,28 +75,28 @@ jQuery(document).ready(function ($) {
         return uniq;
     }
 
-    function wscCollectTargetsByType() {
+    function vefgCollectTargetsByType() {
         const result = {
             common: [],
             page: [],
             post: []
         };
         
-        $('.wsc-page-target:checked:not(:disabled)').each(function () {
+        $('.vefg-page-target:checked:not(:disabled)').each(function () {
             const v = $(this).val();
             if (v) {
                 result.common.push(String(v));
             }
         });
         
-        if (!$('#wsc-panel-pages').hasClass('wsc-target-panel--disabled')) {
-            wscSelectedPages.forEach((title, id) => {
+        if (!$('#vefg-panel-pages').hasClass('vefg-target-panel--disabled')) {
+            vefgSelectedPages.forEach((title, id) => {
                 result.page.push(String(id));
             });
         }
         
-        if (!$('#wsc-panel-posts').hasClass('wsc-target-panel--disabled')) {
-            wscSelectedPosts.forEach((title, id) => {
+        if (!$('#vefg-panel-posts').hasClass('vefg-target-panel--disabled')) {
+            vefgSelectedPosts.forEach((title, id) => {
                 result.post.push(String(id));
             });
         }
@@ -104,22 +104,22 @@ jQuery(document).ready(function ($) {
         return result;
     }
 
-    function wscApplyPageTargetsFromRaw(raw) {
+    function vefgApplyPageTargetsFromRaw(raw) {
         // Reset common locations
-        $('.wsc-page-target').prop('checked', false).prop('disabled', false);
+        $('.vefg-page-target').prop('checked', false).prop('disabled', false);
         
         // Clear badge selections
-        wscSelectedPages.clear();
-        wscSelectedPosts.clear();
-        $('#wsc-pages-selected').empty();
-        $('#wsc-posts-selected').empty();
+        vefgSelectedPages.clear();
+        vefgSelectedPosts.clear();
+        $('#vefg-pages-selected').empty();
+        $('#vefg-posts-selected').empty();
         
-        const list = wscNormalizePageTargetsRaw(raw);
+        const list = vefgNormalizePageTargetsRaw(raw);
         const pageIdsToFetch = [];
         const postIdsToFetch = [];
         
         list.forEach(function (token) {
-            const $cb = $('.wsc-page-target').filter(function () {
+            const $cb = $('.vefg-page-target').filter(function () {
                 return $(this).val() === token;
             });
             if ($cb.length) {
@@ -135,9 +135,9 @@ jQuery(document).ready(function ($) {
         
         // Fetch titles for numeric IDs (pages)
         if (pageIdsToFetch.length > 0) {
-            $.post(WPSpanChecker.ajaxurl, {
-                action: 'wsc_search_pages',
-                nonce: WPSpanChecker.nonce,
+            $.post(VEFGChecker.ajaxurl, {
+                action: 'vefg_search_pages',
+                nonce: VEFGChecker.nonce,
                 search: '',
                 per_page: 100,
                 page: 1
@@ -145,16 +145,16 @@ jQuery(document).ready(function ($) {
                 if (response.success && response.data.items) {
                     response.data.items.forEach(function(item) {
                         if (pageIdsToFetch.indexOf(String(item.id)) !== -1) {
-                            wscSelectedPages.set(String(item.id), item.title);
+                            vefgSelectedPages.set(String(item.id), item.title);
                         }
                     });
-                    wscRenderSelectedBadges('#wsc-pages-selected', wscSelectedPages, 'page');
+                    vefgRenderSelectedBadges('#vefg-pages-selected', vefgSelectedPages, 'page');
                     // Update dropdown checkmarks
-                    $('#wsc-pages-list .wsc-badge-dropdown-item').each(function() {
+                    $('#vefg-pages-list .vefg-badge-dropdown-item').each(function() {
                         const id = String($(this).data('id'));
-                        if (wscSelectedPages.has(id)) {
-                            $(this).addClass('wsc-item-selected');
-                            $(this).find('.wsc-item-checkbox').text('✓');
+                        if (vefgSelectedPages.has(id)) {
+                            $(this).addClass('vefg-item-selected');
+                            $(this).find('.vefg-item-checkbox').text('✓');
                         }
                     });
                 }
@@ -163,9 +163,9 @@ jQuery(document).ready(function ($) {
         
         // Fetch titles for numeric IDs (posts)
         if (postIdsToFetch.length > 0) {
-            $.post(WPSpanChecker.ajaxurl, {
-                action: 'wsc_search_posts',
-                nonce: WPSpanChecker.nonce,
+            $.post(VEFGChecker.ajaxurl, {
+                action: 'vefg_search_posts',
+                nonce: VEFGChecker.nonce,
                 search: '',
                 per_page: 100,
                 page: 1
@@ -173,286 +173,286 @@ jQuery(document).ready(function ($) {
                 if (response.success && response.data.items) {
                     response.data.items.forEach(function(item) {
                         if (postIdsToFetch.indexOf(String(item.id)) !== -1) {
-                            wscSelectedPosts.set(String(item.id), item.title);
+                            vefgSelectedPosts.set(String(item.id), item.title);
                         }
                     });
-                    wscRenderSelectedBadges('#wsc-posts-selected', wscSelectedPosts, 'post');
+                    vefgRenderSelectedBadges('#vefg-posts-selected', vefgSelectedPosts, 'post');
                     // Update dropdown checkmarks
-                    $('#wsc-posts-list .wsc-badge-dropdown-item').each(function() {
+                    $('#vefg-posts-list .vefg-badge-dropdown-item').each(function() {
                         const id = String($(this).data('id'));
-                        if (wscSelectedPosts.has(id)) {
-                            $(this).addClass('wsc-item-selected');
-                            $(this).find('.wsc-item-checkbox').text('✓');
+                        if (vefgSelectedPosts.has(id)) {
+                            $(this).addClass('vefg-item-selected');
+                            $(this).find('.vefg-item-checkbox').text('✓');
                         }
                     });
                 }
             });
         }
         
-        wscUpdateTargetConstraints();
-        wscUpdateFormSelectorRequirement();
+        vefgUpdateTargetConstraints();
+        vefgUpdateFormSelectorRequirement();
     }
 
-    function wscResetPageTargetsForNew() {
-        $('.wsc-page-target').prop('checked', false);
-        wscSelectedPages.clear();
-        wscSelectedPosts.clear();
-        $('#wsc-pages-selected').empty();
-        $('#wsc-posts-selected').empty();
+    function vefgResetPageTargetsForNew() {
+        $('.vefg-page-target').prop('checked', false);
+        vefgSelectedPages.clear();
+        vefgSelectedPosts.clear();
+        $('#vefg-pages-selected').empty();
+        $('#vefg-posts-selected').empty();
         // Reset dropdown checkmarks
-        $('#wsc-pages-list .wsc-badge-dropdown-item').removeClass('wsc-item-selected').find('.wsc-item-checkbox').text('');
-        $('#wsc-posts-list .wsc-badge-dropdown-item').removeClass('wsc-item-selected').find('.wsc-item-checkbox').text('');
-        wscUpdateTargetConstraints();
-        wscUpdateFormSelectorRequirement();
+        $('#vefg-pages-list .vefg-badge-dropdown-item').removeClass('vefg-item-selected').find('.vefg-item-checkbox').text('');
+        $('#vefg-posts-list .vefg-badge-dropdown-item').removeClass('vefg-item-selected').find('.vefg-item-checkbox').text('');
+        vefgUpdateTargetConstraints();
+        vefgUpdateFormSelectorRequirement();
     }
 
-    function wscUpdateTargetConstraints() {
-        const allPagesChecked = $('.wsc-page-target[value="all-pages"]').is(':checked');
-        const singularPageChecked = $('.wsc-page-target[value="singular-page"]').is(':checked');
-        const singularPostChecked = $('.wsc-page-target[value="singular-post"]').is(':checked');
-        const singularAnyChecked = $('.wsc-page-target[value="singular-any"]').is(':checked');
+    function vefgUpdateTargetConstraints() {
+        const allPagesChecked = $('.vefg-page-target[value="all-pages"]').is(':checked');
+        const singularPageChecked = $('.vefg-page-target[value="singular-page"]').is(':checked');
+        const singularPostChecked = $('.vefg-page-target[value="singular-post"]').is(':checked');
+        const singularAnyChecked = $('.vefg-page-target[value="singular-any"]').is(':checked');
 
         if (allPagesChecked) {
-            $('.wsc-common-target').not('[value="all-pages"]').prop('disabled', true).prop('checked', false);
-            $('#wsc-panel-pages').addClass('wsc-target-panel--disabled');
-            $('#wsc-panel-posts').addClass('wsc-target-panel--disabled');
+            $('.vefg-common-target').not('[value="all-pages"]').prop('disabled', true).prop('checked', false);
+            $('#vefg-panel-pages').addClass('vefg-target-panel--disabled');
+            $('#vefg-panel-posts').addClass('vefg-target-panel--disabled');
             // Clear badge selections when disabled
-            wscSelectedPages.clear();
-            wscSelectedPosts.clear();
-            $('#wsc-pages-selected').empty();
-            $('#wsc-posts-selected').empty();
+            vefgSelectedPages.clear();
+            vefgSelectedPosts.clear();
+            $('#vefg-pages-selected').empty();
+            $('#vefg-posts-selected').empty();
         } else {
-            $('.wsc-common-target').prop('disabled', false);
-            $('#wsc-panel-pages').removeClass('wsc-target-panel--disabled');
-            $('#wsc-panel-posts').removeClass('wsc-target-panel--disabled');
+            $('.vefg-common-target').prop('disabled', false);
+            $('#vefg-panel-pages').removeClass('vefg-target-panel--disabled');
+            $('#vefg-panel-posts').removeClass('vefg-target-panel--disabled');
 
             if (singularAnyChecked) {
-                $('#wsc-panel-pages').addClass('wsc-target-panel--disabled');
-                $('#wsc-panel-posts').addClass('wsc-target-panel--disabled');
-                wscSelectedPages.clear();
-                wscSelectedPosts.clear();
-                $('#wsc-pages-selected').empty();
-                $('#wsc-posts-selected').empty();
+                $('#vefg-panel-pages').addClass('vefg-target-panel--disabled');
+                $('#vefg-panel-posts').addClass('vefg-target-panel--disabled');
+                vefgSelectedPages.clear();
+                vefgSelectedPosts.clear();
+                $('#vefg-pages-selected').empty();
+                $('#vefg-posts-selected').empty();
             } else {
                 if (singularPageChecked) {
-                    $('#wsc-panel-pages').addClass('wsc-target-panel--disabled');
-                    wscSelectedPages.clear();
-                    $('#wsc-pages-selected').empty();
+                    $('#vefg-panel-pages').addClass('vefg-target-panel--disabled');
+                    vefgSelectedPages.clear();
+                    $('#vefg-pages-selected').empty();
                 } else {
-                    $('#wsc-panel-pages').removeClass('wsc-target-panel--disabled');
+                    $('#vefg-panel-pages').removeClass('vefg-target-panel--disabled');
                 }
 
                 if (singularPostChecked) {
-                    $('#wsc-panel-posts').addClass('wsc-target-panel--disabled');
-                    wscSelectedPosts.clear();
-                    $('#wsc-posts-selected').empty();
+                    $('#vefg-panel-posts').addClass('vefg-target-panel--disabled');
+                    vefgSelectedPosts.clear();
+                    $('#vefg-posts-selected').empty();
                 } else {
-                    $('#wsc-panel-posts').removeClass('wsc-target-panel--disabled');
+                    $('#vefg-panel-posts').removeClass('vefg-target-panel--disabled');
                 }
             }
         }
     }
 
-    function wscUpdateFormSelectorRequirement() {
-        const allPagesChecked = $('.wsc-page-target[value="all-pages"]').is(':checked');
+    function vefgUpdateFormSelectorRequirement() {
+        const allPagesChecked = $('.vefg-page-target[value="all-pages"]').is(':checked');
         
-        $('#wsc-form-selector-optional').toggleClass('wsc-hidden', allPagesChecked);
-        $('#wsc-form-selector-required').toggleClass('wsc-hidden', !allPagesChecked);
-        $('#wsc-entire-site-notice').toggleClass('wsc-hidden', !allPagesChecked);
+        $('#vefg-form-selector-optional').toggleClass('vefg-hidden', allPagesChecked);
+        $('#vefg-form-selector-required').toggleClass('vefg-hidden', !allPagesChecked);
+        $('#vefg-entire-site-notice').toggleClass('vefg-hidden', !allPagesChecked);
     }
 
     // Badge selection state
-    const wscSelectedPages = new Map();
-    const wscSelectedPosts = new Map();
-    let wscPagesSearchTimeout = null;
-    let wscPostsSearchTimeout = null;
+    const vefgSelectedPages = new Map();
+    const vefgSelectedPosts = new Map();
+    let vefgPagesSearchTimeout = null;
+    let vefgPostsSearchTimeout = null;
 
-    function wscRenderSelectedBadges(container, selectedMap, type) {
+    function vefgRenderSelectedBadges(container, selectedMap, type) {
         const $container = $(container);
         $container.empty();
         
         selectedMap.forEach((title, id) => {
-            const $badge = $('<span class="wsc-selected-badge" data-id="' + id + '" data-type="' + type + '"></span>');
-            $badge.append('<span class="wsc-badge-title">' + wscEsc(title) + '</span>');
-            $badge.append('<span class="wsc-badge-remove dashicons dashicons-no-alt" role="button" tabindex="0" title="' + wscT('remove', 'Remove') + '"></span>');
+            const $badge = $('<span class="vefg-selected-badge" data-id="' + id + '" data-type="' + type + '"></span>');
+            $badge.append('<span class="vefg-badge-title">' + vefgEsc(title) + '</span>');
+            $badge.append('<span class="vefg-badge-remove dashicons dashicons-no-alt" role="button" tabindex="0" title="' + vefgT('remove', 'Remove') + '"></span>');
             $container.append($badge);
         });
     }
 
-    function wscLoadItems(type, search, page) {
-        const action = type === 'page' ? 'wsc_search_pages' : 'wsc_search_posts';
-        const $dropdown = type === 'page' ? $('#wsc-pages-dropdown') : $('#wsc-posts-dropdown');
-        const $list = type === 'page' ? $('#wsc-pages-list') : $('#wsc-posts-list');
-        const $loading = $dropdown.find('.wsc-badge-dropdown-loading');
-        const $empty = $dropdown.find('.wsc-badge-dropdown-empty');
-        const selectedMap = type === 'page' ? wscSelectedPages : wscSelectedPosts;
+    function vefgLoadItems(type, search, page) {
+        const action = type === 'page' ? 'vefg_search_pages' : 'vefg_search_posts';
+        const $dropdown = type === 'page' ? $('#vefg-pages-dropdown') : $('#vefg-posts-dropdown');
+        const $list = type === 'page' ? $('#vefg-pages-list') : $('#vefg-posts-list');
+        const $loading = $dropdown.find('.vefg-badge-dropdown-loading');
+        const $empty = $dropdown.find('.vefg-badge-dropdown-empty');
+        const selectedMap = type === 'page' ? vefgSelectedPages : vefgSelectedPosts;
 
-        $dropdown.removeClass('wsc-hidden');
-        $loading.removeClass('wsc-hidden');
-        $empty.addClass('wsc-hidden');
+        $dropdown.removeClass('vefg-hidden');
+        $loading.removeClass('vefg-hidden');
+        $empty.addClass('vefg-hidden');
         
         if (page === 1) {
             $list.empty();
         }
 
-        $.post(WPSpanChecker.ajaxurl, {
+        $.post(VEFGChecker.ajaxurl, {
             action: action,
-            nonce: WPSpanChecker.nonce,
+            nonce: VEFGChecker.nonce,
             search: search,
             per_page: 20,
             page: page
         }, function(response) {
-            $loading.addClass('wsc-hidden');
+            $loading.addClass('vefg-hidden');
             
             if (response.success && response.data.items) {
                 const items = response.data.items;
                 
                 if (items.length === 0 && page === 1) {
-                    $empty.removeClass('wsc-hidden');
+                    $empty.removeClass('vefg-hidden');
                     return;
                 }
 
                 items.forEach(function(item) {
                     const isSelected = selectedMap.has(String(item.id));
-                    const $item = $('<div class="wsc-badge-dropdown-item' + (isSelected ? ' wsc-item-selected' : '') + '" data-id="' + item.id + '" data-title="' + wscEsc(item.title) + '" data-type="' + type + '"></div>');
-                    $item.append('<span class="wsc-item-checkbox">' + (isSelected ? '✓' : '') + '</span>');
-                    $item.append('<span class="wsc-item-title">' + wscEsc(item.title) + '</span>');
-                    $item.append('<span class="wsc-item-id">#' + item.id + '</span>');
+                    const $item = $('<div class="vefg-badge-dropdown-item' + (isSelected ? ' vefg-item-selected' : '') + '" data-id="' + item.id + '" data-title="' + vefgEsc(item.title) + '" data-type="' + type + '"></div>');
+                    $item.append('<span class="vefg-item-checkbox">' + (isSelected ? '✓' : '') + '</span>');
+                    $item.append('<span class="vefg-item-title">' + vefgEsc(item.title) + '</span>');
+                    $item.append('<span class="vefg-item-id">#' + item.id + '</span>');
                     $list.append($item);
                 });
 
                 // Add load more button if there are more pages
                 if (response.data.page < response.data.total_pages) {
-                    const $loadMore = $('<div class="wsc-badge-load-more" data-page="' + (response.data.page + 1) + '" data-search="' + wscEsc(search) + '" data-type="' + type + '"></div>');
-                    $loadMore.text(wscT('loadMore', 'Load more') + ' (' + response.data.total + ' ' + wscT('total', 'total') + ')');
+                    const $loadMore = $('<div class="vefg-badge-load-more" data-page="' + (response.data.page + 1) + '" data-search="' + vefgEsc(search) + '" data-type="' + type + '"></div>');
+                    $loadMore.text(vefgT('loadMore', 'Load more') + ' (' + response.data.total + ' ' + vefgT('total', 'total') + ')');
                     $list.append($loadMore);
                 }
             }
         }).fail(function() {
-            $loading.addClass('wsc-hidden');
-            $empty.removeClass('wsc-hidden');
+            $loading.addClass('vefg-hidden');
+            $empty.removeClass('vefg-hidden');
         });
     }
 
     // Initialize badge selectors on page load
-    function wscInitBadgeSelectors() {
+    function vefgInitBadgeSelectors() {
         // Load initial pages
-        wscLoadItems('page', '', 1);
+        vefgLoadItems('page', '', 1);
         // Load initial posts
-        wscLoadItems('post', '', 1);
+        vefgLoadItems('post', '', 1);
     }
 
     // Search pages with debounce
-    $('#wsc-search-pages').on('input', function() {
+    $('#vefg-search-pages').on('input', function() {
         const search = $(this).val().trim();
-        clearTimeout(wscPagesSearchTimeout);
-        wscPagesSearchTimeout = setTimeout(function() {
-            wscLoadItems('page', search, 1);
+        clearTimeout(vefgPagesSearchTimeout);
+        vefgPagesSearchTimeout = setTimeout(function() {
+            vefgLoadItems('page', search, 1);
         }, 300);
     });
 
     // Search posts with debounce
-    $('#wsc-search-posts').on('input', function() {
+    $('#vefg-search-posts').on('input', function() {
         const search = $(this).val().trim();
-        clearTimeout(wscPostsSearchTimeout);
-        wscPostsSearchTimeout = setTimeout(function() {
-            wscLoadItems('post', search, 1);
+        clearTimeout(vefgPostsSearchTimeout);
+        vefgPostsSearchTimeout = setTimeout(function() {
+            vefgLoadItems('post', search, 1);
         }, 300);
     });
 
     // Focus on search shows dropdown
-    $('#wsc-search-pages').on('focus', function() {
-        $('#wsc-pages-dropdown').removeClass('wsc-hidden');
+    $('#vefg-search-pages').on('focus', function() {
+        $('#vefg-pages-dropdown').removeClass('vefg-hidden');
     });
 
-    $('#wsc-search-posts').on('focus', function() {
-        $('#wsc-posts-dropdown').removeClass('wsc-hidden');
+    $('#vefg-search-posts').on('focus', function() {
+        $('#vefg-posts-dropdown').removeClass('vefg-hidden');
     });
 
     // Load more items
-    $(document).on('click', '.wsc-badge-load-more', function() {
+    $(document).on('click', '.vefg-badge-load-more', function() {
         const page = parseInt($(this).data('page'), 10);
         const search = $(this).data('search') || '';
         const type = $(this).data('type');
         $(this).remove();
-        wscLoadItems(type, search, page);
+        vefgLoadItems(type, search, page);
     });
 
     // Select/deselect item from dropdown
-    $(document).on('click', '.wsc-badge-dropdown-item', function() {
+    $(document).on('click', '.vefg-badge-dropdown-item', function() {
         const $item = $(this);
         const id = String($item.data('id'));
         const title = $item.data('title');
         const type = $item.data('type');
-        const selectedMap = type === 'page' ? wscSelectedPages : wscSelectedPosts;
-        const containerSelector = type === 'page' ? '#wsc-pages-selected' : '#wsc-posts-selected';
+        const selectedMap = type === 'page' ? vefgSelectedPages : vefgSelectedPosts;
+        const containerSelector = type === 'page' ? '#vefg-pages-selected' : '#vefg-posts-selected';
 
         if (selectedMap.has(id)) {
             selectedMap.delete(id);
-            $item.removeClass('wsc-item-selected');
-            $item.find('.wsc-item-checkbox').text('');
+            $item.removeClass('vefg-item-selected');
+            $item.find('.vefg-item-checkbox').text('');
         } else {
             selectedMap.set(id, title);
-            $item.addClass('wsc-item-selected');
-            $item.find('.wsc-item-checkbox').text('✓');
+            $item.addClass('vefg-item-selected');
+            $item.find('.vefg-item-checkbox').text('✓');
         }
 
-        wscRenderSelectedBadges(containerSelector, selectedMap, type);
-        wscUpdateTargetConstraints();
-        wscUpdateFormSelectorRequirement();
+        vefgRenderSelectedBadges(containerSelector, selectedMap, type);
+        vefgUpdateTargetConstraints();
+        vefgUpdateFormSelectorRequirement();
     });
 
     // Remove badge
-    $(document).on('click', '.wsc-badge-remove', function(e) {
+    $(document).on('click', '.vefg-badge-remove', function(e) {
         e.stopPropagation();
-        const $badge = $(this).closest('.wsc-selected-badge');
+        const $badge = $(this).closest('.vefg-selected-badge');
         const id = String($badge.data('id'));
         const type = $badge.data('type');
-        const selectedMap = type === 'page' ? wscSelectedPages : wscSelectedPosts;
-        const containerSelector = type === 'page' ? '#wsc-pages-selected' : '#wsc-posts-selected';
-        const $dropdownItem = (type === 'page' ? $('#wsc-pages-list') : $('#wsc-posts-list')).find('.wsc-badge-dropdown-item[data-id="' + id + '"]');
+        const selectedMap = type === 'page' ? vefgSelectedPages : vefgSelectedPosts;
+        const containerSelector = type === 'page' ? '#vefg-pages-selected' : '#vefg-posts-selected';
+        const $dropdownItem = (type === 'page' ? $('#vefg-pages-list') : $('#vefg-posts-list')).find('.vefg-badge-dropdown-item[data-id="' + id + '"]');
 
         selectedMap.delete(id);
-        $dropdownItem.removeClass('wsc-item-selected');
-        $dropdownItem.find('.wsc-item-checkbox').text('');
+        $dropdownItem.removeClass('vefg-item-selected');
+        $dropdownItem.find('.vefg-item-checkbox').text('');
         
-        wscRenderSelectedBadges(containerSelector, selectedMap, type);
-        wscUpdateTargetConstraints();
-        wscUpdateFormSelectorRequirement();
+        vefgRenderSelectedBadges(containerSelector, selectedMap, type);
+        vefgUpdateTargetConstraints();
+        vefgUpdateFormSelectorRequirement();
     });
 
     // Close dropdown when clicking outside
     $(document).on('click', function(e) {
-        if (!$(e.target).closest('#wsc-pages-badge-wrap').length) {
-            $('#wsc-pages-dropdown').addClass('wsc-hidden');
+        if (!$(e.target).closest('#vefg-pages-badge-wrap').length) {
+            $('#vefg-pages-dropdown').addClass('vefg-hidden');
         }
-        if (!$(e.target).closest('#wsc-posts-badge-wrap').length) {
-            $('#wsc-posts-dropdown').addClass('wsc-hidden');
+        if (!$(e.target).closest('#vefg-posts-badge-wrap').length) {
+            $('#vefg-posts-dropdown').addClass('vefg-hidden');
         }
     });
 
-    $(document).on('change', '.wsc-common-target', function() {
-        wscUpdateTargetConstraints();
-        wscUpdateFormSelectorRequirement();
+    $(document).on('change', '.vefg-common-target', function() {
+        vefgUpdateTargetConstraints();
+        vefgUpdateFormSelectorRequirement();
     });
 
-    if ($('#wsc-panel-common').length) {
-        wscInitBadgeSelectors();
-        wscUpdateTargetConstraints();
-        wscUpdateFormSelectorRequirement();
+    if ($('#vefg-panel-common').length) {
+        vefgInitBadgeSelectors();
+        vefgUpdateTargetConstraints();
+        vefgUpdateFormSelectorRequirement();
     }
 
-    function wscUpdateAutoValidationMode() {
-        const isAuto = $('#wsc-auto-validation').is(':checked');
-        $('#wsc-auto-validation-rules').toggleClass('wsc-hidden', !isAuto);
-        $('#wsc-manual-fields-section').toggleClass('wsc-hidden', isAuto);
+    function vefgUpdateAutoValidationMode() {
+        const isAuto = $('#vefg-auto-validation').is(':checked');
+        $('#vefg-auto-validation-rules').toggleClass('vefg-hidden', !isAuto);
+        $('#vefg-manual-fields-section').toggleClass('vefg-hidden', isAuto);
     }
 
-    $('#wsc-auto-validation').on('change', function() {
-        wscUpdateAutoValidationMode();
+    $('#vefg-auto-validation').on('change', function() {
+        vefgUpdateAutoValidationMode();
     });
 
-    function wscCollectAutoValidationRules() {
+    function vefgCollectAutoValidationRules() {
         return {
             email: {
                 validate: $('#auto_email_validate').is(':checked'),
@@ -482,7 +482,7 @@ jQuery(document).ready(function ($) {
         };
     }
 
-    function wscApplyAutoValidationRules(rules) {
+    function vefgApplyAutoValidationRules(rules) {
         if (!rules) return;
         if (rules.email) {
             $('#auto_email_validate').prop('checked', !!rules.email.validate);
@@ -511,7 +511,7 @@ jQuery(document).ready(function ($) {
         }
     }
 
-    function wscResetAutoValidationRules() {
+    function vefgResetAutoValidationRules() {
         $('#auto_email_validate').prop('checked', true);
         $('#auto_email_mx').prop('checked', true);
         $('#auto_email_disposable').prop('checked', true);
@@ -527,12 +527,12 @@ jQuery(document).ready(function ($) {
         $('#auto_text_no_urls').prop('checked', false);
     }
 
-    if ($('#wsc-auto-validation').length) {
-        wscUpdateAutoValidationMode();
+    if ($('#vefg-auto-validation').length) {
+        vefgUpdateAutoValidationMode();
     }
 
-    function wscFormatPageTargetsCell(raw) {
-        const list = wscNormalizePageTargetsRaw(raw);
+    function vefgFormatPageTargetsCell(raw) {
+        const list = vefgNormalizePageTargetsRaw(raw);
         if (!list.length) {
             return '—';
         }
@@ -541,7 +541,7 @@ jQuery(document).ready(function ($) {
                 return pageTargetLabels[t];
             }
             if (/^\d+$/.test(t)) {
-                const opt = document.querySelector('#wsc-target-pages option[value="' + t + '"], #wsc-target-posts option[value="' + t + '"]');
+                const opt = document.querySelector('#vefg-target-pages option[value="' + t + '"], #vefg-target-posts option[value="' + t + '"]');
                 if (opt && opt.textContent) {
                     return '#' + t + ' ' + opt.textContent.trim().slice(0, 28);
                 }
@@ -561,11 +561,11 @@ jQuery(document).ready(function ($) {
     // Initialize advanced DataTable
     let table = $('#domains-table').DataTable({
         ajax: {
-            url: WPSpanChecker.ajaxurl,
+            url: VEFGChecker.ajaxurl,
             type: 'POST',
             data: function (d) {
-                d.action = 'get_domains';
-                d.nonce = WPSpanChecker.nonce;
+                d.action = 'vefg_get_domains';
+                d.nonce = VEFGChecker.nonce;
                 d.domain_type = domainType;
             },
             dataSrc: function (json) {
@@ -577,7 +577,7 @@ jQuery(document).ready(function ($) {
             {data: 'domain'},
             {
                 data: null, render: function (data, type, row) {
-                    return '<button class="button delete-domain" data-id="' + row.id + '">' + wscT('delete', 'Delete') + '</button>';
+                    return '<button class="button delete-domain" data-id="' + row.id + '">' + vefgT('delete', 'Delete') + '</button>';
                 }
             }
         ],
@@ -605,48 +605,48 @@ jQuery(document).ready(function ($) {
         e.preventDefault();
         let domain = $(this).find('input[name="domain"]').val();
 
-        $.post(WPSpanChecker.ajaxurl, {
-            action: 'add_domain',
-            nonce: WPSpanChecker.nonce,
+        $.post(VEFGChecker.ajaxurl, {
+            action: 'vefg_add_domain',
+            nonce: VEFGChecker.nonce,
             domain_type: domainType,
             domain: domain
         }, function (response) {
             if (response.success) {
                 table.ajax.reload(null, false);
                 $('#add-domain-form')[0].reset();
-                wscOkToast(wscT('domainAdded', 'Domain added.'));
+                vefgOkToast(vefgT('domainAdded', 'Domain added.'));
             } else {
-                wscErrToast(wscAjaxErr(response.data, wscT('errorAddingDomain', 'Error adding domain.')));
+                vefgErrToast(vefgAjaxErr(response.data, vefgT('errorAddingDomain', 'Error adding domain.')));
             }
         });
     });
 
-    $('#wsc-import-whitelist-seed').on('click', function () {
+    $('#vefg-import-whitelist-seed').on('click', function () {
         const $btn = $(this);
         Swal.fire({
-            title: wscT('importWhitelistSeedTitle', 'Import bundled whitelist domains?'),
-            text: wscT('importWhitelistSeedText', 'This will add common provider domains and skip existing entries.'),
+            title: vefgT('importWhitelistSeedTitle', 'Import bundled whitelist domains?'),
+            text: vefgT('importWhitelistSeedText', 'This will add common provider domains and skip existing entries.'),
             icon: 'question',
             showCancelButton: true,
-            confirmButtonText: wscT('import', 'Import'),
-            cancelButtonText: wscT('cancel', 'Cancel'),
+            confirmButtonText: vefgT('import', 'Import'),
+            cancelButtonText: vefgT('cancel', 'Cancel'),
         }).then(function (result) {
             if (!result.isConfirmed) {
                 return;
             }
             $btn.prop('disabled', true);
-            $.post(WPSpanChecker.ajaxurl, {
-                action: 'import_whitelist_seed',
-                nonce: WPSpanChecker.nonce
+            $.post(VEFGChecker.ajaxurl, {
+                action: 'vefg_import_whitelist_seed',
+                nonce: VEFGChecker.nonce
             }, function (response) {
                 if (response && response.success) {
                     table.ajax.reload(null, false);
-                    wscOkToast(wscAjaxErr(response.data, wscT('importDone', 'Whitelist import complete.')));
+                    vefgOkToast(vefgAjaxErr(response.data, vefgT('importDone', 'Whitelist import complete.')));
                 } else {
-                    wscErrToast(wscAjaxErr(response ? response.data : null, wscT('importFailed', 'Whitelist import failed.')));
+                    vefgErrToast(vefgAjaxErr(response ? response.data : null, vefgT('importFailed', 'Whitelist import failed.')));
                 }
             }).fail(function () {
-                wscErrToast(wscT('importFailed', 'Whitelist import failed.'));
+                vefgErrToast(vefgT('importFailed', 'Whitelist import failed.'));
             }).always(function () {
                 $btn.prop('disabled', false);
             });
@@ -657,36 +657,36 @@ jQuery(document).ready(function ($) {
     $('#domains-table').on('click', '.delete-domain', function () {
         let id = $(this).data('id');
         Swal.fire({
-            title: wscT('confirmDeleteDomainTitle', 'Remove this domain?'),
-            text: wscT('confirmDeleteDomain', 'Are you sure you want to delete this domain?'),
+            title: vefgT('confirmDeleteDomainTitle', 'Remove this domain?'),
+            text: vefgT('confirmDeleteDomain', 'Are you sure you want to delete this domain?'),
             icon: 'warning',
             showCancelButton: true,
-            confirmButtonText: wscT('delete', 'Delete'),
-            cancelButtonText: wscT('cancel', 'Cancel'),
+            confirmButtonText: vefgT('delete', 'Delete'),
+            cancelButtonText: vefgT('cancel', 'Cancel'),
         }).then(function (result) {
             if (!result.isConfirmed) {
                 return;
             }
-            $.post(WPSpanChecker.ajaxurl, {
-                action: 'delete_domain',
-                nonce: WPSpanChecker.nonce,
+            $.post(VEFGChecker.ajaxurl, {
+                action: 'vefg_delete_domain',
+                nonce: VEFGChecker.nonce,
                 domain_type: domainType,
                 id: id
             }, function (response) {
                 if (response.success) {
                     table.ajax.reload(null, false);
-                    wscOkToast(wscT('domainRemoved', 'Domain removed.'));
+                    vefgOkToast(vefgT('domainRemoved', 'Domain removed.'));
                 } else {
-                    wscErrToast(wscAjaxErr(response.data, wscT('errorDeletingDomain', 'Error deleting domain.')));
+                    vefgErrToast(vefgAjaxErr(response.data, vefgT('errorDeletingDomain', 'Error deleting domain.')));
                 }
             });
         });
     });
 
 
-    let wscRegexTargetInput = null;
+    let vefgRegexTargetInput = null;
 
-    function wscEsc(s) {
+    function vefgEsc(s) {
         return String(s === undefined || s === null ? '' : s)
             .replace(/&/g, '&amp;')
             .replace(/</g, '&lt;')
@@ -694,9 +694,9 @@ jQuery(document).ready(function ($) {
             .replace(/'/g, '&#39;');
     }
 
-    function wscFgNextIndex() {
+    function vefgFgNextIndex() {
         let max = 0;
-        $('#wsc-form-fields .wsc-form-field-row').each(function () {
+        $('#vefg-form-fields .vefg-form-field-row').each(function () {
             const ix = parseInt($(this).attr('data-field-index'), 10) || 0;
             if (ix > max) {
                 max = ix;
@@ -705,7 +705,7 @@ jQuery(document).ready(function ($) {
         return max + 1;
     }
 
-    function wscFgMergeApi(item, legacyRow) {
+    function vefgFgMergeApi(item, legacyRow) {
         const lr = legacyRow || {};
         const d = item || {};
         const has = function (k) {
@@ -716,48 +716,48 @@ jQuery(document).ready(function ($) {
         return { wr: wr, vt: vt };
     }
 
-    function wscFgToggleRow($row) {
+    function vefgFgToggleRow($row) {
         const t = $row.find('.form-field').val();
-        $row.find('.wsc-fg-opt-email').toggle(t === 'email' || t === 'url');
-        $row.find('.wsc-fg-opt-text').toggle(t === 'text');
-        $row.find('.wsc-fg-opt-username').toggle(t === 'username');
-        $row.find('.wsc-fg-opt-textarea').toggle(t === 'textarea');
-        $row.find('.wsc-fg-opt-other').toggle(
+        $row.find('.vefg-fg-opt-email').toggle(t === 'email' || t === 'url');
+        $row.find('.vefg-fg-opt-text').toggle(t === 'text');
+        $row.find('.vefg-fg-opt-username').toggle(t === 'username');
+        $row.find('.vefg-fg-opt-textarea').toggle(t === 'textarea');
+        $row.find('.vefg-fg-opt-other').toggle(
             t === 'tel' || t === 'number' || t === 'password'
         );
     }
 
-    function wscFgPickRadio($row, name, val) {
+    function vefgFgPickRadio($row, name, val) {
         const sval = String(val);
         $row.find('input[type="radio"][name="' + name + '"]').each(function () {
             const on = String($(this).val()) === sval;
             $(this).prop('checked', on);
-            $(this).closest('.wsc-switch-option').toggleClass('wsc-check', on);
+            $(this).closest('.vefg-switch-option').toggleClass('vefg-check', on);
         });
     }
 
     /** Reset toggles that do not apply when field type changes (conditional guard). */
-    function wscFgSyncConditionalRadios($row) {
+    function vefgFgSyncConditionalRadios($row) {
         const ft = $row.find('.form-field').val();
         const ix = $row.attr('data-field-index');
         if (ft !== 'email' && ft !== 'url') {
-            wscFgPickRadio($row, 'fg_webrisk_' + ix, 0);
-            wscFgPickRadio($row, 'fg_vt_' + ix, 0);
+            vefgFgPickRadio($row, 'fg_webrisk_' + ix, 0);
+            vefgFgPickRadio($row, 'fg_vt_' + ix, 0);
         }
         if (ft !== 'text') {
-            wscFgPickRadio($row, 'fg_texturls_' + ix, 1);
+            vefgFgPickRadio($row, 'fg_texturls_' + ix, 1);
         }
         if (ft !== 'username') {
-            wscFgPickRadio($row, 'fg_userexists_' + ix, 0);
+            vefgFgPickRadio($row, 'fg_userexists_' + ix, 0);
         }
         if (ft !== 'textarea') {
-            wscFgPickRadio($row, 'fg_tlinks_' + ix, 1);
-            wscFgPickRadio($row, 'fg_tai_' + ix, 0);
+            vefgFgPickRadio($row, 'fg_tlinks_' + ix, 1);
+            vefgFgPickRadio($row, 'fg_tai_' + ix, 0);
         }
     }
 
     /** Strip irrelevant keys before save (matches server Form_Guard_Conditional::normalize_field_config). */
-    function wscFgEffectivePayload(ft, raw) {
+    function vefgFgEffectivePayload(ft, raw) {
         const o = Object.assign({}, raw);
         if (ft !== 'email' && ft !== 'url') {
             o.is_webrisk = 0;
@@ -776,10 +776,10 @@ jQuery(document).ready(function ($) {
         return o;
     }
 
-    function wscFgRowHtml(ix, item, legacyRow) {
+    function vefgFgRowHtml(ix, item, legacyRow) {
         const d = item || {};
         const field = d.field || 'text';
-        const api = wscFgMergeApi(d, legacyRow);
+        const api = vefgFgMergeApi(d, legacyRow);
         const optSel = function (v) {
             return field === v ? ' selected="selected"' : '';
         };
@@ -812,118 +812,118 @@ jQuery(document).ready(function ($) {
         const textUrlsAllow = hasTextUrls
             ? (parseInt(d.text_allow_urls ?? d.textAllowUrls, 10) !== 0)
             : true;
-        const regexVal = wscEsc(d.regex || '');
+        const regexVal = vefgEsc(d.regex || '');
         const selEv = d.event || 'change';
 
         function rad(name, val, cur) {
-            const lab = val ? wscT('enable', 'Enable') : wscT('disable', 'Disable');
+            const lab = val ? vefgT('enable', 'Enable') : vefgT('disable', 'Disable');
             const numVal = parseInt(val, 10) || 0;
             const numCur = parseInt(cur, 10) || 0;
             const isChecked = numCur === numVal;
-            return '<span class="wsc-switch-option' + (isChecked ? ' wsc-check' : '') + '">' +
+            return '<span class="vefg-switch-option' + (isChecked ? ' vefg-check' : '') + '">' +
                 '<input type="radio" name="' + name + '" value="' + numVal + '"' + (isChecked ? ' checked="checked"' : '') + '>' +
                 '<label>' + lab + '</label></span>';
         }
 
         return (
-            '<div class="wsc-form-field-row wsc-form-group" data-field-index="' + ix + '">' +
+            '<div class="vefg-form-field-row vefg-form-group" data-field-index="' + ix + '">' +
             '<span class="removeFormField dashicons dashicons-no-alt" role="button" tabindex="0"></span>' +
-            '<div class="wsc-fg-row-banner wsc-mb-4">' +
-            '<strong><span class="wsc-fg-row-badge">1</span>. ' + wscT('mappedFieldTitle', 'Mapped form control') + '</strong>' +
-            '<p class="wsc-form-info-message wsc-text-info wsc-mt-2 wsc-mb-0">' + wscT('mappedFieldGuardsBlurb', 'Guards in this row apply only to this field’s ID/class. Use “Add field” for each separate input (10 fields → 10 rows).') + '</p>' +
+            '<div class="vefg-fg-row-banner vefg-mb-4">' +
+            '<strong><span class="vefg-fg-row-badge">1</span>. ' + vefgT('mappedFieldTitle', 'Mapped form control') + '</strong>' +
+            '<p class="vefg-form-info-message vefg-text-info vefg-mt-2 vefg-mb-0">' + vefgT('mappedFieldGuardsBlurb', 'Guards in this row apply only to this field’s ID/class. Use “Add field” for each separate input (10 fields → 10 rows).') + '</p>' +
             '</div>' +
-            '<label class="wsc-form-label" for="form-field-' + ix + '">' + wscT('formField', 'Form field') + '</label>' +
-            '<select id="form-field-' + ix + '" class="wsc-input wsc-input-primary form-field">' +
-            '<option value="text"' + optSel('text') + '>' + wscT('optionText', 'Text') + '</option>' +
-            '<option value="username"' + optSel('username') + '>' + wscT('optionUsername', 'Username') + '</option>' +
-            '<option value="textarea"' + optSel('textarea') + '>' + wscT('optionTextarea', 'Textarea') + '</option>' +
-            '<option value="email"' + optSel('email') + '>' + wscT('optionEmail', 'Email') + '</option>' +
-            '<option value="url"' + optSel('url') + '>' + wscT('optionUrl', 'URL') + '</option>' +
-            '<option value="tel"' + optSel('tel') + '>' + wscT('optionTel', 'Telephone') + '</option>' +
-            '<option value="number"' + optSel('number') + '>' + wscT('optionNumber', 'Number') + '</option>' +
-            '<option value="password"' + optSel('password') + '>' + wscT('optionPassword', 'Password') + '</option>' +
+            '<label class="vefg-form-label" for="form-field-' + ix + '">' + vefgT('formField', 'Form field') + '</label>' +
+            '<select id="form-field-' + ix + '" class="vefg-input vefg-input-primary form-field">' +
+            '<option value="text"' + optSel('text') + '>' + vefgT('optionText', 'Text') + '</option>' +
+            '<option value="username"' + optSel('username') + '>' + vefgT('optionUsername', 'Username') + '</option>' +
+            '<option value="textarea"' + optSel('textarea') + '>' + vefgT('optionTextarea', 'Textarea') + '</option>' +
+            '<option value="email"' + optSel('email') + '>' + vefgT('optionEmail', 'Email') + '</option>' +
+            '<option value="url"' + optSel('url') + '>' + vefgT('optionUrl', 'URL') + '</option>' +
+            '<option value="tel"' + optSel('tel') + '>' + vefgT('optionTel', 'Telephone') + '</option>' +
+            '<option value="number"' + optSel('number') + '>' + vefgT('optionNumber', 'Number') + '</option>' +
+            '<option value="password"' + optSel('password') + '>' + vefgT('optionPassword', 'Password') + '</option>' +
             '</select>' +
-            '<label class="wsc-form-label wsc-mt-4" for="form-id-' + ix + '">' + wscT('fieldId', 'Field ID') + '</label>' +
-            '<input id="form-id-' + ix + '" type="text" class="wsc-input wsc-input-primary field-id" placeholder="' + wscEsc(wscT('fieldId', 'Field ID')) + '" value="' + wscEsc(d.id || '') + '">' +
-            '<label class="wsc-form-label wsc-mt-4" for="form-class-' + ix + '">' + wscT('fieldClass', 'Field class') + '</label>' +
-            '<input id="form-class-' + ix + '" type="text" class="wsc-input wsc-input-primary field-class" placeholder="' + wscEsc(wscT('fieldClass', 'Field class')) + '" value="' + wscEsc(d.class || '') + '">' +
-            '<label class="wsc-form-label wsc-mt-4" for="form-event-' + ix + '">' + wscT('javascriptEvent', 'JavaScript event') + '</label>' +
-            '<select class="wsc-input wsc-input-primary form-event wsc-mt-4" id="form-event-' + ix + '">' +
-            '<option value="change"' + (selEv === 'change' ? ' selected' : '') + '>' + wscT('optionChange', 'Change') + '</option>' +
-            '<option value="input"' + (selEv === 'input' ? ' selected' : '') + '>' + wscT('optionInput', 'Input') + '</option>' +
-            '<option value="submit"' + (selEv === 'submit' ? ' selected' : '') + '>' + wscT('optionFormSubmit', 'Form submit') + '</option>' +
+            '<label class="vefg-form-label vefg-mt-4" for="form-id-' + ix + '">' + vefgT('fieldId', 'Field ID') + '</label>' +
+            '<input id="form-id-' + ix + '" type="text" class="vefg-input vefg-input-primary field-id" placeholder="' + vefgEsc(vefgT('fieldId', 'Field ID')) + '" value="' + vefgEsc(d.id || '') + '">' +
+            '<label class="vefg-form-label vefg-mt-4" for="form-class-' + ix + '">' + vefgT('fieldClass', 'Field class') + '</label>' +
+            '<input id="form-class-' + ix + '" type="text" class="vefg-input vefg-input-primary field-class" placeholder="' + vefgEsc(vefgT('fieldClass', 'Field class')) + '" value="' + vefgEsc(d.class || '') + '">' +
+            '<label class="vefg-form-label vefg-mt-4" for="form-event-' + ix + '">' + vefgT('javascriptEvent', 'JavaScript event') + '</label>' +
+            '<select class="vefg-input vefg-input-primary form-event vefg-mt-4" id="form-event-' + ix + '">' +
+            '<option value="change"' + (selEv === 'change' ? ' selected' : '') + '>' + vefgT('optionChange', 'Change') + '</option>' +
+            '<option value="input"' + (selEv === 'input' ? ' selected' : '') + '>' + vefgT('optionInput', 'Input') + '</option>' +
+            '<option value="submit"' + (selEv === 'submit' ? ' selected' : '') + '>' + vefgT('optionFormSubmit', 'Form submit') + '</option>' +
             '</select>' +
-            '<fieldset class="wsc-fg-rules-fieldset wsc-fg-fieldset wsc-mt-4">' +
-            '<legend class="wsc-form-label">' + wscT('validationRulesLegend', 'Validation rules') + '</legend>' +
-            '<div class="wsc-form-attr wsc-mt-2">' +
-            '<p class="wsc-form-label">' + wscT('requiredField', 'Required field') + '</p>' +
-            '<div class="wsc-switch-control">' + rad('is_required_f_' + ix, 1, req) + rad('is_required_f_' + ix, 0, req) + '</div>' +
-            '<span class="wsc-form-info-message wsc-text-info">' + wscT('requiredFieldHint', 'Mark the field as required in the browser.') + '</span></div>' +
-            '<div class="wsc-form-attr wsc-mt-4">' +
-            '<p class="wsc-form-label">' + wscT('requireValidation', 'Require validation') + '</p>' +
-            '<div class="wsc-switch-control">' + rad('is_validate_f_' + ix, 1, val) + rad('is_validate_f_' + ix, 0, val) + '</div>' +
-            '<span class="wsc-form-info-message wsc-text-info">' + wscT('requireValidationHint', 'Run server-side validation for this field.') + '</span></div>' +
-            '<label class="wsc-form-label wsc-mt-4" for="field-regex-' + ix + '">' + wscT('customRegex', 'Custom regex (delimited)') + '</label>' +
-            '<div class="wsc-flex wsc-gap-2 wsc-items-center wsc-flex-wrap">' +
-            '<input id="field-regex-' + ix + '" type="text" class="wsc-input wsc-input-primary field-regex wsc-flex-grow" placeholder="/^[a-z]+$/" value="' + regexVal + '">' +
-            '<button type="button" class="wsc-btn wsc-btn-outline-primary wsc-open-regex-presets">' + wscT('presetRegex', 'Preset patterns') + '</button></div>' +
-            '<span class="wsc-form-info-message wsc-text-info">' + wscT('customRegexHint', 'Optional. Must look like /pattern/flags. Checked on the server when validation is enabled.') + '</span>' +
+            '<fieldset class="vefg-fg-rules-fieldset vefg-fg-fieldset vefg-mt-4">' +
+            '<legend class="vefg-form-label">' + vefgT('validationRulesLegend', 'Validation rules') + '</legend>' +
+            '<div class="vefg-form-attr vefg-mt-2">' +
+            '<p class="vefg-form-label">' + vefgT('requiredField', 'Required field') + '</p>' +
+            '<div class="vefg-switch-control">' + rad('is_required_f_' + ix, 1, req) + rad('is_required_f_' + ix, 0, req) + '</div>' +
+            '<span class="vefg-form-info-message vefg-text-info">' + vefgT('requiredFieldHint', 'Mark the field as required in the browser.') + '</span></div>' +
+            '<div class="vefg-form-attr vefg-mt-4">' +
+            '<p class="vefg-form-label">' + vefgT('requireValidation', 'Require validation') + '</p>' +
+            '<div class="vefg-switch-control">' + rad('is_validate_f_' + ix, 1, val) + rad('is_validate_f_' + ix, 0, val) + '</div>' +
+            '<span class="vefg-form-info-message vefg-text-info">' + vefgT('requireValidationHint', 'Run server-side validation for this field.') + '</span></div>' +
+            '<label class="vefg-form-label vefg-mt-4" for="field-regex-' + ix + '">' + vefgT('customRegex', 'Custom regex (delimited)') + '</label>' +
+            '<div class="vefg-flex vefg-gap-2 vefg-items-center vefg-flex-wrap">' +
+            '<input id="field-regex-' + ix + '" type="text" class="vefg-input vefg-input-primary field-regex vefg-flex-grow" placeholder="/^[a-z]+$/" value="' + regexVal + '">' +
+            '<button type="button" class="vefg-btn vefg-btn-outline-primary vefg-open-regex-presets">' + vefgT('presetRegex', 'Preset patterns') + '</button></div>' +
+            '<span class="vefg-form-info-message vefg-text-info">' + vefgT('customRegexHint', 'Optional. Must look like /pattern/flags. Checked on the server when validation is enabled.') + '</span>' +
             '</fieldset>' +
-            '<fieldset class="wsc-fg-security-fieldset wsc-fg-fieldset wsc-mt-4">' +
-            '<legend class="wsc-form-label">' + wscT('securityMethodsLegend', 'Protection methods (based on field type)') + '</legend>' +
-            '<p class="wsc-form-info-message wsc-text-info wsc-mb-4">' + wscT('securityMethodsIntro', 'Email and URL rows can enable Web Risk and VirusTotal (Google Web Risk defaults ON when you pick Email). Username rows can enable live “already registered” checks. Text adds URL-in-value rules; textarea adds links + AI spam screening.') + '</p>' +
-            '<div class="wsc-form-attr wsc-mt-2 wsc-fg-opt-email">' +
-            '<p class="wsc-form-label">' + wscT('googleWebRisk', 'Google Web Risk') + '</p>' +
-            '<div class="wsc-switch-control">' + rad('fg_webrisk_' + ix, 1, wr) + rad('fg_webrisk_' + ix, 0, wr) + '</div>' +
-            '<span class="wsc-form-info-message wsc-text-info">' + wscT('webriskEmailUrlOnly', 'Used when “Form field” is Email or URL and “Require validation” is enabled for domain checks.') + '</span></div>' +
-            '<div class="wsc-form-attr wsc-mt-4 wsc-fg-opt-email">' +
-            '<p class="wsc-form-label">' + wscT('virusTotal', 'VirusTotal scanner') + '</p>' +
-            '<div class="wsc-switch-control">' + rad('fg_vt_' + ix, 1, vt) + rad('fg_vt_' + ix, 0, vt) + '</div>' +
-            '<span class="wsc-form-info-message wsc-text-info">' + wscT('vtEmailUrlOnly', 'Same as Web Risk: applies together with Email or URL domain validation.') + '</span></div>' +
-            '<div class="wsc-form-attr wsc-mt-4 wsc-fg-opt-username">' +
-            '<p class="wsc-form-label">' + wscT('usernameTakenCheck', 'Reject if username exists') + '</p>' +
-            '<div class="wsc-switch-control">' + rad('fg_userexists_' + ix, 1, tun) + rad('fg_userexists_' + ix, 0, tun) + '</div>' +
-            '<span class="wsc-form-info-message wsc-text-info">' + wscT('usernameTakenHint', 'Maps to a normal text/username input. When enabled, checks WordPress on change/input (debounced) and again on submit.') + '</span></div>' +
-            '<div class="wsc-form-attr wsc-mt-4 wsc-fg-opt-text">' +
-            '<p class="wsc-form-label">' + wscT('textAllowUrls', 'Allow URLs in value') + '</p>' +
-            '<div class="wsc-switch-control">' + rad('fg_texturls_' + ix, 1, textUrlsAllow ? 1 : 0) + rad('fg_texturls_' + ix, 0, textUrlsAllow ? 1 : 0) + '</div>' +
-            '<span class="wsc-form-info-message wsc-text-info">' + wscT('textAllowUrlsHint', 'Turn off to reject http(s) URLs inside this single-line field.') + '</span></div>' +
-            '<div class="wsc-form-attr wsc-mt-4 wsc-fg-opt-textarea">' +
-            '<p class="wsc-form-label">' + wscT('textareaAllowLinks', 'Allow links in message') + '</p>' +
-            '<div class="wsc-switch-control">' + rad('fg_tlinks_' + ix, 1, tlinks) + rad('fg_tlinks_' + ix, 0, tlinks) + '</div></div>' +
-            '<div class="wsc-form-attr wsc-mt-4 wsc-fg-opt-textarea">' +
-            '<p class="wsc-form-label">' + wscT('textareaAiSpam', 'AI spam check') + '</p>' +
-            '<div class="wsc-switch-control">' + rad('fg_tai_' + ix, 1, tai) + rad('fg_tai_' + ix, 0, tai) + '</div>' +
-            '<span class="wsc-form-info-message wsc-text-info">' + wscT('textareaAiSpamHint', 'Uses AI settings from VMS Span Checker → AI. Runs on the server when validation is enabled.') + '</span></div>' +
-            '<div class="wsc-form-attr wsc-mt-4 wsc-fg-opt-other">' +
-            '<p class="wsc-form-info-message wsc-text-info wsc-mb-0">' + wscT('securityMethodsOtherHint', 'Extra reputation toggles appear for Email/URL. Use “Validation rules” above for required / server validation / regex.') + '</p></div>' +
+            '<fieldset class="vefg-fg-security-fieldset vefg-fg-fieldset vefg-mt-4">' +
+            '<legend class="vefg-form-label">' + vefgT('securityMethodsLegend', 'Protection methods (based on field type)') + '</legend>' +
+            '<p class="vefg-form-info-message vefg-text-info vefg-mb-4">' + vefgT('securityMethodsIntro', 'Email and URL rows can enable Web Risk and VirusTotal (Google Web Risk defaults ON when you pick Email). Username rows can enable live “already registered” checks. Text adds URL-in-value rules; textarea adds links + AI spam screening.') + '</p>' +
+            '<div class="vefg-form-attr vefg-mt-2 vefg-fg-opt-email">' +
+            '<p class="vefg-form-label">' + vefgT('googleWebRisk', 'Google Web Risk') + '</p>' +
+            '<div class="vefg-switch-control">' + rad('fg_webrisk_' + ix, 1, wr) + rad('fg_webrisk_' + ix, 0, wr) + '</div>' +
+            '<span class="vefg-form-info-message vefg-text-info">' + vefgT('webriskEmailUrlOnly', 'Used when “Form field” is Email or URL and “Require validation” is enabled for domain checks.') + '</span></div>' +
+            '<div class="vefg-form-attr vefg-mt-4 vefg-fg-opt-email">' +
+            '<p class="vefg-form-label">' + vefgT('virusTotal', 'VirusTotal scanner') + '</p>' +
+            '<div class="vefg-switch-control">' + rad('fg_vt_' + ix, 1, vt) + rad('fg_vt_' + ix, 0, vt) + '</div>' +
+            '<span class="vefg-form-info-message vefg-text-info">' + vefgT('vtEmailUrlOnly', 'Same as Web Risk: applies together with Email or URL domain validation.') + '</span></div>' +
+            '<div class="vefg-form-attr vefg-mt-4 vefg-fg-opt-username">' +
+            '<p class="vefg-form-label">' + vefgT('usernameTakenCheck', 'Reject if username exists') + '</p>' +
+            '<div class="vefg-switch-control">' + rad('fg_userexists_' + ix, 1, tun) + rad('fg_userexists_' + ix, 0, tun) + '</div>' +
+            '<span class="vefg-form-info-message vefg-text-info">' + vefgT('usernameTakenHint', 'Maps to a normal text/username input. When enabled, checks WordPress on change/input (debounced) and again on submit.') + '</span></div>' +
+            '<div class="vefg-form-attr vefg-mt-4 vefg-fg-opt-text">' +
+            '<p class="vefg-form-label">' + vefgT('textAllowUrls', 'Allow URLs in value') + '</p>' +
+            '<div class="vefg-switch-control">' + rad('fg_texturls_' + ix, 1, textUrlsAllow ? 1 : 0) + rad('fg_texturls_' + ix, 0, textUrlsAllow ? 1 : 0) + '</div>' +
+            '<span class="vefg-form-info-message vefg-text-info">' + vefgT('textAllowUrlsHint', 'Turn off to reject http(s) URLs inside this single-line field.') + '</span></div>' +
+            '<div class="vefg-form-attr vefg-mt-4 vefg-fg-opt-textarea">' +
+            '<p class="vefg-form-label">' + vefgT('textareaAllowLinks', 'Allow links in message') + '</p>' +
+            '<div class="vefg-switch-control">' + rad('fg_tlinks_' + ix, 1, tlinks) + rad('fg_tlinks_' + ix, 0, tlinks) + '</div></div>' +
+            '<div class="vefg-form-attr vefg-mt-4 vefg-fg-opt-textarea">' +
+            '<p class="vefg-form-label">' + vefgT('textareaAiSpam', 'AI spam check') + '</p>' +
+            '<div class="vefg-switch-control">' + rad('fg_tai_' + ix, 1, tai) + rad('fg_tai_' + ix, 0, tai) + '</div>' +
+            '<span class="vefg-form-info-message vefg-text-info">' + vefgT('textareaAiSpamHint', 'Uses AI settings from VMS Elements Form Guard → AI. Runs on the server when validation is enabled.') + '</span></div>' +
+            '<div class="vefg-form-attr vefg-mt-4 vefg-fg-opt-other">' +
+            '<p class="vefg-form-info-message vefg-text-info vefg-mb-0">' + vefgT('securityMethodsOtherHint', 'Extra reputation toggles appear for Email/URL. Use “Validation rules” above for required / server validation / regex.') + '</p></div>' +
             '</fieldset>' +
             '</div>'
         );
     }
 
-    function wscFgRefreshRowNumbers() {
-        $('#wsc-form-fields .wsc-form-field-row').each(function (i) {
-            $(this).find('.wsc-fg-row-badge').text(String(i + 1));
+    function vefgFgRefreshRowNumbers() {
+        $('#vefg-form-fields .vefg-form-field-row').each(function (i) {
+            $(this).find('.vefg-fg-row-badge').text(String(i + 1));
         });
     }
 
-    function wscFgAppendRow(item, legacyRow) {
-        const ix = wscFgNextIndex();
-        $('#wsc-form-fields').append(wscFgRowHtml(ix, item, legacyRow));
-        const $nr = $('#wsc-form-fields .wsc-form-field-row[data-field-index="' + ix + '"]');
-        $nr.data('wscPrevField', $nr.find('.form-field').val());
-        wscFgToggleRow($nr);
-        wscFgSyncConditionalRadios($nr);
-        wscFgRefreshRowNumbers();
+    function vefgFgAppendRow(item, legacyRow) {
+        const ix = vefgFgNextIndex();
+        $('#vefg-form-fields').append(vefgFgRowHtml(ix, item, legacyRow));
+        const $nr = $('#vefg-form-fields .vefg-form-field-row[data-field-index="' + ix + '"]');
+        $nr.data('vefgPrevField', $nr.find('.form-field').val());
+        vefgFgToggleRow($nr);
+        vefgFgSyncConditionalRadios($nr);
+        vefgFgRefreshRowNumbers();
     }
 
-    function wscFgResetRows() {
-        $('#wsc-form-fields').empty();
-        wscFgAppendRow(null, {});
+    function vefgFgResetRows() {
+        $('#vefg-form-fields').empty();
+        vefgFgAppendRow(null, {});
     }
 
-    function wscFgDisplaySelector(row) {
+    function vefgFgDisplaySelector(row) {
         const fid = String(row.form_id || '').trim();
         const fcls = String(row.form_class || '').trim();
         if (fid.indexOf('#') !== -1 || fid.indexOf('.') !== -1 || fid.indexOf('[') !== -1) {
@@ -944,87 +944,87 @@ jQuery(document).ready(function ($) {
         return out;
     }
 
-    function wscFgFillPresetModal($input) {
-        wscRegexTargetInput = $input;
-        const $list = $('#wsc-regex-preset-list');
+    function vefgFgFillPresetModal($input) {
+        vefgRegexTargetInput = $input;
+        const $list = $('#vefg-regex-preset-list');
         $list.empty();
-        const regexLists = (typeof WPSpanChecker !== 'undefined' && WPSpanChecker.regexList) ? WPSpanChecker.regexList : [];
+        const regexLists = (typeof VEFGChecker !== 'undefined' && VEFGChecker.regexList) ? VEFGChecker.regexList : [];
         regexLists.forEach(function (item) {
-            const valid = wscEsc(item.valid_example || item.example || '');
-            const invalid = wscEsc(item.invalid_example || '');
-            const pat = wscEsc(item.pattern || '');
-            const $li = $('<li class="wsc-regex-preset-item wsc-card wsc-p-3 wsc-mb-3"></li>');
-            $li.append('<strong>' + wscEsc(item.name || '') + '</strong>');
-            $li.append('<div class="wsc-regex-preset-pattern">' + pat + '</div>');
-            $li.append('<div class="wsc-text-info wsc-mb-2">' + wscEsc(item.desc || '') + '</div>');
-            $li.append('<div class="wsc-mb-1"><span class="wsc-badge-ok">' + wscT('validExample', 'Valid') + '</span> <code>' + valid + '</code></div>');
-            $li.append('<div class="wsc-mb-2"><span class="wsc-badge-bad">' + wscT('invalidExample', 'Invalid') + '</span> <code>' + invalid + '</code></div>');
-            const $btn = $('<button type="button" class="wsc-btn wsc-btn-primary wsc-use-preset-regex"></button>').text(wscT('usePattern', 'Use pattern'));
+            const valid = vefgEsc(item.valid_example || item.example || '');
+            const invalid = vefgEsc(item.invalid_example || '');
+            const pat = vefgEsc(item.pattern || '');
+            const $li = $('<li class="vefg-regex-preset-item vefg-card vefg-p-3 vefg-mb-3"></li>');
+            $li.append('<strong>' + vefgEsc(item.name || '') + '</strong>');
+            $li.append('<div class="vefg-regex-preset-pattern">' + pat + '</div>');
+            $li.append('<div class="vefg-text-info vefg-mb-2">' + vefgEsc(item.desc || '') + '</div>');
+            $li.append('<div class="vefg-mb-1"><span class="vefg-badge-ok">' + vefgT('validExample', 'Valid') + '</span> <code>' + valid + '</code></div>');
+            $li.append('<div class="vefg-mb-2"><span class="vefg-badge-bad">' + vefgT('invalidExample', 'Invalid') + '</span> <code>' + invalid + '</code></div>');
+            const $btn = $('<button type="button" class="vefg-btn vefg-btn-primary vefg-use-preset-regex"></button>').text(vefgT('usePattern', 'Use pattern'));
             $btn.attr('data-pattern', item.pattern || '');
             $li.append($btn);
             $list.append($li);
         });
-        $('#wsc-regex-preset-modal').removeClass('wsc-hidden').attr('aria-hidden', 'false');
+        $('#vefg-regex-preset-modal').removeClass('vefg-hidden').attr('aria-hidden', 'false');
     }
 
-    function wscFgClosePresetModal() {
-        $('#wsc-regex-preset-modal').addClass('wsc-hidden').attr('aria-hidden', 'true');
-        wscRegexTargetInput = null;
+    function vefgFgClosePresetModal() {
+        $('#vefg-regex-preset-modal').addClass('vefg-hidden').attr('aria-hidden', 'true');
+        vefgRegexTargetInput = null;
     }
 
-    $('#wsc-form-fields').on('click', '.wsc-open-regex-presets', function () {
-        wscFgFillPresetModal($(this).closest('.wsc-form-field-row').find('.field-regex'));
+    $('#vefg-form-fields').on('click', '.vefg-open-regex-presets', function () {
+        vefgFgFillPresetModal($(this).closest('.vefg-form-field-row').find('.field-regex'));
     });
 
-    $('#wsc-regex-preset-modal').on('click', '.wsc-regex-modal-overlay, .wsc-close-regex-modal', function () {
-        wscFgClosePresetModal();
+    $('#vefg-regex-preset-modal').on('click', '.vefg-regex-modal-overlay, .vefg-close-regex-modal', function () {
+        vefgFgClosePresetModal();
     });
 
-    $('#wsc-regex-preset-list').on('click', '.wsc-use-preset-regex', function () {
+    $('#vefg-regex-preset-list').on('click', '.vefg-use-preset-regex', function () {
         const p = $(this).attr('data-pattern');
-        if (wscRegexTargetInput && p) {
-            wscRegexTargetInput.val(p);
+        if (vefgRegexTargetInput && p) {
+            vefgRegexTargetInput.val(p);
         }
-        wscFgClosePresetModal();
+        vefgFgClosePresetModal();
     });
 
-        $('#wsc-form-fields').on('change', '.form-field', function () {
-            const $row = $(this).closest('.wsc-form-field-row');
+        $('#vefg-form-fields').on('change', '.form-field', function () {
+            const $row = $(this).closest('.vefg-form-field-row');
             const ix = $row.attr('data-field-index');
-            const prev = String($row.data('wscPrevField') || '');
+            const prev = String($row.data('vefgPrevField') || '');
             const ft = $(this).val();
-            wscFgSyncConditionalRadios($row);
+            vefgFgSyncConditionalRadios($row);
             if (ft === 'email' && prev !== 'email') {
-                wscFgPickRadio($row, 'fg_webrisk_' + ix, 1);
-                wscFgPickRadio($row, 'fg_vt_' + ix, 0);
+                vefgFgPickRadio($row, 'fg_webrisk_' + ix, 1);
+                vefgFgPickRadio($row, 'fg_vt_' + ix, 0);
             }
             if (ft === 'username' && prev !== 'username') {
-                wscFgPickRadio($row, 'fg_userexists_' + ix, 1);
+                vefgFgPickRadio($row, 'fg_userexists_' + ix, 1);
             }
-            wscFgToggleRow($row);
-            $row.data('wscPrevField', ft);
+            vefgFgToggleRow($row);
+            $row.data('vefgPrevField', ft);
         });
 
-    $('#wsc-form-fields').on('click', '.removeFormField', function () {
-        if ($('#wsc-form-fields .wsc-form-field-row').length <= 1) {
-            wscErrToast(wscT('fgNeedOneField', 'Keep at least one field row.'));
+    $('#vefg-form-fields').on('click', '.removeFormField', function () {
+        if ($('#vefg-form-fields .vefg-form-field-row').length <= 1) {
+            vefgErrToast(vefgT('fgNeedOneField', 'Keep at least one field row.'));
             return;
         }
-        $(this).closest('.wsc-form-field-row').remove();
-        wscFgRefreshRowNumbers();
+        $(this).closest('.vefg-form-field-row').remove();
+        vefgFgRefreshRowNumbers();
     });
 
-    $('#wscAddFormField').on('click', function () {
-        wscFgAppendRow(null, {});
+    $('#vefgAddFormField').on('click', function () {
+        vefgFgAppendRow(null, {});
     });
 
     let formSettingTable = $('#form-setting-table').DataTable({
         ajax: {
-            url: WPSpanChecker.ajaxurl,
+            url: VEFGChecker.ajaxurl,
             type: 'POST',
             data: function (d) {
                 d.action = 'get_form_settings';
-                d.nonce = WPSpanChecker.nonce;
+                d.nonce = VEFGChecker.nonce;
             },
             dataSrc: function (json) {
                 return json.success ? json.data.formSettings : [];
@@ -1049,7 +1049,7 @@ jQuery(document).ready(function ($) {
                 data: 'page_id',
                 responsivePriority: 5,
                 render: function (data) {
-                    return wscFormatPageTargetsCell(data);
+                    return vefgFormatPageTargetsCell(data);
                 }
             },
             {
@@ -1089,9 +1089,9 @@ jQuery(document).ready(function ($) {
                 render: function (data, type, row) {
                     const isAuto = parseInt(data, 10) === 1 || data === true || data === '1';
                     if (isAuto) {
-                        return '<span class="wsc-mode-badge wsc-mode-badge--auto">' + wscT('autoMode', 'Auto') + '</span>';
+                        return '<span class="vefg-mode-badge vefg-mode-badge--auto">' + vefgT('autoMode', 'Auto') + '</span>';
                     }
-                    return '<span class="wsc-mode-badge wsc-mode-badge--manual">' + wscT('manualMode', 'Manual') + '</span>';
+                    return '<span class="vefg-mode-badge vefg-mode-badge--manual">' + vefgT('manualMode', 'Manual') + '</span>';
                 }
             },
             {
@@ -1111,21 +1111,21 @@ jQuery(document).ready(function ($) {
                         
                         const tags = [];
                         if (autoRules.email) {
-                            if (autoRules.email.validate) tags.push('<span class="wsc-validation-tag wsc-validation-tag--on">Email</span>');
-                            if (autoRules.email.webrisk) tags.push('<span class="wsc-validation-tag wsc-validation-tag--on">Web Risk</span>');
-                            if (autoRules.email.virustotal) tags.push('<span class="wsc-validation-tag wsc-validation-tag--on">VirusTotal</span>');
+                            if (autoRules.email.validate) tags.push('<span class="vefg-validation-tag vefg-validation-tag--on">Email</span>');
+                            if (autoRules.email.webrisk) tags.push('<span class="vefg-validation-tag vefg-validation-tag--on">Web Risk</span>');
+                            if (autoRules.email.virustotal) tags.push('<span class="vefg-validation-tag vefg-validation-tag--on">VirusTotal</span>');
                         }
                         if (autoRules.textarea && autoRules.textarea.ai_spam) {
-                            tags.push('<span class="wsc-validation-tag wsc-validation-tag--on">AI Spam</span>');
+                            tags.push('<span class="vefg-validation-tag vefg-validation-tag--on">AI Spam</span>');
                         }
                         if (autoRules.username && autoRules.username.check_exists) {
-                            tags.push('<span class="wsc-validation-tag wsc-validation-tag--on">Username</span>');
+                            tags.push('<span class="vefg-validation-tag vefg-validation-tag--on">Username</span>');
                         }
                         if (autoRules.password && autoRules.password.strength) {
-                            tags.push('<span class="wsc-validation-tag wsc-validation-tag--on">Password</span>');
+                            tags.push('<span class="vefg-validation-tag vefg-validation-tag--on">Password</span>');
                         }
                         
-                        return tags.length ? '<div class="wsc-validation-summary">' + tags.join('') + '</div>' : wscT('defaultRules', 'Default rules');
+                        return tags.length ? '<div class="vefg-validation-summary">' + tags.join('') + '</div>' : vefgT('defaultRules', 'Default rules');
                     }
                     
                     let formFields;
@@ -1147,20 +1147,20 @@ jQuery(document).ready(function ($) {
                             guards.push('AI');
                         }
                         const guardStr = guards.length ? ' (' + guards.join(', ') + ')' : '';
-                        return '<span class="wsc-validation-tag">' + wscEsc(ft) + guardStr + '</span>';
+                        return '<span class="vefg-validation-tag">' + vefgEsc(ft) + guardStr + '</span>';
                     }).join(' ');
                 }
             },
             {
                 data: null,
                 responsivePriority: 1,
-                className: 'wsc-actions-cell',
+                className: 'vefg-actions-cell',
                 render: function (data, type, row) {
                     const rowId = row.id ?? '';
                     const jsonData = JSON.stringify(row) ?? '{}';
-                    return '<div class="wsc-action-buttons">' +
-                        '<button class="wsc-btn wsc-btn-primary edit-form-setting" data-json=\'' + jsonData.replace(/'/g, '&#39;') + '\' data-id="' + rowId + '">' + wscT('edit', 'Edit') + '</button>' +
-                        '<button class="wsc-btn wsc-btn-danger delete-form-setting" data-id="' + rowId + '">' + wscT('delete', 'Delete') + '</button>' +
+                    return '<div class="vefg-action-buttons">' +
+                        '<button class="vefg-btn vefg-btn-primary edit-form-setting" data-json=\'' + jsonData.replace(/'/g, '&#39;') + '\' data-id="' + rowId + '">' + vefgT('edit', 'Edit') + '</button>' +
+                        '<button class="vefg-btn vefg-btn-danger delete-form-setting" data-id="' + rowId + '">' + vefgT('delete', 'Delete') + '</button>' +
                         '</div>';
                 }
             }
@@ -1186,29 +1186,29 @@ jQuery(document).ready(function ($) {
         let id = $(this).data('id');
         const formSettingForm = $('#form-setting-table');
         Swal.fire({
-            title: wscT('confirmDeleteFormTitle', 'Remove this Form Guard mapping?'),
-            text: wscT('confirmDeleteFormSetting', 'Are you sure you want to delete this Form Guard mapping?'),
+            title: vefgT('confirmDeleteFormTitle', 'Remove this Form Guard mapping?'),
+            text: vefgT('confirmDeleteFormSetting', 'Are you sure you want to delete this Form Guard mapping?'),
             icon: 'warning',
             showCancelButton: true,
-            confirmButtonText: wscT('delete', 'Delete'),
-            cancelButtonText: wscT('cancel', 'Cancel'),
+            confirmButtonText: vefgT('delete', 'Delete'),
+            cancelButtonText: vefgT('cancel', 'Cancel'),
         }).then(function (result) {
             if (!result.isConfirmed) {
                 return;
             }
-            formSettingForm.addClass('wsc-opacity');
-            $.post(WPSpanChecker.ajaxurl, {
+            formSettingForm.addClass('vefg-opacity');
+            $.post(VEFGChecker.ajaxurl, {
                 action: 'delete_form_setting',
-                nonce: WPSpanChecker.nonce,
+                nonce: VEFGChecker.nonce,
                 id: id
             }, function (response) {
                 if (response.success) {
                     formSettingTable.ajax.reload(null, false);
-                    wscOkToast(wscT('formSettingRemoved', 'Form Guard mapping removed.'));
+                    vefgOkToast(vefgT('formSettingRemoved', 'Form Guard mapping removed.'));
                 } else {
-                    wscErrToast(wscAjaxErr(response.data, wscT('errorDeletingSetting', 'Could not delete Form Guard mapping.')));
+                    vefgErrToast(vefgAjaxErr(response.data, vefgT('errorDeletingSetting', 'Could not delete Form Guard mapping.')));
                 }
-                formSettingForm.removeClass('wsc-opacity');
+                formSettingForm.removeClass('vefg-opacity');
             });
         });
     });
@@ -1217,16 +1217,16 @@ jQuery(document).ready(function ($) {
         let formData = $(this).data('json');
         const id = $('#form_settings_id');
         id.val(formData.id);
-        const fields = $('#wsc-form-fields');
-        const formError = $('#wsc-form-error-message');
+        const fields = $('#vefg-form-fields');
+        const formError = $('#vefg-form-error-message');
         formError.html('');
-        wscApplyPageTargetsFromRaw(formData.page_id);
+        vefgApplyPageTargetsFromRaw(formData.page_id);
         $('#form_type').val(formData.form_type !== '' ? formData.form_type : '');
-        $('#form_selector').val(wscFgDisplaySelector(formData));
+        $('#form_selector').val(vefgFgDisplaySelector(formData));
         $('#submit_selector').val(formData.submit_selector ? String(formData.submit_selector) : '');
 
         const isAuto = parseInt(formData.auto_validation, 10) === 1 || formData.auto_validation === true || formData.auto_validation === '1';
-        $('#wsc-auto-validation').prop('checked', isAuto);
+        $('#vefg-auto-validation').prop('checked', isAuto);
         
         if (isAuto) {
             let autoRules;
@@ -1235,16 +1235,16 @@ jQuery(document).ready(function ($) {
             } catch (e) {
                 autoRules = {};
             }
-            wscApplyAutoValidationRules(autoRules || {});
+            vefgApplyAutoValidationRules(autoRules || {});
         } else {
-            wscResetAutoValidationRules();
+            vefgResetAutoValidationRules();
         }
         
         // Set reCAPTCHA checkbox
         const enableRecaptcha = parseInt(formData.enable_recaptcha, 10) === 1;
-        $('#wsc-enable-recaptcha').prop('checked', enableRecaptcha);
+        $('#vefg-enable-recaptcha').prop('checked', enableRecaptcha);
         
-        wscUpdateAutoValidationMode();
+        vefgUpdateAutoValidationMode();
 
         let formSettingData = [];
         if (Array.isArray(formData.settings)) {
@@ -1259,65 +1259,65 @@ jQuery(document).ready(function ($) {
 
         fields.empty();
         if (!Array.isArray(formSettingData) || formSettingData.length === 0) {
-            wscFgAppendRow(null, formData);
+            vefgFgAppendRow(null, formData);
         } else {
             formSettingData.forEach(function (item) {
-                wscFgAppendRow(item, formData);
+                vefgFgAppendRow(item, formData);
             });
         }
 
-        $('#wsc-settings-form').toggleClass('wsc-hidden');
-        $('#form-setting-table').toggleClass('wsc-hidden');
+        $('#vefg-settings-form').toggleClass('vefg-hidden');
+        $('#form-setting-table').toggleClass('vefg-hidden');
     });
 
-    $('#wsc-settings-form').on('submit', function (e) {
+    $('#vefg-settings-form').on('submit', function (e) {
         e.preventDefault();
-        const formSettingForm = $('#wsc-settings-form');
+        const formSettingForm = $('#vefg-settings-form');
         const id = $('#form_settings_id');
         const saveButton = $('#saveFormSetting');
-        const formError = $('#wsc-form-error-message');
+        const formError = $('#vefg-form-error-message');
         const formType = $('#form_type').val();
-        const pageTargets = wscCollectPageTargetsArray();
+        const pageTargets = vefgCollectPageTargetsArray();
         const pageId = JSON.stringify(pageTargets);
         const combinedSel = String($('#form_selector').val() || '').trim();
         const submitSel = String($('#submit_selector').val() || '').trim();
         const formSettings = [];
 
-        const hasPageTarget = pageTargets.length > 0 && !(pageTargets.length === 1 && pageTargets[0] === 'all-pages' && !$('.wsc-page-target[value="all-pages"]').is(':checked'));
-        const hasAnySelection = $('.wsc-page-target:checked').length > 0 ||
-            wscSelectedPages.size > 0 ||
-            wscSelectedPosts.size > 0;
+        const hasPageTarget = pageTargets.length > 0 && !(pageTargets.length === 1 && pageTargets[0] === 'all-pages' && !$('.vefg-page-target[value="all-pages"]').is(':checked'));
+        const hasAnySelection = $('.vefg-page-target:checked').length > 0 ||
+            vefgSelectedPages.size > 0 ||
+            vefgSelectedPosts.size > 0;
 
         if (!hasAnySelection) {
-            formError.removeClass('wsc-text-success');
-            formError.addClass('wsc-form-error');
-            formError.html(wscT('locationRequired', 'Please select at least one location (Common locations, Specific pages, or Specific posts).'));
-            wscErrToast(wscT('locationRequired', 'Please select at least one location.'));
+            formError.removeClass('vefg-text-success');
+            formError.addClass('vefg-form-error');
+            formError.html(vefgT('locationRequired', 'Please select at least one location (Common locations, Specific pages, or Specific posts).'));
+            vefgErrToast(vefgT('locationRequired', 'Please select at least one location.'));
             return;
         }
 
         const hasFormSelector = combinedSel !== '';
         const hasSubmitSelector = submitSel !== '';
-        const allPagesChecked = $('.wsc-page-target[value="all-pages"]').is(':checked');
+        const allPagesChecked = $('.vefg-page-target[value="all-pages"]').is(':checked');
         
         // Form ID/class is ONLY required when "Entire site" is selected
         // For specific pages/posts or common locations, we'll find the first form on the page
         if (allPagesChecked && !hasFormSelector) {
-            formError.removeClass('wsc-text-success');
-            formError.addClass('wsc-form-error');
-            formError.html(wscT('formSelectorRequiredForEntireSite', 'Form Selector is required when targeting the entire site.'));
-            wscErrToast(wscT('formSelectorRequiredForEntireSite', 'Form Selector is required for Entire site.'));
+            formError.removeClass('vefg-text-success');
+            formError.addClass('vefg-form-error');
+            formError.html(vefgT('formSelectorRequiredForEntireSite', 'Form Selector is required when targeting the entire site.'));
+            vefgErrToast(vefgT('formSelectorRequiredForEntireSite', 'Form Selector is required for Entire site.'));
             return;
         }
         
         // For specific pages/posts or common locations, form selector is optional
         // The frontend will find the first <form> on the matching page
 
-        const isAutoValidation = $('#wsc-auto-validation').is(':checked');
-        const autoRules = isAutoValidation ? wscCollectAutoValidationRules() : {};
+        const isAutoValidation = $('#vefg-auto-validation').is(':checked');
+        const autoRules = isAutoValidation ? vefgCollectAutoValidationRules() : {};
         
         if (!isAutoValidation) {
-            $('#wsc-form-fields .wsc-form-field-row').each(function () {
+            $('#vefg-form-fields .vefg-form-field-row').each(function () {
                 const $row = $(this);
                 const ix = $row.attr('data-field-index');
                 const ft = $row.find('.form-field').val();
@@ -1336,13 +1336,13 @@ jQuery(document).ready(function ($) {
                     textarea_ai_spam: parseInt($row.find('input[name="fg_tai_' + ix + '"]:checked').val(), 10) || 0,
                     regex: $row.find('.field-regex').val(),
                 };
-                formSettings.push(wscFgEffectivePayload(ft, raw));
+                formSettings.push(vefgFgEffectivePayload(ft, raw));
             });
         }
 
         $.ajax({
             method: 'POST',
-            url: WPSpanChecker.ajaxurl,
+            url: VEFGChecker.ajaxurl,
             data: {
                 action: 'add_form_settings',
                 id: parseInt(id.val(), 10) || 0,
@@ -1353,108 +1353,108 @@ jQuery(document).ready(function ($) {
                 submitSelector: submitSel,
                 autoValidation: isAutoValidation ? 1 : 0,
                 autoRules: JSON.stringify(autoRules),
-                enableRecaptcha: $('#wsc-enable-recaptcha').is(':checked') ? 1 : 0,
+                enableRecaptcha: $('#vefg-enable-recaptcha').is(':checked') ? 1 : 0,
                 formSettings: formSettings,
-                nonce: WPSpanChecker.nonce
+                nonce: VEFGChecker.nonce
             },
             beforeSend: function () {
-                formSettingForm.addClass('wsc-opacity');
+                formSettingForm.addClass('vefg-opacity');
                 saveButton.prop('disabled', !$(this).prop('disabled'));
-                saveButton.find('.wsc-spinner').removeClass('wsc-hidden');
+                saveButton.find('.vefg-spinner').removeClass('vefg-hidden');
                 formError.html('');
             },
             success: function () {
-                formError.addClass('wsc-text-success');
-                formError.removeClass('wsc-form-error');
-                formError.html(wscT('saved', 'Saved'));
+                formError.addClass('vefg-text-success');
+                formError.removeClass('vefg-form-error');
+                formError.html(vefgT('saved', 'Saved'));
                 formSettingTable.ajax.reload(null, false);
                 setTimeout(() => {
-                    const formSettingFormEl = document.getElementById('wsc-settings-form');
+                    const formSettingFormEl = document.getElementById('vefg-settings-form');
                     formSettingFormEl.reset();
-                    $('#wsc-settings-form').toggleClass('wsc-hidden');
-                    $('#form-setting-table').toggleClass('wsc-hidden');
-                    wscFgResetRows();
+                    $('#vefg-settings-form').toggleClass('vefg-hidden');
+                    $('#form-setting-table').toggleClass('vefg-hidden');
+                    vefgFgResetRows();
                 }, 1000);
             },
             error: function (jqXHR, textStatus, errorThrown) {
-                formError.removeClass('wsc-text-success');
-                formError.addClass('wsc-form-error');
+                formError.removeClass('vefg-text-success');
+                formError.addClass('vefg-form-error');
                 formError.html(errorThrown.message || String(errorThrown));
             },
             complete: function () {
-                formSettingForm.removeClass('wsc-opacity');
+                formSettingForm.removeClass('vefg-opacity');
                 saveButton.removeAttr('disabled');
-                saveButton.find('.wsc-spinner').addClass('wsc-hidden');
+                saveButton.find('.vefg-spinner').addClass('vefg-hidden');
                 id.val(0);
             }
         });
     });
 
-    if ($('#wsc-form-fields').length) {
-        wscFgResetRows();
+    if ($('#vefg-form-fields').length) {
+        vefgFgResetRows();
     }
 
-    $('#wscAddFormSetting').on('click', function () {
-        const wasHidden = $('#wsc-settings-form').hasClass('wsc-hidden');
-        $('#wsc-settings-form').toggleClass('wsc-hidden');
-        $('#form-setting-table').toggleClass('wsc-hidden');
+    $('#vefgAddFormSetting').on('click', function () {
+        const wasHidden = $('#vefg-settings-form').hasClass('vefg-hidden');
+        $('#vefg-settings-form').toggleClass('vefg-hidden');
+        $('#form-setting-table').toggleClass('vefg-hidden');
         if (wasHidden) {
             $('#form_settings_id').val('0');
-            wscResetPageTargetsForNew();
+            vefgResetPageTargetsForNew();
             $('#form_selector').val('');
             $('#submit_selector').val('');
-            $('#wsc-auto-validation').prop('checked', true);
-            $('#wsc-enable-recaptcha').prop('checked', false);
-            wscResetAutoValidationRules();
-            wscUpdateAutoValidationMode();
-            wscFgResetRows();
+            $('#vefg-auto-validation').prop('checked', true);
+            $('#vefg-enable-recaptcha').prop('checked', false);
+            vefgResetAutoValidationRules();
+            vefgUpdateAutoValidationMode();
+            vefgFgResetRows();
         }
     });
 
     $('.toggleFormField').on('click', function () {
-        $('#wsc-settings-form').toggleClass('wsc-hidden');
-        $('#form-setting-table').toggleClass('wsc-hidden');
+        $('#vefg-settings-form').toggleClass('vefg-hidden');
+        $('#form-setting-table').toggleClass('vefg-hidden');
     });
 
-    $(document).on('click', '.wsc-switch-option', function () {
+    $(document).on('click', '.vefg-switch-option', function () {
          const $this = $(this);
-         $this.addClass('wsc-check').siblings('.wsc-switch-option').removeClass('wsc-check');
+         $this.addClass('vefg-check').siblings('.vefg-switch-option').removeClass('vefg-check');
          $this.find('input[type="radio"]').prop('checked', true);
-         $this.siblings('.wsc-switch-option').find('input[type="radio"]').prop('checked', false);
+         $this.siblings('.vefg-switch-option').find('input[type="radio"]').prop('checked', false);
     });
 
 }); // end jquery
 
 // Open modal
-function wscOpenModal(element) {
-    element.classList.add('wsc-block');
+function vefgOpenModal(element) {
+    element.classList.add('vefg-block');
 }
 
 // Close modal
-function wscCloseModal(element) {
-    element.classList.remove('wsc-block');
+function vefgCloseModal(element) {
+    element.classList.remove('vefg-block');
 }
 
-function loadRegex(e){
+function vefgLoadRegex(e){
     const element = jQuery(e);
-    regexList(element.parent().next().find('ul'));
-    wscOpenModal(e.parentElement.nextElementSibling);
+    vefgRenderRegexList(element.parent().next().find('ul'));
+    vefgOpenModal(e.parentElement.nextElementSibling);
 }
 
-function regexList(element){
-    const regexLists = WPSpanChecker.regexList;
-    const L = (WPSpanChecker.i18n) ? WPSpanChecker.i18n : {};
+function vefgRenderRegexList(element){
+    const regexLists = VEFGChecker.regexList;
+    const L = (VEFGChecker.i18n) ? VEFGChecker.i18n : {};
     const t = (k, fb) => (L[k]) ? L[k] : fb;
     element.html('');
     regexLists.forEach(item => {
         const $li = jQuery(`
-            <li class="wsc-card wsc-p-3 border rounded" style="list-style:none; background:#fff;">
+            <li class="vefg-card vefg-p-3 border rounded" style="list-style:none; background:#fff;">
                 <strong>${item.name}</strong>
                 <div style="font-family:monospace; margin:8px 0;">${item.pattern}</div>
                 <div style="color:#666; font-size:0.9em;">${item.desc}</div>
                 <div style="margin-top:8px;">
                     <span style="font-family:monospace; background:#f4f4f4; padding:4px 8px; border-radius:4px;">${t('examplePrefix', 'Example:')} ${item.example}</span>
-                    <button class="wsc-copy-button wsc-btn wsc-btn-outline-primary" type="button" data-regex="${item.pattern}" style="margin-left:8px; padding:4px 8px; border-radius:4px;" onclick="copyToClipboard(${item.pattern})">${t('copy', 'Copy')}</button>
+                    <button class="vefg-copy-button vefg-btn vefg-btn-outline-primary" type="button" data-regex="${item.pattern}" style="margin-left:8px; padding:4px 8px; border-radius:4px;" onclick="vefgCopyToClipboard(${item.pattern})">${t('copy', 'Copy')}</button>
                 </div>
             </li>
         `);
@@ -1462,14 +1462,14 @@ function regexList(element){
     });
 }
 
-function copyToClipboard(text) {
-    const L = (typeof WPSpanChecker !== 'undefined' && WPSpanChecker.i18n) ? WPSpanChecker.i18n : {};
+function vefgCopyToClipboard(text) {
+    const L = (typeof VEFGChecker !== 'undefined' && VEFGChecker.i18n) ? VEFGChecker.i18n : {};
     const t = (k, fb) => (L[k]) ? L[k] : fb;
     if (navigator.clipboard && window.isSecureContext) {
         // ✅ Modern way (requires HTTPS or localhost)
         return navigator.clipboard.writeText(text)
             .then(() => {
-                wpSpanCheckerToast.fire({
+                vefgToast.fire({
                     icon: 'success',
                     title: t('copied', 'Copied'),
                     position: 'bottom-right',
@@ -1477,7 +1477,7 @@ function copyToClipboard(text) {
                 console.log("Copied to clipboard:", text);
             })
             .catch(err => {
-                wpSpanCheckerToast.fire({
+                vefgToast.fire({
                     icon: 'error',
                     title: err.message ?? String(err),
                     position: 'bottom-right',
@@ -1495,13 +1495,13 @@ function copyToClipboard(text) {
 
         try {
             document.execCommand("copy");
-            wpSpanCheckerToast.fire({
+            vefgToast.fire({
                 icon: 'success',
                 title: t('copied', 'Copied'),
                 position: 'bottom-right',
             })
         } catch (err) {
-            wpSpanCheckerToast.fire({
+            vefgToast.fire({
                 icon: 'error',
                 title: err.message ?? String(err),
                 position: 'bottom-right',

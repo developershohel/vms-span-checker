@@ -7,7 +7,7 @@
  * interpolated table names built from `$wpdb->prefix`). All identifiers are
  * hardcoded inside the plugin and never derived from user input.
  *
- * @package VMS_Span_Checker
+ * @package VMS_Elements_Form_Guard
  *
  * phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
  * phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -17,7 +17,7 @@
  * phpcs:disable PluginCheck.Security.DirectDB.UnescapedDBParameter
  */
 
-namespace VMS_Span_Checker;
+namespace VMS_Elements_Form_Guard;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -35,24 +35,28 @@ class Activator {
 
 		$charset_collate = $wpdb->get_charset_collate();
 
+		// Migrate any pre-existing legacy `span_*` domain tables to the plugin
+		// prefix before (re)creating the schema so existing data is preserved.
+		self::rename_legacy_domain_tables();
+
 		// Free plugin owns these tables. The Pro plugin's own activator creates
-		// `vms_span_checker_form_settings`, `vms_span_checker_forms` and
-		// `vms_span_checker_ai_post_summary` (Pro tables). Pre-existing
+		// `vms_elements_form_guard_form_settings`, `vms_elements_form_guard_forms` and
+		// `vms_elements_form_guard_ai_post_summary` (Pro tables). Pre-existing
 		// installs that already have those tables keep them — we never DROP.
 		$tables = array(
-			"CREATE TABLE {$wpdb->prefix}span_whitelist_domains (
+			"CREATE TABLE {$wpdb->prefix}vms_elements_form_guard_whitelist_domains (
 				id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 				domain varchar(255) NOT NULL,
 				PRIMARY KEY  (id),
 				UNIQUE KEY domain (domain)
 			) $charset_collate;",
-			"CREATE TABLE {$wpdb->prefix}span_disposable_domains (
+			"CREATE TABLE {$wpdb->prefix}vms_elements_form_guard_disposable_domains (
 				id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 				domain varchar(255) NOT NULL,
 				PRIMARY KEY  (id),
 				UNIQUE KEY domain (domain)
 			) $charset_collate;",
-			"CREATE TABLE {$wpdb->prefix}vms_span_checker_logs (
+			"CREATE TABLE {$wpdb->prefix}vms_elements_form_guard_logs (
 				id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 				type varchar(50) NOT NULL DEFAULT '',
 				ip varchar(100) NOT NULL DEFAULT '',
@@ -64,7 +68,7 @@ class Activator {
 				KEY created_at (created_at),
 				KEY status_type (status,type)
 			) $charset_collate;",
-			"CREATE TABLE {$wpdb->prefix}vms_span_checker_api_keys (
+			"CREATE TABLE {$wpdb->prefix}vms_elements_form_guard_api_keys (
 				id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 				key_name varchar(100) NOT NULL DEFAULT '',
 				api_key text NOT NULL,
@@ -72,7 +76,7 @@ class Activator {
 				created_at datetime NOT NULL,
 				PRIMARY KEY  (id)
 			) $charset_collate;",
-			"CREATE TABLE {$wpdb->prefix}vms_span_checker_comment_enforcement (
+			"CREATE TABLE {$wpdb->prefix}vms_elements_form_guard_comment_enforcement (
 				id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 				actor_key varchar(191) NOT NULL,
 				actor_label varchar(191) NOT NULL DEFAULT '',
@@ -103,8 +107,40 @@ class Activator {
 		self::maybe_seed_disposable_domains();
 		self::maybe_seed_whitelist_domains();
 
-		update_option( 'vms_span_checker_db_version', VMS_SPAN_CHECKER_VERSION );
-		update_option( 'vms_span_checker_schema_version', '10' );
+		update_option( 'vms_elements_form_guard_db_version', VMS_ELEMENTS_FORM_GUARD_VERSION );
+		update_option( 'vms_elements_form_guard_schema_version', '11' );
+	}
+
+	/**
+	 * Rename legacy `span_*` domain tables to the plugin prefix.
+	 *
+	 * Older installs created `{$prefix}span_whitelist_domains` and
+	 * `{$prefix}span_disposable_domains`. These are renamed in place so the
+	 * stored domain lists survive the prefix normalization. No-op when the
+	 * legacy tables are absent or the new tables already exist.
+	 */
+	private static function rename_legacy_domain_tables(): void {
+		global $wpdb;
+
+		$renames = array(
+			'span_whitelist_domains'  => 'vms_elements_form_guard_whitelist_domains',
+			'span_disposable_domains' => 'vms_elements_form_guard_disposable_domains',
+		);
+
+		foreach ( $renames as $old => $new ) {
+			$old_table = $wpdb->prefix . $old;
+			$new_table = $wpdb->prefix . $new;
+
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table names use trusted prefix.
+			$old_exists = $wpdb->get_var( "SHOW TABLES LIKE '{$old_table}'" );
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table names use trusted prefix.
+			$new_exists = $wpdb->get_var( "SHOW TABLES LIKE '{$new_table}'" );
+
+			if ( $old_exists && ! $new_exists ) {
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table names use trusted prefix.
+				$wpdb->query( "RENAME TABLE {$old_table} TO {$new_table}" );
+			}
+		}
 	}
 
 	/**
@@ -113,40 +149,40 @@ class Activator {
 	public static function maybe_upgrade_schema(): void {
 		global $wpdb;
 
-		$current = (string) get_option( 'vms_span_checker_schema_version', '1' );
+		$current = (string) get_option( 'vms_elements_form_guard_schema_version', '1' );
 
 		if ( version_compare( $current, '2', '<' ) ) {
-			$table = $wpdb->prefix . 'vms_span_checker_form_settings';
+			$table = $wpdb->prefix . 'vms_elements_form_guard_form_settings';
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name uses trusted prefix.
 			$exists = $wpdb->get_var( "SHOW TABLES LIKE '{$table}'" );
 			if ( $exists ) {
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name uses trusted prefix.
 				$wpdb->query( "ALTER TABLE {$table} MODIFY COLUMN page_id text NOT NULL" );
 			}
-			update_option( 'vms_span_checker_schema_version', '2' );
+			update_option( 'vms_elements_form_guard_schema_version', '2' );
 			$current = '2';
 		}
 
 		if ( version_compare( $current, '3', '<' ) ) {
 			self::install_ai_tables();
-			update_option( 'vms_span_checker_schema_version', '3' );
+			update_option( 'vms_elements_form_guard_schema_version', '3' );
 			$current = '3';
 		}
 
 		if ( version_compare( $current, '4', '<' ) ) {
-			$table = $wpdb->prefix . 'vms_span_checker_comment_enforcement';
+			$table = $wpdb->prefix . 'vms_elements_form_guard_comment_enforcement';
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name uses trusted prefix.
 			$exists = $wpdb->get_var( "SHOW TABLES LIKE '{$table}'" );
 			if ( $exists ) {
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name uses trusted prefix.
 				$wpdb->query( "ALTER TABLE {$table} MODIFY COLUMN actor_key varchar(191) NOT NULL" );
 			}
-			update_option( 'vms_span_checker_schema_version', '4' );
+			update_option( 'vms_elements_form_guard_schema_version', '4' );
 			$current = '4';
 		}
 
 		if ( version_compare( $current, '5', '<' ) ) {
-			$table = $wpdb->prefix . 'vms_span_checker_comment_enforcement';
+			$table = $wpdb->prefix . 'vms_elements_form_guard_comment_enforcement';
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name uses trusted prefix.
 			$exists = $wpdb->get_var( "SHOW TABLES LIKE '{$table}'" );
 			if ( $exists ) {
@@ -163,12 +199,12 @@ class Activator {
 					$wpdb->query( "ALTER TABLE {$table} ADD COLUMN last_ip varchar(45) NOT NULL DEFAULT '' AFTER site_banned" );
 				}
 			}
-			update_option( 'vms_span_checker_schema_version', '5' );
+			update_option( 'vms_elements_form_guard_schema_version', '5' );
 			$current = '5';
 		}
 
 		if ( version_compare( $current, '6', '<' ) ) {
-			$table = $wpdb->prefix . 'vms_span_checker_form_settings';
+			$table = $wpdb->prefix . 'vms_elements_form_guard_form_settings';
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name uses trusted prefix.
 			$exists = $wpdb->get_var( "SHOW TABLES LIKE '{$table}'" );
 			if ( $exists ) {
@@ -179,12 +215,12 @@ class Activator {
 					$wpdb->query( "ALTER TABLE {$table} ADD COLUMN submit_selector varchar(500) NOT NULL DEFAULT '' AFTER form_class" );
 				}
 			}
-			update_option( 'vms_span_checker_schema_version', '6' );
+			update_option( 'vms_elements_form_guard_schema_version', '6' );
 			$current = '6';
 		}
 
 		if ( version_compare( $current, '7', '<' ) ) {
-			$table = $wpdb->prefix . 'vms_span_checker_form_settings';
+			$table = $wpdb->prefix . 'vms_elements_form_guard_form_settings';
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name uses trusted prefix.
 			$exists = $wpdb->get_var( "SHOW TABLES LIKE '{$table}'" );
 			if ( $exists ) {
@@ -201,12 +237,12 @@ class Activator {
 					$wpdb->query( "ALTER TABLE {$table} ADD COLUMN auto_rules longtext NULL AFTER auto_validation" );
 				}
 			}
-			update_option( 'vms_span_checker_schema_version', '7' );
+			update_option( 'vms_elements_form_guard_schema_version', '7' );
 			$current = '7';
 		}
 
 		if ( version_compare( $current, '8', '<' ) ) {
-			$table = $wpdb->prefix . 'vms_span_checker_form_settings';
+			$table = $wpdb->prefix . 'vms_elements_form_guard_form_settings';
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name uses trusted prefix.
 			$exists = $wpdb->get_var( "SHOW TABLES LIKE '{$table}'" );
 			if ( $exists ) {
@@ -217,12 +253,12 @@ class Activator {
 					$wpdb->query( "ALTER TABLE {$table} ADD COLUMN enable_recaptcha tinyint(1) NOT NULL DEFAULT 0 AFTER auto_rules" );
 				}
 			}
-			update_option( 'vms_span_checker_schema_version', '8' );
+			update_option( 'vms_elements_form_guard_schema_version', '8' );
 			$current = '8';
 		}
 
 		if ( version_compare( $current, '9', '<' ) ) {
-			$table = $wpdb->prefix . 'vms_span_checker_comment_enforcement';
+			$table = $wpdb->prefix . 'vms_elements_form_guard_comment_enforcement';
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name uses trusted prefix.
 			$exists = $wpdb->get_var( "SHOW TABLES LIKE '{$table}'" );
 			if ( $exists ) {
@@ -262,16 +298,24 @@ class Activator {
 					$wpdb->query( "ALTER TABLE {$table} ADD INDEX user_id (user_id)" );
 				}
 			}
-			update_option( 'vms_span_checker_schema_version', '9' );
+			update_option( 'vms_elements_form_guard_schema_version', '9' );
 			$current = '9';
 		}
 
 		if ( version_compare( $current, '10', '<' ) ) {
 			// Free/Pro split bump. Pre-existing Pro-owned tables
-			// (vms_span_checker_form_settings, vms_span_checker_forms,
-			// vms_span_checker_ai_post_summary) are intentionally NOT dropped
+			// (vms_elements_form_guard_form_settings, vms_elements_form_guard_forms,
+			// vms_elements_form_guard_ai_post_summary) are intentionally NOT dropped
 			// — the Pro plugin's activator will dbDelta them when installed.
-			update_option( 'vms_span_checker_schema_version', '10' );
+			update_option( 'vms_elements_form_guard_schema_version', '10' );
+			$current = '10';
+		}
+
+		if ( version_compare( $current, '11', '<' ) ) {
+			// Normalize legacy `span_*` domain table names to the plugin prefix.
+			self::rename_legacy_domain_tables();
+			update_option( 'vms_elements_form_guard_schema_version', '11' );
+			$current = '11';
 		}
 	}
 
@@ -290,7 +334,7 @@ class Activator {
 		$charset_collate = $wpdb->get_charset_collate();
 
 		$sql = array(
-			"CREATE TABLE {$wpdb->prefix}vms_span_checker_comment_enforcement (
+			"CREATE TABLE {$wpdb->prefix}vms_elements_form_guard_comment_enforcement (
 				id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 				actor_key varchar(191) NOT NULL,
 				actor_label varchar(191) NOT NULL DEFAULT '',
@@ -325,13 +369,13 @@ class Activator {
 	private static function maybe_seed_disposable_domains(): void {
 		global $wpdb;
 
-		$table = $wpdb->prefix . 'span_disposable_domains';
+		$table = $wpdb->prefix . 'vms_elements_form_guard_disposable_domains';
 		$count = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table}" );
 		if ( $count > 0 ) {
 			return;
 		}
 
-		$file = VMS_SPAN_CHECKER_DIR . 'includes/data/disposable-domains.php';
+		$file = VMS_ELEMENTS_FORM_GUARD_DIR . 'includes/data/disposable-domains.php';
 		if ( ! is_readable( $file ) ) {
 			return;
 		}
@@ -360,14 +404,14 @@ class Activator {
 	private static function maybe_seed_whitelist_domains(): void {
 		global $wpdb;
 
-		$table = $wpdb->prefix . 'span_whitelist_domains';
+		$table = $wpdb->prefix . 'vms_elements_form_guard_whitelist_domains';
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name uses trusted prefix.
 		$count = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table}" );
 		if ( $count > 0 ) {
 			return;
 		}
 
-		$file = VMS_SPAN_CHECKER_DIR . 'includes/data/whitelist.sql';
+		$file = VMS_ELEMENTS_FORM_GUARD_DIR . 'includes/data/whitelist.sql';
 		if ( ! is_readable( $file ) ) {
 			return;
 		}

@@ -1,22 +1,22 @@
 <?php
 /**
- * AI VMS Span Checker configuration (providers, comment rules, prompts).
+ * AI VMS Elements Form Guard configuration (providers, comment rules, prompts).
  *
- * @package VMS_Span_Checker
+ * @package VMS_Elements_Form_Guard
  */
 
-namespace VMS_Span_Checker;
+namespace VMS_Elements_Form_Guard;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
 /**
- * Stored in option wsc-ai-span-config.
+ * Stored in option vefg-ai-span-config.
  */
 class AI_Span_Config {
 
-	public const OPTION_KEY = 'wsc-ai-span-config';
+	public const OPTION_KEY = 'vefg-ai-span-config';
 
 	/**
 	 * Default configuration.
@@ -35,7 +35,7 @@ class AI_Span_Config {
 			'gemini_model'               => 'gemini-2.0-flash-lite',
 			'deepseek_api_key'           => '',
 			'deepseek_model'             => 'deepseek-chat',
-			'system_prompt'              => self::default_system_prompt(),
+			'system_prompt'              => '',
 			'summary_post_types'         => array( 'post' ),
 			// Block User / Strike system settings
 			'block_user_enabled'            => true,
@@ -134,7 +134,7 @@ class AI_Span_Config {
 	public static function default_system_prompt(): string {
 		return __(
 			'You are a strict comment moderator. Compare the POST_SUMMARY with the COMMENT_TEXT. Decide if the comment is good-faith and on-topic, or spam: promotional/affiliate, SEO or backlink pitches, pharma/gambling/adult promos, unrelated topics, gibberish, foreign-language off-topic ads, contact harvesting (“email me at…”), crypto/loan scams, essay-writing services, or mass emoji/noise. If PRODUCT_REVIEW_MODE is yes, genuine short product reviews are allowed. Respond with ONLY valid JSON (no markdown, no code fences): {"status":"ok"|"spam","message":"If spam, name the spam pattern in English; if ok use a short neutral phrase."}',
-			'vms-span-checker'
+			'vms-elements-form-guard'
 		);
 	}
 
@@ -154,7 +154,7 @@ REJECT as spam: Promotional or affiliate pitches; URLs/link farming or SEO keywo
 Always compare REVIEW_TEXT against PRODUCT_SUMMARY—reject generic praise or rage that could apply to any product.
 
 Respond ONLY with valid JSON (no markdown, no code fences): {"status":"ok"|"spam","message":"If spam, name the pattern briefly in English; if ok use a short neutral phrase."}',
-			'vms-span-checker'
+			'vms-elements-form-guard'
 		);
 	}
 
@@ -166,7 +166,24 @@ Respond ONLY with valid JSON (no markdown, no code fences): {"status":"ok"|"spam
 		if ( ! is_array( $raw ) ) {
 			$raw = array();
 		}
-		return array_merge( self::defaults(), $raw );
+		$merged = array_merge( self::defaults(), $raw );
+		return self::apply_translated_prompt_defaults( $merged );
+	}
+
+	/**
+	 * Fill empty AI prompts with translated defaults (only after `init`).
+	 *
+	 * @param array<string, mixed> $config Merged config.
+	 * @return array<string, mixed>
+	 */
+	private static function apply_translated_prompt_defaults( array $config ): array {
+		if ( '' === trim( (string) ( $config['system_prompt'] ?? '' ) ) ) {
+			$config['system_prompt'] = self::default_system_prompt();
+		}
+		if ( '' === trim( (string) ( $config['review_system_prompt'] ?? '' ) ) ) {
+			$config['review_system_prompt'] = self::default_review_system_prompt();
+		}
+		return $config;
 	}
 
 	/**
@@ -209,7 +226,7 @@ Respond ONLY with valid JSON (no markdown, no code fences): {"status":"ok"|"spam
 
 		$c['comment_max_strikes']   = max( 1, min( 100, absint( $c['comment_max_strikes'] ?? 5 ) ) );
 		$c['comment_contact_page_id'] = absint( $c['comment_contact_page_id'] ?? 0 );
-		
+
 		// Contact Guard settings
 		$c['contact_guard_enabled'] = ! empty( $c['contact_guard_enabled'] );
 		$c['contact_guard_page_id'] = absint( $c['contact_guard_page_id'] ?? 0 );

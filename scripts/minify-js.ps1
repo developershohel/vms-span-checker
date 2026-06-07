@@ -12,9 +12,8 @@ $root = Split-Path -Parent $PSScriptRoot
 $jsDir = Join-Path $root 'assets\js'
 
 $files = @(
-    'wsc-shared-toast.js',
-    'license-heartbeat.js',
-    'vms-span-checker.js',
+    'vefg-shared-toast.js',
+    'vms-elements-form-guard.js',
     'domains.js',
     'subscribe-guard.js',
     'contact-guard.js',

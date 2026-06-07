@@ -1,8 +1,12 @@
 /vendor/
 /node_modules/
+/scripts/
+/dist/
+.cursor/
 .git/
 .github/
 .gitignore
+.distignore
 composer.json
 composer.lock
 .phpcs.xml
@@ -12,3 +16,5 @@ AGENTS.md
 README.md
 *.map
 *.scss
+assets/wordpress-org/
+assets/brand/marketplace-cover.svg

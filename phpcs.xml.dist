@@ -1,16 +1,47 @@
 <?xml version="1.0"?>
-<ruleset name="VMS Span Checker">
-	<description>WordPress coding standards and PHP compatibility for this plugin.</description>
+<ruleset name="VMS Elements Form Guard">
+	<description>
+		Coding standards aligned with the official Plugin Check tool.
+
+		Uses WordPress-Core + WordPress-Extra (the same surface Plugin Check
+		enforces) plus PHPCompatibilityWP for runtime safety. WordPress-Docs is
+		deliberately excluded because Plugin Check does not enforce docblock
+		formatting and those rules generate noise without surfacing real bugs.
+	</description>
 
 	<file>.</file>
-	<file>../vms-span-checker-pro</file>
+	<file>../vms-elements-form-guard-pro</file>
 
 	<exclude-pattern>*/vendor/*</exclude-pattern>
 	<exclude-pattern>*/node_modules/*</exclude-pattern>
 	<exclude-pattern>*/assets/*</exclude-pattern>
+	<exclude-pattern>*/languages/*</exclude-pattern>
 
-	<rule ref="WordPress"/>
+	<rule ref="WordPress-Core">
+		<!-- Style preference, not a defect Plugin Check flags. -->
+		<exclude name="WordPress.PHP.YodaConditions.NotYoda"/>
+		<exclude name="Universal.Operators.DisallowShortTernary.Found"/>
+		<exclude name="Squiz.Commenting.InlineComment.InvalidEndChar"/>
+	</rule>
+
+	<rule ref="WordPress-Extra">
+		<exclude name="WordPress.PHP.YodaConditions.NotYoda"/>
+		<exclude name="Universal.Operators.DisallowShortTernary.Found"/>
+		<exclude name="Squiz.Commenting.InlineComment.InvalidEndChar"/>
+	</rule>
+
 	<rule ref="PHPCompatibilityWP"/>
 
+	<!--
+		The default spam-check components live in a single bundle file so the
+		16 tiny implementations can be registered together. See the file's own
+		docblock for justification.
+	-->
+	<rule ref="WordPress.Files.FileName.InvalidClassFileName">
+		<exclude-pattern>*/includes/spam/class-default-spam-check-components.php</exclude-pattern>
+	</rule>
+
 	<config name="testVersion" value="7.4-"/>
+
+	<config name="minimum_wp_version" value="6.0"/>
 </ruleset>

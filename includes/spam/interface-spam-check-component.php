@@ -2,10 +2,10 @@
 /**
  * Contract for one pluggable spam check step (heuristic pipeline).
  *
- * @package VMS_Span_Checker
+ * @package VMS_Elements_Form_Guard
  */
 
-namespace VMS_Span_Checker\Spam;
+namespace VMS_Elements_Form_Guard\Spam;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

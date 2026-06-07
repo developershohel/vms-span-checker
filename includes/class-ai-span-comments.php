@@ -3,10 +3,10 @@
  * AI-assisted comment spam checks and strike / block enforcement.
  *
  * Direct `$wpdb` calls target the plugin-owned
- * `{$wpdb->prefix}vms_span_checker_comment_enforcement` custom table. Identifiers
+ * `{$wpdb->prefix}vms_elements_form_guard_comment_enforcement` custom table. Identifiers
  * are hardcoded; values are prepared via `$wpdb->prepare()` or insert helpers.
  *
- * @package VMS_Span_Checker
+ * @package VMS_Elements_Form_Guard
  *
  * phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
  * phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -14,10 +14,10 @@
  * phpcs:disable PluginCheck.Security.DirectDB.UnescapedDBParameter
  */
 
-namespace VMS_Span_Checker;
+namespace VMS_Elements_Form_Guard;
 
 use WP_Error;
-use VMS_Span_Checker\Services\AI_Span_Completion;
+use VMS_Elements_Form_Guard\Services\AI_Span_Completion;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -75,7 +75,7 @@ class AI_Span_Comments {
 		// Flag-only display notice; the request originates from a server-side
 		// redirect after logout, so no nonce is involved.
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display-only flag, no state change.
-		if ( is_admin() || empty( $_GET['wsc_site_ban'] ) ) {
+		if ( is_admin() || empty( $_GET['vefg_site_ban'] ) ) {
 			return;
 		}
 		$c         = AI_Span_Config::get();
@@ -86,8 +86,8 @@ class AI_Span_Comments {
 		if ( $contact_id <= 0 || ! is_page( $contact_id ) ) {
 			return;
 		}
-		echo '<div class="wsc-site-ban-flash" role="status" style="max-width:720px;margin:1rem auto;padding:12px 14px;border-left:4px solid #d63638;background:#fcf0f1;border-radius:4px;">';
-		echo esc_html__( 'Your account was signed out because it has been permanently restricted from this site due to repeated abuse.', 'vms-span-checker' );
+		echo '<div class="vefg-site-ban-flash" role="status" style="max-width:720px;margin:1rem auto;padding:12px 14px;border-left:4px solid #d63638;background:#fcf0f1;border-radius:4px;">';
+		echo esc_html__( 'Your account was signed out because it has been permanently restricted from this site due to repeated abuse.', 'vms-elements-form-guard' );
 		echo '</div>';
 	}
 
@@ -101,22 +101,22 @@ class AI_Span_Comments {
 		// One-time token consumed from URL; the token itself is bound to a
 		// transient created server-side, so no nonce is required.
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Validated against server-stored transient below.
-		if ( empty( $_GET['wsc_comment_err'] ) ) {
+		if ( empty( $_GET['vefg_comment_err'] ) ) {
 			return;
 		}
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Validated against server-stored transient below.
-		$token = sanitize_text_field( wp_unslash( (string) $_GET['wsc_comment_err'] ) );
+		$token = sanitize_text_field( wp_unslash( (string) $_GET['vefg_comment_err'] ) );
 		if ( strlen( $token ) !== 16 || ! ctype_alnum( $token ) ) {
 			return;
 		}
-		$key  = 'wsc_cerr_' . $token;
+		$key  = 'vefg_cerr_' . $token;
 		$data = get_transient( $key );
 		delete_transient( $key );
 		if ( ! is_array( $data ) || empty( $data['message'] ) ) {
 			return;
 		}
 		self::$frontend_comment_notice = array(
-			'title'   => isset( $data['title'] ) ? (string) $data['title'] : __( 'Comment not posted', 'vms-span-checker' ),
+			'title'   => isset( $data['title'] ) ? (string) $data['title'] : __( 'Comment not posted', 'vms-elements-form-guard' ),
 			'message' => (string) $data['message'],
 		);
 		add_action( 'comment_form_before', array( $this, 'print_comment_form_error_notice' ), 5 );
@@ -157,7 +157,7 @@ class AI_Span_Comments {
 			return;
 		}
 		$msg = self::$frontend_comment_notice['message'];
-		echo '<div class="wsc-comment-blocked-notice" role="alert" style="border-left:4px solid #d63638;background:#fcf0f1;padding:12px 14px;margin:0 0 1.25em;border-radius:4px;color:#1d2327;font-size:14px;line-height:1.45;">';
+		echo '<div class="vefg-comment-blocked-notice" role="alert" style="border-left:4px solid #d63638;background:#fcf0f1;padding:12px 14px;margin:0 0 1.25em;border-radius:4px;color:#1d2327;font-size:14px;line-height:1.45;">';
 		echo '<strong style="display:block;margin-bottom:6px;">' . esc_html( self::$frontend_comment_notice['title'] ) . '</strong>';
 		echo '<span>' . esc_html( $msg ) . '</span>';
 		echo '</div>';
@@ -172,16 +172,16 @@ class AI_Span_Comments {
 		}
 
 		wp_enqueue_style(
-			'wsc-public-sweetalert',
-			VMS_Span_Checker_ASSETS_URL . 'plugins/sweetalert2/sweetalert2.min.css',
+			'vefg-public-sweetalert',
+			VMS_ELEMENTS_FORM_GUARD_ASSETS_URL . 'plugins/sweetalert2/sweetalert2.min.css',
 			array(),
-			VMS_Span_Checker_VERSION
+			VMS_ELEMENTS_FORM_GUARD_VERSION
 		);
 		wp_enqueue_script(
-			'wsc-public-sweetalert',
-			VMS_Span_Checker_ASSETS_URL . 'plugins/sweetalert2/sweetalert2.all.min.js',
+			'vefg-public-sweetalert',
+			VMS_ELEMENTS_FORM_GUARD_ASSETS_URL . 'plugins/sweetalert2/sweetalert2.all.min.js',
 			array(),
-			VMS_Span_Checker_VERSION,
+			VMS_ELEMENTS_FORM_GUARD_VERSION,
 			true
 		);
 
@@ -189,15 +189,15 @@ class AI_Span_Comments {
 			array(
 				'title'   => self::$frontend_comment_notice['title'],
 				'message' => self::$frontend_comment_notice['message'],
-				'ok'      => __( 'OK', 'vms-span-checker' ),
+				'ok'      => __( 'OK', 'vms-elements-form-guard' ),
 			)
 		);
 
 		wp_add_inline_script(
-			'wsc-public-sweetalert',
+			'vefg-public-sweetalert',
 			'document.addEventListener("DOMContentLoaded",function(){var d=' . $payload . ';'
 			. 'if(typeof Swal!=="undefined"){Swal.fire({icon:"error",title:d.title,text:d.message,confirmButtonText:d.ok});}'
-			. 'if(window.history&&history.replaceState){var u=new URL(window.location.href);u.searchParams.delete("wsc_comment_err");'
+			. 'if(window.history&&history.replaceState){var u=new URL(window.location.href);u.searchParams.delete("vefg_comment_err");'
 			. 'history.replaceState(null,"",u.pathname+u.search+window.location.hash);}});',
 			'after'
 		);
@@ -216,7 +216,7 @@ class AI_Span_Comments {
 	}
 
 	/**
-	 * @param \WP_Comment $prepared_comment .
+	 * @param \WP_Comment      $prepared_comment .
 	 * @param \WP_REST_Request $request .
 	 * @return \WP_Comment|WP_Error
 	 */
@@ -249,8 +249,8 @@ class AI_Span_Comments {
 		}
 
 		// Product Review Guard is a Pro feature — only delegate when it's loaded.
-		if ( class_exists( '\\VMS_Span_Checker\\Product_Review_Guard' )
-			&& \VMS_Span_Checker\Product_Review_Guard::should_delegate_review_to_product_guard( $commentdata )
+		if ( class_exists( '\\VMS_Elements_Form_Guard\\Product_Review_Guard' )
+			&& \VMS_Elements_Form_Guard\Product_Review_Guard::should_delegate_review_to_product_guard( $commentdata )
 		) {
 			return true;
 		}
@@ -260,8 +260,8 @@ class AI_Span_Comments {
 
 		if ( $row && ! empty( $row['site_banned'] ) ) {
 			return new WP_Error(
-				'wsc_site_banned',
-				__( 'You cannot use this site anymore due to repeated abuse. Use the contact page if you need to reach the owner.', 'vms-span-checker' )
+				'vefg_site_banned',
+				__( 'You cannot use this site anymore due to repeated abuse. Use the contact page if you need to reach the owner.', 'vms-elements-form-guard' )
 			);
 		}
 
@@ -281,7 +281,7 @@ class AI_Span_Comments {
 			// Pro plugin's AI_Span_Summary supplies this via the bridge filter.
 			// When Pro is absent, the filter returns '' and AI moderation runs
 			// without post context (still effective for the comment body).
-			$summary = (string) apply_filters( 'vms_span_checker_post_summary_text', '', $post_id );
+			$summary = (string) apply_filters( 'vms_elements_form_guard_post_summary_text', '', $post_id );
 			$summary = '' !== $summary ? $summary : null;
 			if ( $summary !== null && $summary !== '' ) {
 				$sys = (string) ( $c['system_prompt'] ?? '' );
@@ -301,10 +301,10 @@ class AI_Span_Comments {
 					if ( ! is_wp_error( $verdict ) && 'spam' === $verdict['status'] ) {
 						Comment_Enforcement::register_strike( $actor, $verdict['message'], $c, 'comment' );
 						return new WP_Error(
-							'wsc_spam',
+							'vefg_spam',
 							sprintf(
 								/* translators: %s: short reason from AI */
-								__( 'Comment rejected: %s', 'vms-span-checker' ),
+								__( 'Comment rejected: %s', 'vms-elements-form-guard' ),
 								$verdict['message']
 							)
 						);
@@ -316,8 +316,8 @@ class AI_Span_Comments {
 		$row = Comment_Enforcement::get_row( $actor['key'] );
 		if ( $row && ! empty( $row['blocked'] ) && empty( $row['site_banned'] ) ) {
 			return new WP_Error(
-				'wsc_blocked',
-				__( 'You are blocked from commenting on this site due to repeated spam attempts.', 'vms-span-checker' )
+				'vefg_blocked',
+				__( 'You are blocked from commenting on this site due to repeated spam attempts.', 'vms-elements-form-guard' )
 			);
 		}
 
@@ -329,7 +329,7 @@ class AI_Span_Comments {
 	 */
 	public static function admin_unblock( string $actor_key ): bool {
 		global $wpdb;
-		$table = $wpdb->prefix . 'vms_span_checker_comment_enforcement';
+		$table = $wpdb->prefix . 'vms_elements_form_guard_comment_enforcement';
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name uses trusted prefix.
 		$result = $wpdb->query(
 			$wpdb->prepare(
@@ -406,7 +406,7 @@ class AI_Span_Comments {
 	 *
 	 * Any unspecified scope flag is cleared on this row.
 	 *
-	 * @param int                                                                         $user_id WordPress user ID.
+	 * @param int                                                                          $user_id WordPress user ID.
 	 * @param array{scope?:array<int,string>,reason?:string,expiry_days?:int,strikes?:int} $opts    Block options.
 	 * @return array{success:bool,message:string,actor_key:string}
 	 */
@@ -415,7 +415,7 @@ class AI_Span_Comments {
 		if ( ! ( $user instanceof \WP_User ) ) {
 			return array(
 				'success'   => false,
-				'message'   => __( 'User not found.', 'vms-span-checker' ),
+				'message'   => __( 'User not found.', 'vms-elements-form-guard' ),
 				'actor_key' => '',
 			);
 		}
@@ -425,7 +425,7 @@ class AI_Span_Comments {
 		if ( $exempt_admins && user_can( $user, 'manage_options' ) ) {
 			return array(
 				'success'   => false,
-				'message'   => __( 'This user is an administrator and is exempt from blocking. Disable "Exempt Admins" in Block User Settings to override.', 'vms-span-checker' ),
+				'message'   => __( 'This user is an administrator and is exempt from blocking. Disable "Exempt Admins" in Block User Settings to override.', 'vms-elements-form-guard' ),
 				'actor_key' => '',
 			);
 		}
@@ -438,7 +438,7 @@ class AI_Span_Comments {
 
 		$reason = isset( $opts['reason'] ) ? trim( (string) $opts['reason'] ) : '';
 		if ( '' === $reason ) {
-			$reason = __( 'Manually blocked by administrator.', 'vms-span-checker' );
+			$reason = __( 'Manually blocked by administrator.', 'vms-elements-form-guard' );
 		}
 		$reason = function_exists( 'mb_substr' ) ? mb_substr( $reason, 0, 500 ) : substr( $reason, 0, 500 );
 
@@ -472,7 +472,7 @@ class AI_Span_Comments {
 		);
 
 		global $wpdb;
-		$table    = $wpdb->prefix . 'vms_span_checker_comment_enforcement';
+		$table    = $wpdb->prefix . 'vms_elements_form_guard_comment_enforcement';
 		$existing = self::get_enforcement_row_by_key( $actor_key );
 
 		if ( $existing ) {
@@ -496,7 +496,7 @@ class AI_Span_Comments {
 		if ( ! $ok ) {
 			return array(
 				'success'   => false,
-				'message'   => __( 'Database error while saving block.', 'vms-span-checker' ),
+				'message'   => __( 'Database error while saving block.', 'vms-elements-form-guard' ),
 				'actor_key' => '',
 			);
 		}
@@ -505,7 +505,7 @@ class AI_Span_Comments {
 			'success'   => true,
 			'message'   => sprintf(
 				/* translators: %s: user display label */
-				__( 'User %s is now blocked.', 'vms-span-checker' ),
+				__( 'User %s is now blocked.', 'vms-elements-form-guard' ),
 				$actor_label
 			),
 			'actor_key' => $actor_key,
@@ -522,7 +522,7 @@ class AI_Span_Comments {
 	public static function admin_edit_block_scope( string $actor_key, array $scope ): bool {
 		$scope = array_values( array_intersect( array( 'form', 'login', 'site' ), $scope ) );
 		global $wpdb;
-		$table  = $wpdb->prefix . 'vms_span_checker_comment_enforcement';
+		$table  = $wpdb->prefix . 'vms_elements_form_guard_comment_enforcement';
 		$update = array(
 			'blocked'       => in_array( 'form', $scope, true ) ? 1 : 0,
 			'login_blocked' => in_array( 'login', $scope, true ) ? 1 : 0,
@@ -545,7 +545,7 @@ class AI_Span_Comments {
 	 */
 	private static function get_enforcement_row_by_key( string $actor_key ): ?array {
 		global $wpdb;
-		$table = $wpdb->prefix . 'vms_span_checker_comment_enforcement';
+		$table = $wpdb->prefix . 'vms_elements_form_guard_comment_enforcement';
 		$row   = $wpdb->get_row(
 			$wpdb->prepare( "SELECT * FROM {$table} WHERE actor_key = %s", $actor_key ),
 			ARRAY_A
@@ -585,14 +585,14 @@ class AI_Span_Comments {
 			if ( ! is_string( $target ) || '' === $target ) {
 				$target = home_url( '/' );
 			}
-			$target = add_query_arg( 'wsc_site_ban', '1', $target );
+			$target = add_query_arg( 'vefg_site_ban', '1', $target );
 			wp_safe_redirect( $target );
 			exit;
 		}
 
-		$msg  = __( 'Your access to this site has been permanently restricted due to repeated spam or abuse.', 'vms-span-checker' );
+		$msg  = __( 'Your access to this site has been permanently restricted due to repeated spam or abuse.', 'vms-elements-form-guard' );
 		$msg .= ' ' . $this->get_contact_owner_html_fragment();
-		wp_die( wp_kses_post( $msg ), esc_html__( 'Access restricted', 'vms-span-checker' ), array( 'response' => 403 ) );
+		wp_die( wp_kses_post( $msg ), esc_html__( 'Access restricted', 'vms-elements-form-guard' ), array( 'response' => 403 ) );
 	}
 
 	/**
@@ -611,8 +611,8 @@ class AI_Span_Comments {
 		$row = Comment_Enforcement::get_row( 'u:' . (int) $user->ID );
 		if ( $row && ! empty( $row['site_banned'] ) ) {
 			return new WP_Error(
-				'wsc_site_banned_login',
-				__( 'This account cannot sign in because it was permanently restricted due to repeated abuse. Please contact the site owner.', 'vms-span-checker' )
+				'vefg_site_banned_login',
+				__( 'This account cannot sign in because it was permanently restricted due to repeated abuse. Please contact the site owner.', 'vms-elements-form-guard' )
 			);
 		}
 		return $user;
@@ -654,7 +654,7 @@ class AI_Span_Comments {
 		if ( ! self::$strike_closed_comments || ! is_singular() || $this->strike_notice_printed ) {
 			return;
 		}
-		echo '<div class="wsc-strike-comment-note-wrap" style="max-width:720px;margin:1.25rem auto;padding:0 1rem;">';
+		echo '<div class="vefg-strike-comment-note-wrap" style="max-width:720px;margin:1.25rem auto;padding:0 1rem;">';
 		echo wp_kses_post( $this->get_strike_block_notice_html() );
 		echo '</div>';
 		$this->strike_notice_printed = true;
@@ -666,10 +666,10 @@ class AI_Span_Comments {
 	private function get_strike_block_notice_html(): string {
 		$c = AI_Span_Config::get();
 		/* translators: %d: strike threshold */
-		$explain = sprintf( __( 'Comments are disabled for you on this site because your submissions exceeded the strike limit (%d). This helps protect the community from spam.', 'vms-span-checker' ), (int) ( $c['comment_max_strikes'] ?? 5 ) );
+		$explain = sprintf( __( 'Comments are disabled for you on this site because your submissions exceeded the strike limit (%d). This helps protect the community from spam.', 'vms-elements-form-guard' ), (int) ( $c['comment_max_strikes'] ?? 5 ) );
 		$contact = $this->get_contact_owner_html_fragment();
-		return '<div class="wsc-strike-comment-note" role="status" style="border-left:4px solid #996800;background:#fcf9e8;padding:14px 16px;border-radius:4px;line-height:1.5;">'
-			. '<p style="margin:0 0 8px;"><strong>' . esc_html__( 'Why you cannot comment here', 'vms-span-checker' ) . '</strong></p>'
+		return '<div class="vefg-strike-comment-note" role="status" style="border-left:4px solid #996800;background:#fcf9e8;padding:14px 16px;border-radius:4px;line-height:1.5;">'
+			. '<p style="margin:0 0 8px;"><strong>' . esc_html__( 'Why you cannot comment here', 'vms-elements-form-guard' ) . '</strong></p>'
 			. '<p style="margin:0 0 10px;">' . esc_html( $explain ) . '</p>'
 			. '<p style="margin:0;">' . $contact . '</p>'
 			. '</div>';
@@ -686,12 +686,12 @@ class AI_Span_Comments {
 		}
 		$permalink  = ( $page_id > 0 ) ? get_permalink( $page_id ) : '';
 		if ( ! is_string( $permalink ) || '' === $permalink ) {
-			return esc_html__( 'If you believe this is a mistake, please reach the site owner through any contact method they publish on this website.', 'vms-span-checker' );
+			return esc_html__( 'If you believe this is a mistake, please reach the site owner through any contact method they publish on this website.', 'vms-elements-form-guard' );
 		}
 		return sprintf(
 			/* translators: %s: anchor HTML to contact page */
-			__( 'If you need to reach the site owner, use the %s page.', 'vms-span-checker' ),
-			'<a href="' . esc_url( $permalink ) . '">' . esc_html__( 'contact', 'vms-span-checker' ) . '</a>'
+			__( 'If you need to reach the site owner, use the %s page.', 'vms-elements-form-guard' ),
+			'<a href="' . esc_url( $permalink ) . '">' . esc_html__( 'contact', 'vms-elements-form-guard' ) . '</a>'
 		);
 	}
 
@@ -711,7 +711,7 @@ class AI_Span_Comments {
 			return false;
 		}
 		global $wpdb;
-		$table = $wpdb->prefix . 'vms_span_checker_comment_enforcement';
+		$table = $wpdb->prefix . 'vms_elements_form_guard_comment_enforcement';
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$n = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE blocked = 1 AND site_banned = 0 AND last_ip = %s", $ip ) );
 		return $n > 0;
@@ -732,7 +732,7 @@ class AI_Span_Comments {
 			return null;
 		}
 		global $wpdb;
-		$table = $wpdb->prefix . 'vms_span_checker_comment_enforcement';
+		$table = $wpdb->prefix . 'vms_elements_form_guard_comment_enforcement';
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$row = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table} WHERE site_banned = 1 AND last_ip = %s LIMIT 1", $ip ), ARRAY_A );
 		return is_array( $row ) ? $row : null;

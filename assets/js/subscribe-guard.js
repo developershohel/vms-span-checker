@@ -1,15 +1,15 @@
 /**
- * VMS Span Checker - Subscribe Guard
+ * VMS Elements Form Guard - Subscribe Guard
  * Validates email addresses on newsletter/subscription forms using a validation button approach.
  */
 (function($) {
     'use strict';
 
-    if (typeof WPSpanSubscribeGuard === 'undefined') {
+    if (typeof VEFGSubscribeGuard === 'undefined') {
         return;
     }
 
-    var config = WPSpanSubscribeGuard;
+    var config = VEFGSubscribeGuard;
     var ajaxUrl = config.ajaxUrl || '';
     var nonce = config.nonce || '';
     var formSelector = config.formSelector || '';
@@ -61,25 +61,25 @@
 
         // Form selector is required - only use provided selector
         if (!formSelector || formSelector.trim() === '') {
-            console.log('[VMS Span Checker] Subscribe Guard: No form selector configured. Form selector is required.');
+            console.log('[VMS Elements Form Guard] Subscribe Guard: No form selector configured. Form selector is required.');
             return [];
         }
 
         var matches = $(formSelector);
-        console.log('[VMS Span Checker] Subscribe Guard: Checking selector:', formSelector, 'found:', matches.length, 'elements');
+        console.log('[VMS Elements Form Guard] Subscribe Guard: Checking selector:', formSelector, 'found:', matches.length, 'elements');
         for (var i = 0; i < matches.length; i++) {
             var formEl = resolveFormElement(matches[i]);
             if (!formEl) {
                 continue;
             }
             var $form = $(formEl);
-            if ($form.data('wsc-subscribe-guard')) {
-                console.log('[VMS Span Checker] Subscribe Guard: Form already has subscribe guard');
+            if ($form.data('vefg-subscribe-guard')) {
+                console.log('[VMS Elements Form Guard] Subscribe Guard: Form already has subscribe guard');
                 continue;
             }
             // Check if form is already protected by another guard (Form Guard, Contact Guard, etc.)
-            if ($form.data('wsc-guard-protected')) {
-                console.log('[VMS Span Checker] Subscribe Guard: Form already protected by another guard');
+            if ($form.data('vefg-guard-protected')) {
+                console.log('[VMS Elements Form Guard] Subscribe Guard: Form already protected by another guard');
                 continue;
             }
             if (formEl.id === 'adminbarsearch' || $form.closest('#wpadminbar').length > 0) {
@@ -132,7 +132,7 @@
         if (submitSelector && submitSelector.trim() !== '') {
             var $btn = findVisibleSubmit($form, submitSelector);
             if ($btn.length) {
-                console.log('[VMS Span Checker] Subscribe Guard: Found submit via custom selector:', submitSelector);
+                console.log('[VMS Elements Form Guard] Subscribe Guard: Found submit via custom selector:', submitSelector);
                 return $btn;
             }
         }
@@ -182,7 +182,7 @@
     function validateEmail(email, recaptchaToken) {
         return new Promise(function(resolve, reject) {
             var data = {
-                action: 'wsc_validate_subscribe',
+                action: 'vefg_validate_subscribe',
                 nonce: nonce,
                 email: email
             };
@@ -212,20 +212,20 @@
 
     function showFieldError($field, message) {
         clearFieldError($field);
-        $field.addClass('wsc-field-invalid');
-        var $error = $('<span class="wsc-field-error wsc-subscribe-error">' + message + '</span>');
+        $field.addClass('vefg-field-invalid');
+        var $error = $('<span class="vefg-field-error vefg-subscribe-error">' + message + '</span>');
         $field.after($error);
     }
 
     function clearFieldError($field) {
-        $field.removeClass('wsc-field-invalid');
-        $field.siblings('.wsc-subscribe-error').remove();
-        $field.parent().find('.wsc-subscribe-error').remove();
+        $field.removeClass('vefg-field-invalid');
+        $field.siblings('.vefg-subscribe-error').remove();
+        $field.parent().find('.vefg-subscribe-error').remove();
     }
 
     function clearAllErrors($form) {
-        $form.find('.wsc-field-invalid').removeClass('wsc-field-invalid');
-        $form.find('.wsc-subscribe-error').remove();
+        $form.find('.vefg-field-invalid').removeClass('vefg-field-invalid');
+        $form.find('.vefg-subscribe-error').remove();
     }
 
     function copyButtonStyles($source, $target) {
@@ -313,8 +313,8 @@
         }
 
         if (recaptchaVersion === 'v2') {
-            var uniqueId = 'wsc-recaptcha-' + Math.random().toString(36).substr(2, 9);
-            var recaptchaContainer = $('<div id="' + uniqueId + '" class="wsc-recaptcha-container" style="margin: 10px 0;"></div>');
+            var uniqueId = 'vefg-recaptcha-' + Math.random().toString(36).substr(2, 9);
+            var recaptchaContainer = $('<div id="' + uniqueId + '" class="vefg-recaptcha-container" style="margin: 10px 0;"></div>');
             $actionsWrap.prepend(recaptchaContainer);
             
             $validationBtn.prop('disabled', true).css('opacity', '0.6');
@@ -345,13 +345,13 @@
     function setupGuard(form) {
         var $form = $(form);
         
-        if ($form.data('wsc-subscribe-guard')) {
+        if ($form.data('vefg-subscribe-guard')) {
             return;
         }
 
         // Check if form is already protected by another guard (Form Guard, Contact Guard, etc.)
-        if ($form.data('wsc-guard-protected')) {
-            console.log('[VMS Span Checker] Subscribe Guard: Form already protected by another guard, skipping');
+        if ($form.data('vefg-guard-protected')) {
+            console.log('[VMS Elements Form Guard] Subscribe Guard: Form already protected by another guard, skipping');
             return;
         }
 
@@ -360,22 +360,22 @@
             return;
         }
 
-        $form.data('wsc-subscribe-guard', true);
-        $form.data('wsc-guard-protected', true); // Mark as protected
+        $form.data('vefg-subscribe-guard', true);
+        $form.data('vefg-guard-protected', true); // Mark as protected
         subscribeGuardAttached = true;
-        console.log('[VMS Span Checker] Subscribe Guard attached to form:', form);
+        console.log('[VMS Elements Form Guard] Subscribe Guard attached to form:', form);
 
         var $originalSubmit = findSubmitButton($form);
         if (!$originalSubmit.length) {
-            console.log('[VMS Span Checker] Subscribe Guard: No submit button found');
+            console.log('[VMS Elements Form Guard] Subscribe Guard: No submit button found');
             return;
         }
 
-        var $actionsWrap = $('<div class="wsc-guard-actions"></div>');
+        var $actionsWrap = $('<div class="vefg-guard-actions"></div>');
         $originalSubmit.after($actionsWrap);
 
         var submitText = $originalSubmit.val() || $originalSubmit.text() || t('submit', 'Subscribe');
-        var $validationBtn = $('<input type="button" class="wsc-validation-btn wsc-subscribe-validation-btn">');
+        var $validationBtn = $('<input type="button" class="vefg-validation-btn vefg-subscribe-validation-btn">');
         $validationBtn.val(submitText);
         
         copyButtonStyles($originalSubmit, $validationBtn);
@@ -438,7 +438,7 @@
                     }
 
                     if (result.status) {
-                        console.log('[VMS Span Checker] Subscribe Guard: Email validated, submitting form');
+                        console.log('[VMS Elements Form Guard] Subscribe Guard: Email validated, submitting form');
                         
                         $originalSubmit.css({
                             'display': '',
@@ -469,7 +469,7 @@
                 .catch(function(err) {
                     isValidating = false;
                     $validationBtn.val(submitText).prop('disabled', recaptchaEnabled && recaptchaVersion === 'v2');
-                    console.error('[VMS Span Checker] Subscribe Guard error:', err);
+                    console.error('[VMS Elements Form Guard] Subscribe Guard error:', err);
                     showToast('error', err.message || t('serverError', 'Validation error. Please try again.'));
                 });
         });
@@ -503,12 +503,12 @@
     }
 
     function init() {
-        console.log('[VMS Span Checker] Subscribe Guard initializing...');
+        console.log('[VMS Elements Form Guard] Subscribe Guard initializing...');
         
         loadRecaptchaScript();
         
         var forms = detectSubscribeForms();
-        console.log('[VMS Span Checker] Subscribe Guard found', forms.length, 'form(s)');
+        console.log('[VMS Elements Form Guard] Subscribe Guard found', forms.length, 'form(s)');
         
         forms.forEach(function(form) {
             setupGuard(form);
@@ -527,7 +527,7 @@
                             }
                             var newForms = detectSubscribeForms();
                             newForms.forEach(function(form) {
-                                if (!$(form).data('wsc-subscribe-guard')) {
+                                if (!$(form).data('vefg-subscribe-guard')) {
                                     setupGuard(form);
                                 }
                             });

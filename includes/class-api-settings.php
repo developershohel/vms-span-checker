@@ -2,17 +2,17 @@
 /**
  * API key storage for plugin-managed integrations.
  *
- * Queries target the plugin-owned `{$wpdb->prefix}vms_span_checker_api_keys`
+ * Queries target the plugin-owned `{$wpdb->prefix}vms_elements_form_guard_api_keys`
  * custom table; the identifier is hardcoded.
  *
- * @package VMS_Span_Checker
+ * @package VMS_Elements_Form_Guard
  *
  * phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
  * phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
  * phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
  */
 
-namespace VMS_Span_Checker;
+namespace VMS_Elements_Form_Guard;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -25,7 +25,7 @@ class API_Settings {
 	public function __construct() {
 		global $wpdb;
 		$this->wpdb  = $wpdb;
-		$this->table = $this->wpdb->prefix . 'vms_span_checker_api_keys';
+		$this->table = $this->wpdb->prefix . 'vms_elements_form_guard_api_keys';
 	}
 
 	public function get_all(): array {
@@ -39,10 +39,10 @@ class API_Settings {
 	}
 
 	public function update_status( int $id, string $status ): bool {
-		return (bool) $this->wpdb->update( $this->table, [ 'status' => $status ], [ 'id' => $id ] );
+		return (bool) $this->wpdb->update( $this->table, array( 'status' => $status ), array( 'id' => $id ) );
 	}
 
 	public function delete_key( int $id ): bool {
-		return (bool) $this->wpdb->delete( $this->table, [ 'id' => $id ] );
+		return (bool) $this->wpdb->delete( $this->table, array( 'id' => $id ) );
 	}
 }

@@ -1,6 +1,6 @@
 {
-	"name": "vms-span-checker/vms-span-checker",
-	"description": "VMS Span Checker WordPress plugin",
+	"name": "vms-elements-form-guard/vms-elements-form-guard",
+	"description": "VMS Elements Form Guard WordPress plugin",
 	"type": "wordpress-plugin",
 	"license": "GPL-2.0-or-later",
 	"require": {

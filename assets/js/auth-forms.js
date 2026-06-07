@@ -1,12 +1,12 @@
 /**
- * VMS Span Checker - Auth Forms JavaScript
+ * VMS Elements Form Guard - Auth Forms JavaScript
  */
 
 (function($) {
 	'use strict';
 
-	var WSCAuthForms = {
-		config: window.WSCAuthForms || {},
+	var VEFGAuthForms = {
+		config: window.VEFGAuthForms || {},
 		recaptchaLoaded: false,
 		recaptchaWidgets: {},
 
@@ -21,32 +21,32 @@
 			var self = this;
 
 			// Login form
-			$(document).on('submit', '#wsc-login-form', function(e) {
+			$(document).on('submit', '#vefg-login-form', function(e) {
 				e.preventDefault();
 				self.handleLogin($(this));
 			});
 
 			// Register form
-			$(document).on('submit', '#wsc-register-form', function(e) {
+			$(document).on('submit', '#vefg-register-form', function(e) {
 				e.preventDefault();
 				self.handleRegister($(this));
 			});
 
 			// Forgot password form
-			$(document).on('submit', '#wsc-forgot-form', function(e) {
+			$(document).on('submit', '#vefg-forgot-form', function(e) {
 				e.preventDefault();
 				self.handleForgotPassword($(this));
 			});
 
 			// Reset password form
-			$(document).on('submit', '#wsc-reset-form', function(e) {
+			$(document).on('submit', '#vefg-reset-form', function(e) {
 				e.preventDefault();
 				self.handleResetPassword($(this));
 			});
 		},
 
 		initPasswordToggles: function() {
-			$(document).on('click', '.wsc-auth-toggle-pass', function() {
+			$(document).on('click', '.vefg-auth-toggle-pass', function() {
 				var $btn = $(this);
 				var $input = $btn.siblings('input');
 				var $icon = $btn.find('.dashicons');
@@ -62,9 +62,9 @@
 		},
 
 		initPasswordStrength: function() {
-			$(document).on('input', '#wsc-reg-pass, #wsc-reset-pass', function() {
+			$(document).on('input', '#vefg-reg-pass, #vefg-reset-pass', function() {
 				var password = $(this).val();
-				var $strength = $(this).closest('.wsc-auth-field').find('.wsc-auth-password-strength');
+				var $strength = $(this).closest('.vefg-auth-field').find('.vefg-auth-password-strength');
 
 				if (!$strength.length) return;
 
@@ -91,7 +91,7 @@
 
 		loadRecaptcha: function() {
 			var self = this;
-			var $recaptchaContainers = $('.wsc-auth-recaptcha');
+			var $recaptchaContainers = $('.vefg-auth-recaptcha');
 
 			if (!$recaptchaContainers.length || !this.config.recaptchaSiteKey) {
 				return;
@@ -104,12 +104,12 @@
 			}
 
 			var script = document.createElement('script');
-			script.src = 'https://www.google.com/recaptcha/api.js?onload=wscRecaptchaOnload&render=explicit';
+			script.src = 'https://www.google.com/recaptcha/api.js?onload=vefgRecaptchaOnload&render=explicit';
 			script.async = true;
 			script.defer = true;
 			document.head.appendChild(script);
 
-			window.wscRecaptchaOnload = function() {
+			window.vefgRecaptchaOnload = function() {
 				self.recaptchaLoaded = true;
 				self.renderRecaptcha();
 			};
@@ -118,7 +118,7 @@
 		renderRecaptcha: function() {
 			var self = this;
 
-			$('.wsc-auth-recaptcha').each(function() {
+			$('.vefg-auth-recaptcha').each(function() {
 				var $container = $(this);
 				var id = $container.attr('id');
 
@@ -137,7 +137,7 @@
 
 		getRecaptchaToken: function($form) {
 			var self = this;
-			var $container = $form.find('.wsc-auth-recaptcha');
+			var $container = $form.find('.vefg-auth-recaptcha');
 
 			if (!$container.length || !this.config.recaptchaSiteKey) {
 				return Promise.resolve('');
@@ -163,8 +163,8 @@
 
 		handleLogin: function($form) {
 			var self = this;
-			var $btn = $form.find('.wsc-auth-submit');
-			var $messageArea = $form.find('.wsc-auth-message-area');
+			var $btn = $form.find('.vefg-auth-submit');
+			var $messageArea = $form.find('.vefg-auth-message-area');
 
 			$btn.addClass('loading').prop('disabled', true);
 			$messageArea.empty();
@@ -177,8 +177,8 @@
 				}
 
 				var data = {
-					action: 'wsc_auth_login',
-					wsc_auth_nonce: $form.find('[name="wsc_auth_nonce"]').val(),
+					action: 'vefg_auth_login',
+					vefg_auth_nonce: $form.find('[name="vefg_auth_nonce"]').val(),
 					user_login: $form.find('[name="user_login"]').val(),
 					user_password: $form.find('[name="user_password"]').val(),
 					remember: $form.find('[name="remember"]').is(':checked') ? '1' : '0',
@@ -208,8 +208,8 @@
 
 		handleRegister: function($form) {
 			var self = this;
-			var $btn = $form.find('.wsc-auth-submit');
-			var $messageArea = $form.find('.wsc-auth-message-area');
+			var $btn = $form.find('.vefg-auth-submit');
+			var $messageArea = $form.find('.vefg-auth-message-area');
 
 			// Client-side validation
 			var password = $form.find('[name="user_password"]').val();
@@ -236,8 +236,8 @@
 				}
 
 				var data = {
-					action: 'wsc_auth_register',
-					wsc_auth_nonce: $form.find('[name="wsc_auth_nonce"]').val(),
+					action: 'vefg_auth_register',
+					vefg_auth_nonce: $form.find('[name="vefg_auth_nonce"]').val(),
 					user_login: $form.find('[name="user_login"]').val(),
 					user_email: $form.find('[name="user_email"]').val(),
 					user_password: password,
@@ -268,15 +268,15 @@
 
 		handleForgotPassword: function($form) {
 			var self = this;
-			var $btn = $form.find('.wsc-auth-submit');
-			var $messageArea = $form.find('.wsc-auth-message-area');
+			var $btn = $form.find('.vefg-auth-submit');
+			var $messageArea = $form.find('.vefg-auth-message-area');
 
 			$btn.addClass('loading').prop('disabled', true);
 			$messageArea.empty();
 
 			var data = {
-				action: 'wsc_auth_forgot_password',
-				wsc_auth_nonce: $form.find('[name="wsc_auth_nonce"]').val(),
+				action: 'vefg_auth_forgot_password',
+				vefg_auth_nonce: $form.find('[name="vefg_auth_nonce"]').val(),
 				user_email: $form.find('[name="user_email"]').val()
 			};
 
@@ -296,8 +296,8 @@
 
 		handleResetPassword: function($form) {
 			var self = this;
-			var $btn = $form.find('.wsc-auth-submit');
-			var $messageArea = $form.find('.wsc-auth-message-area');
+			var $btn = $form.find('.vefg-auth-submit');
+			var $messageArea = $form.find('.vefg-auth-message-area');
 
 			// Client-side validation
 			var password = $form.find('[name="user_password"]').val();
@@ -317,8 +317,8 @@
 			$messageArea.empty();
 
 			var data = {
-				action: 'wsc_auth_reset_password',
-				wsc_auth_nonce: $form.find('[name="wsc_auth_nonce"]').val(),
+				action: 'vefg_auth_reset_password',
+				vefg_auth_nonce: $form.find('[name="vefg_auth_nonce"]').val(),
 				rp_key: $form.find('[name="rp_key"]').val(),
 				rp_login: $form.find('[name="rp_login"]').val(),
 				user_password: password,
@@ -345,12 +345,12 @@
 		},
 
 		showMessage: function($container, message, type) {
-			var className = type === 'success' ? 'wsc-auth-message--success' : 'wsc-auth-message--error';
-			$container.html('<div class="wsc-auth-message ' + className + '">' + message + '</div>');
+			var className = type === 'success' ? 'vefg-auth-message--success' : 'vefg-auth-message--error';
+			$container.html('<div class="vefg-auth-message ' + className + '">' + message + '</div>');
 		},
 
 		resetRecaptcha: function($form) {
-			var $container = $form.find('.wsc-auth-recaptcha');
+			var $container = $form.find('.vefg-auth-recaptcha');
 			if (!$container.length) return;
 
 			var id = $container.attr('id');
@@ -362,125 +362,125 @@
 	};
 
 	$(document).ready(function() {
-		WSCAuthForms.init();
-		WSCAuthForms.initOTPInputs();
-		WSCAuthForms.initResendOTP();
+		VEFGAuthForms.init();
+		VEFGAuthForms.initOTPInputs();
+		VEFGAuthForms.initResendOTP();
 	});
 
 	// OTP digit inputs handling
-	WSCAuthForms.initOTPInputs = function() {
-		$(document).on('input', '.wsc-otp-digit', function(e) {
+	VEFGAuthForms.initOTPInputs = function() {
+		$(document).on('input', '.vefg-otp-digit', function(e) {
 			var $this = $(this);
 			var val = $this.val().replace(/[^0-9]/g, '');
 			$this.val(val);
 
 			if (val.length === 1) {
 				$this.addClass('filled');
-				$this.next('.wsc-otp-digit').focus();
+				$this.next('.vefg-otp-digit').focus();
 			} else {
 				$this.removeClass('filled');
 			}
 
 			// Update hidden field
 			var otp = '';
-			$('.wsc-otp-digit').each(function() {
+			$('.vefg-otp-digit').each(function() {
 				otp += $(this).val();
 			});
-			$('#wsc-otp-code').val(otp);
+			$('#vefg-otp-code').val(otp);
 		});
 
-		$(document).on('keydown', '.wsc-otp-digit', function(e) {
+		$(document).on('keydown', '.vefg-otp-digit', function(e) {
 			var $this = $(this);
 
 			if (e.key === 'Backspace' && $this.val() === '') {
-				$this.prev('.wsc-otp-digit').focus().val('').removeClass('filled');
+				$this.prev('.vefg-otp-digit').focus().val('').removeClass('filled');
 			}
 		});
 
-		$(document).on('paste', '.wsc-otp-digit', function(e) {
+		$(document).on('paste', '.vefg-otp-digit', function(e) {
 			e.preventDefault();
 			var pastedData = (e.originalEvent.clipboardData || window.clipboardData).getData('text');
 			var digits = pastedData.replace(/[^0-9]/g, '').split('');
 
-			$('.wsc-otp-digit').each(function(index) {
+			$('.vefg-otp-digit').each(function(index) {
 				if (digits[index]) {
 					$(this).val(digits[index]).addClass('filled');
 				}
 			});
 
 			var otp = '';
-			$('.wsc-otp-digit').each(function() {
+			$('.vefg-otp-digit').each(function() {
 				otp += $(this).val();
 			});
-			$('#wsc-otp-code').val(otp);
+			$('#vefg-otp-code').val(otp);
 
-			$('.wsc-otp-digit').last().focus();
+			$('.vefg-otp-digit').last().focus();
 		});
 	};
 
 	// Resend OTP
-	WSCAuthForms.initResendOTP = function() {
-		$(document).on('click', '#wsc-resend-otp', function(e) {
+	VEFGAuthForms.initResendOTP = function() {
+		$(document).on('click', '#vefg-resend-otp', function(e) {
 			e.preventDefault();
 			var $link = $(this);
 			var email = $link.data('email');
 			var $form = $link.closest('form');
-			var $messageArea = $form.find('.wsc-auth-message-area');
-			var nonce = $form.find('[name="wsc_auth_nonce"]').val();
+			var $messageArea = $form.find('.vefg-auth-message-area');
+			var nonce = $form.find('[name="vefg_auth_nonce"]').val();
 
-			$link.text(WSCAuthForms.config.i18n.sendingOTP || 'Sending...');
+			$link.text(VEFGAuthForms.config.i18n.sendingOTP || 'Sending...');
 
-			$.post(WSCAuthForms.config.ajaxUrl, {
-				action: 'wsc_auth_resend_otp',
-				wsc_auth_nonce: nonce,
+			$.post(VEFGAuthForms.config.ajaxUrl, {
+				action: 'vefg_auth_resend_otp',
+				vefg_auth_nonce: nonce,
 				email: email
 			}, function(response) {
-				$link.text(WSCAuthForms.config.i18n.resendOTP || 'Resend');
+				$link.text(VEFGAuthForms.config.i18n.resendOTP || 'Resend');
 				if (response.success) {
-					WSCAuthForms.showMessage($messageArea, response.data.message, 'success');
+					VEFGAuthForms.showMessage($messageArea, response.data.message, 'success');
 				} else {
-					WSCAuthForms.showMessage($messageArea, response.data.message, 'error');
+					VEFGAuthForms.showMessage($messageArea, response.data.message, 'error');
 				}
 			}).fail(function() {
-				$link.text(WSCAuthForms.config.i18n.resendOTP || 'Resend');
-				WSCAuthForms.showMessage($messageArea, WSCAuthForms.config.i18n.networkError || 'Network error.', 'error');
+				$link.text(VEFGAuthForms.config.i18n.resendOTP || 'Resend');
+				VEFGAuthForms.showMessage($messageArea, VEFGAuthForms.config.i18n.networkError || 'Network error.', 'error');
 			});
 		});
 	};
 
 	// OTP form handler
-	$(document).on('submit', '#wsc-otp-form', function(e) {
+	$(document).on('submit', '#vefg-otp-form', function(e) {
 		e.preventDefault();
 		var $form = $(this);
-		var $btn = $form.find('.wsc-auth-submit');
-		var $messageArea = $form.find('.wsc-auth-message-area');
+		var $btn = $form.find('.vefg-auth-submit');
+		var $messageArea = $form.find('.vefg-auth-message-area');
 
 		$btn.addClass('loading').prop('disabled', true);
 		$messageArea.empty();
 
 		var data = {
-			action: 'wsc_auth_verify_otp',
-			wsc_auth_nonce: $form.find('[name="wsc_auth_nonce"]').val(),
+			action: 'vefg_auth_verify_otp',
+			vefg_auth_nonce: $form.find('[name="vefg_auth_nonce"]').val(),
 			email: $form.find('[name="email"]').val(),
 			otp_code: $form.find('[name="otp_code"]').val()
 		};
 
-		$.post(WSCAuthForms.config.ajaxUrl, data, function(response) {
+		$.post(VEFGAuthForms.config.ajaxUrl, data, function(response) {
 			$btn.removeClass('loading').prop('disabled', false);
 
 			if (response.success) {
-				WSCAuthForms.showMessage($messageArea, response.data.message, 'success');
+				VEFGAuthForms.showMessage($messageArea, response.data.message, 'success');
 				if (response.data.redirect) {
 					setTimeout(function() {
 						window.location.href = response.data.redirect;
 					}, 1000);
 				}
 			} else {
-				WSCAuthForms.showMessage($messageArea, response.data.message, 'error');
+				VEFGAuthForms.showMessage($messageArea, response.data.message, 'error');
 			}
 		}).fail(function() {
 			$btn.removeClass('loading').prop('disabled', false);
-			WSCAuthForms.showMessage($messageArea, WSCAuthForms.config.i18n.networkError || 'Network error.', 'error');
+			VEFGAuthForms.showMessage($messageArea, VEFGAuthForms.config.i18n.networkError || 'Network error.', 'error');
 		});
 	});
 

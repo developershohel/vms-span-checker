@@ -2,11 +2,11 @@
 /**
  * Validation activity logger.
  *
- * Writes to and reads from the plugin-owned `{$wpdb->prefix}vms_span_checker_logs`
+ * Writes to and reads from the plugin-owned `{$wpdb->prefix}vms_elements_form_guard_logs`
  * custom table; identifiers are hardcoded and values pass through
  * `$wpdb->prepare()` / `$wpdb->insert()`.
  *
- * @package VMS_Span_Checker
+ * @package VMS_Elements_Form_Guard
  *
  * phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
  * phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -15,7 +15,7 @@
  * phpcs:disable PluginCheck.Security.DirectDB.UnescapedDBParameter
  */
 
-namespace VMS_Span_Checker;
+namespace VMS_Elements_Form_Guard;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -28,7 +28,7 @@ class Logger {
 	public function __construct() {
 		global $wpdb;
 		$this->wpdb  = $wpdb;
-		$this->table = $this->wpdb->prefix . 'vms_span_checker_logs';
+		$this->table = $this->wpdb->prefix . 'vms_elements_form_guard_logs';
 	}
 
 	public function log( string $type, string $ip, string $domain, string $status, string $message = '' ): bool {

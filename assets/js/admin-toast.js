@@ -1,7 +1,7 @@
 ( function () {
 	'use strict';
 
-	if ( typeof Swal === 'undefined' || ! document.body.classList.contains( 'wsc-plugin-admin' ) ) {
+	if ( typeof Swal === 'undefined' || ! document.body.classList.contains( 'vefg-plugin-admin' ) ) {
 		return;
 	}
 

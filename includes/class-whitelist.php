@@ -2,11 +2,11 @@
 /**
  * Whitelist domain repository.
  *
- * All queries target the plugin-owned `{$wpdb->prefix}span_whitelist_domains`
+ * All queries target the plugin-owned `{$wpdb->prefix}vms_elements_form_guard_whitelist_domains`
  * custom table. Identifiers are hardcoded; values are always passed through
  * `$wpdb->prepare()` or `$wpdb->insert()` / `$wpdb->delete()` helpers.
  *
- * @package VMS_Span_Checker
+ * @package VMS_Elements_Form_Guard
  *
  * phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
  * phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -15,7 +15,7 @@
  * phpcs:disable PluginCheck.Security.DirectDB.UnescapedDBParameter
  */
 
-namespace VMS_Span_Checker;
+namespace VMS_Elements_Form_Guard;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -28,11 +28,11 @@ class Whitelist {
 	public function __construct() {
 		global $wpdb;
 		$this->wpdb  = $wpdb;
-		$this->table = $this->wpdb->prefix . 'span_whitelist_domains';
+		$this->table = $this->wpdb->prefix . 'vms_elements_form_guard_whitelist_domains';
 	}
 
-	public function get_all(int $page = 1, int $per_page = 50): array {
-		$offset = ($page - 1) * $per_page;
+	public function get_all( int $page = 1, int $per_page = 50 ): array {
+		$offset = ( $page - 1 ) * $per_page;
 		return $this->wpdb->get_results(
 			$this->wpdb->prepare(
 				"SELECT * FROM {$this->table} ORDER BY id ASC LIMIT %d OFFSET %d",
@@ -44,21 +44,21 @@ class Whitelist {
 	}
 
 	public function count(): int {
-		return (int) $this->wpdb->get_var("SELECT COUNT(*) FROM {$this->table}");
+		return (int) $this->wpdb->get_var( "SELECT COUNT(*) FROM {$this->table}" );
 	}
 
-	public function total_pages(int $per_page = 50): int {
-		return (int) ceil($this->count() / $per_page);
+	public function total_pages( int $per_page = 50 ): int {
+		return (int) ceil( $this->count() / $per_page );
 	}
 
-	public function add_domain(string $domain): bool {
+	public function add_domain( string $domain ): bool {
 		global $wpdb;
-		return (bool) $wpdb->insert($this->table, ['domain' => sanitize_text_field($domain)]);
+		return (bool) $wpdb->insert( $this->table, array( 'domain' => sanitize_text_field( $domain ) ) );
 	}
 
-	public function delete_domain(int $id): bool {
+	public function delete_domain( int $id ): bool {
 		global $wpdb;
-		return (bool) $wpdb->delete($this->table, ['id' => $id]);
+		return (bool) $wpdb->delete( $this->table, array( 'id' => $id ) );
 	}
 
 	/**

@@ -1,15 +1,15 @@
 /**
- * VMS Span Checker - Login Guard
+ * VMS Elements Form Guard - Login Guard
  * Adds reCAPTCHA protection to WordPress login forms.
  */
 (function($) {
     'use strict';
 
-    if (typeof WPSpanLoginGuard === 'undefined') {
+    if (typeof VEFGLoginGuard === 'undefined') {
         return;
     }
 
-    var config = WPSpanLoginGuard;
+    var config = VEFGLoginGuard;
     var recaptchaEnabled = config.recaptchaEnabled || false;
     var recaptchaSiteKey = config.recaptchaSiteKey || '';
     var recaptchaVersion = config.recaptchaVersion || 'v2';
@@ -128,24 +128,24 @@
         }
         
         if (!$form || !$form.length) {
-            console.log('[VMS Span Checker] Login Guard: No login form found.');
+            console.log('[VMS Elements Form Guard] Login Guard: No login form found.');
             return;
         }
 
-        if ($form.data('wsc-login-guard')) {
+        if ($form.data('vefg-login-guard')) {
             return;
         }
 
         // Check if form is already protected by another guard
-        if ($form.data('wsc-guard-protected')) {
-            console.log('[VMS Span Checker] Login Guard: Form already protected by another guard, skipping');
+        if ($form.data('vefg-guard-protected')) {
+            console.log('[VMS Elements Form Guard] Login Guard: Form already protected by another guard, skipping');
             return;
         }
 
-        $form.data('wsc-login-guard', true);
-        $form.data('wsc-guard-protected', true); // Mark as protected
+        $form.data('vefg-login-guard', true);
+        $form.data('vefg-guard-protected', true); // Mark as protected
         loginGuardAttached = true;
-        console.log('[VMS Span Checker] Login Guard initializing on form:', $form[0]);
+        console.log('[VMS Elements Form Guard] Login Guard initializing on form:', $form[0]);
 
         if (!recaptchaEnabled || !recaptchaSiteKey) {
             return;
@@ -154,13 +154,13 @@
         var $submitBtn = findSubmitButton($form);
         
         if (!$submitBtn.length) {
-            console.log('[VMS Span Checker] Login Guard: No submit button found');
+            console.log('[VMS Elements Form Guard] Login Guard: No submit button found');
             return;
         }
 
         if (recaptchaVersion === 'v2') {
-            var uniqueId = 'wsc-login-recaptcha-' + Math.random().toString(36).substr(2, 9);
-            var recaptchaContainer = $('<div id="' + uniqueId + '" class="wsc-login-recaptcha" style="margin-bottom: 16px;"></div>');
+            var uniqueId = 'vefg-login-recaptcha-' + Math.random().toString(36).substr(2, 9);
+            var recaptchaContainer = $('<div id="' + uniqueId + '" class="vefg-login-recaptcha" style="margin-bottom: 16px;"></div>');
             $submitBtn.closest('p, .submit, .login-submit').before(recaptchaContainer);
             
             $submitBtn.prop('disabled', true).css('opacity', '0.6');
@@ -172,12 +172,12 @@
                             sitekey: recaptchaSiteKey,
                             callback: function(token) {
                                 $submitBtn.prop('disabled', false).css('opacity', '1');
-                                $form.find('input[name="wsc_recaptcha_token"]').remove();
-                                $form.append('<input type="hidden" name="wsc_recaptcha_token" value="' + token + '">');
+                                $form.find('input[name="vefg_recaptcha_token"]').remove();
+                                $form.append('<input type="hidden" name="vefg_recaptcha_token" value="' + token + '">');
                             },
                             'expired-callback': function() {
                                 $submitBtn.prop('disabled', true).css('opacity', '0.6');
-                                $form.find('input[name="wsc_recaptcha_token"]').remove();
+                                $form.find('input[name="vefg_recaptcha_token"]').remove();
                             }
                         });
                     } catch (e) {
@@ -190,7 +190,7 @@
             checkRecaptcha();
         } else if (recaptchaVersion === 'v3') {
             $form.on('submit', function(e) {
-                var $hiddenToken = $form.find('input[name="wsc_recaptcha_token"]');
+                var $hiddenToken = $form.find('input[name="vefg_recaptcha_token"]');
                 
                 if ($hiddenToken.length && $hiddenToken.val()) {
                     return true;
@@ -202,8 +202,8 @@
                     grecaptcha.ready(function() {
                         grecaptcha.execute(recaptchaSiteKey, { action: 'login' })
                             .then(function(token) {
-                                $form.find('input[name="wsc_recaptcha_token"]').remove();
-                                $form.append('<input type="hidden" name="wsc_recaptcha_token" value="' + token + '">');
+                                $form.find('input[name="vefg_recaptcha_token"]').remove();
+                                $form.append('<input type="hidden" name="vefg_recaptcha_token" value="' + token + '">');
                                 $form[0].submit();
                             })
                             .catch(function(err) {

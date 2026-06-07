@@ -1,11 +1,11 @@
 <?php
 /**
- * Orchestrates ordered spam-check components (extend via wsc_spam_check_components).
+ * Orchestrates ordered spam-check components (extend via vefg_spam_check_components).
  *
- * @package VMS_Span_Checker
+ * @package VMS_Elements_Form_Guard
  */
 
-namespace VMS_Span_Checker\Spam;
+namespace VMS_Elements_Form_Guard\Spam;
 
 use WP_Error;
 
@@ -74,7 +74,7 @@ final class Comment_Spam_Controller {
 		 * @param array<int, Spam_Check_Component> $list Default pipeline.
 		 */
 		// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Established hook name; renaming would break BC for existing filter consumers.
-		$filtered = apply_filters( 'wsc_spam_check_components', $list );
+		$filtered = apply_filters( 'vefg_spam_check_components', $list );
 		return is_array( $filtered ) ? $filtered : $list;
 	}
 }

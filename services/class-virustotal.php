@@ -2,10 +2,10 @@
 /**
  * VirusTotal API v3 client.
  *
- * @package VMS_Span_Checker
+ * @package VMS_Elements_Form_Guard
  */
 
-namespace VMS_Span_Checker\Services;
+namespace VMS_Elements_Form_Guard\Services;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -27,7 +27,7 @@ class VirusTotal {
 	 * Load stored keys.
 	 */
 	public function __construct() {
-		$config         = get_option( 'wsc-virustotal-config', array() );
+		$config         = get_option( 'vefg-virustotal-config', array() );
 		$this->api_keys = isset( $config['keys'] ) && is_array( $config['keys'] ) ? $config['keys'] : array();
 	}
 
@@ -61,7 +61,7 @@ class VirusTotal {
 		if ( empty( $this->api_keys ) ) {
 			return array(
 				'status'  => false,
-				'message' => __( 'Security reputation check is temporarily unavailable. Please try again later.', 'vms-span-checker' ),
+				'message' => __( 'Security reputation check is temporarily unavailable. Please try again later.', 'vms-elements-form-guard' ),
 			);
 		}
 
@@ -69,7 +69,7 @@ class VirusTotal {
 		if ( ! $api_key ) {
 			return array(
 				'status'  => false,
-				'message' => __( 'Security reputation check is temporarily unavailable. Please try again later.', 'vms-span-checker' ),
+				'message' => __( 'Security reputation check is temporarily unavailable. Please try again later.', 'vms-elements-form-guard' ),
 			);
 		}
 
@@ -88,7 +88,7 @@ class VirusTotal {
 		if ( is_wp_error( $response ) ) {
 			return array(
 				'status'  => false,
-				'message' => __( 'Security reputation check could not be completed. Please try again.', 'vms-span-checker' ),
+				'message' => __( 'Security reputation check could not be completed. Please try again.', 'vms-elements-form-guard' ),
 			);
 		}
 
@@ -96,7 +96,7 @@ class VirusTotal {
 		if ( $http_code < 200 || $http_code >= 300 ) {
 			return array(
 				'status'  => false,
-				'message' => __( 'Security reputation check could not be completed. Please try again.', 'vms-span-checker' ),
+				'message' => __( 'Security reputation check could not be completed. Please try again.', 'vms-elements-form-guard' ),
 			);
 		}
 
@@ -104,7 +104,7 @@ class VirusTotal {
 		if ( ! $body ) {
 			return array(
 				'status'  => false,
-				'message' => __( 'Security reputation check returned an empty response. Please try again.', 'vms-span-checker' ),
+				'message' => __( 'Security reputation check returned an empty response. Please try again.', 'vms-elements-form-guard' ),
 			);
 		}
 
@@ -112,7 +112,7 @@ class VirusTotal {
 		if ( ! is_array( $data ) ) {
 			return array(
 				'status'  => false,
-				'message' => __( 'Security reputation check returned an invalid response. Please try again.', 'vms-span-checker' ),
+				'message' => __( 'Security reputation check returned an invalid response. Please try again.', 'vms-elements-form-guard' ),
 			);
 		}
 
@@ -123,14 +123,14 @@ class VirusTotal {
 		if ( empty( $stats ) ) {
 			return array(
 				'status'  => false,
-				'message' => __( 'Security reputation report was incomplete. Please try again.', 'vms-span-checker' ),
+				'message' => __( 'Security reputation report was incomplete. Please try again.', 'vms-elements-form-guard' ),
 			);
 		}
 
 		$malicious  = isset( $stats['malicious'] ) ? (int) $stats['malicious'] : 0;
 		$suspicious = isset( $stats['suspicious'] ) ? (int) $stats['suspicious'] : 0;
 
-		$config     = get_option( 'wsc-virustotal-config', array() );
+		$config     = get_option( 'vefg-virustotal-config', array() );
 		$max_bad    = isset( $config['max_malicious'] ) ? max( 0, (int) $config['max_malicious'] ) : 0;
 		$max_susp   = isset( $config['max_suspicious'] ) ? (int) $config['max_suspicious'] : -1;
 
@@ -139,7 +139,7 @@ class VirusTotal {
 				'status'  => false,
 				'message' => sprintf(
 					/* translators: 1: malicious engine count, 2: allowed max */
-					__( 'This email domain failed security reputation checks (%1$d signals; allowed max %2$d).', 'vms-span-checker' ),
+					__( 'This email domain failed security reputation checks (%1$d signals; allowed max %2$d).', 'vms-elements-form-guard' ),
 					$malicious,
 					$max_bad
 				),
@@ -151,7 +151,7 @@ class VirusTotal {
 				'status'  => false,
 				'message' => sprintf(
 					/* translators: 1: suspicious engine count, 2: allowed max */
-					__( 'This email domain failed security reputation checks (%1$d suspicious signals; allowed max %2$d).', 'vms-span-checker' ),
+					__( 'This email domain failed security reputation checks (%1$d suspicious signals; allowed max %2$d).', 'vms-elements-form-guard' ),
 					$suspicious,
 					$max_susp
 				),
@@ -160,7 +160,7 @@ class VirusTotal {
 
 		return array(
 			'status'  => true,
-			'message' => __( 'Domain passed reputation checks.', 'vms-span-checker' ),
+			'message' => __( 'Domain passed reputation checks.', 'vms-elements-form-guard' ),
 		);
 	}
 }

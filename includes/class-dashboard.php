@@ -3,10 +3,10 @@
  * Dashboard statistics and log queries.
  *
  * All queries read aggregated data from the plugin-owned
- * `{$wpdb->prefix}vms_span_checker_logs` custom table. Identifiers are hardcoded
+ * `{$wpdb->prefix}vms_elements_form_guard_logs` custom table. Identifiers are hardcoded
  * and dynamic values are prepared via `$wpdb->prepare()`.
  *
- * @package VMS_Span_Checker
+ * @package VMS_Elements_Form_Guard
  *
  * phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
  * phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -15,7 +15,7 @@
  * phpcs:disable PluginCheck.Security.DirectDB.UnescapedDBParameter
  */
 
-namespace VMS_Span_Checker;
+namespace VMS_Elements_Form_Guard;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -42,26 +42,26 @@ class Dashboard {
 	}
 
 	/**
-	 * Summary metrics for VMS Span Checker.
+	 * Summary metrics for VMS Elements Form Guard.
 	 *
 	 * @return array<string, int|bool>
 	 */
 	public function get_summary() {
-		$logs  = $this->wpdb->prefix . 'vms_span_checker_logs';
-		$forms = $this->wpdb->prefix . 'vms_span_checker_form_settings';
+		$logs  = $this->wpdb->prefix . 'vms_elements_form_guard_logs';
+		$forms = $this->wpdb->prefix . 'vms_elements_form_guard_form_settings';
 
-		$vt_config = get_option( 'wsc-virustotal-config', array() );
+		$vt_config = get_option( 'vefg-virustotal-config', array() );
 		$vt_keys   = isset( $vt_config['keys'] ) && is_array( $vt_config['keys'] ) ? $vt_config['keys'] : array();
 		$vt_count  = count( array_filter( array_map( 'strval', $vt_keys ) ) );
 
-		$google     = get_option( 'wsc-google-config', array() );
+		$google     = get_option( 'vefg-google-config', array() );
 		$google_key = isset( $google['api_key'] ) ? (string) $google['api_key'] : '';
 
 		$failed = (int) $this->wpdb->get_var( "SELECT COUNT(*) FROM {$logs} WHERE status = 'failed'" );
 
 		return array(
-			'whitelist_count'       => (int) $this->wpdb->get_var( "SELECT COUNT(*) FROM {$this->wpdb->prefix}span_whitelist_domains" ),
-			'disposable_count'      => (int) $this->wpdb->get_var( "SELECT COUNT(*) FROM {$this->wpdb->prefix}span_disposable_domains" ),
+			'whitelist_count'       => (int) $this->wpdb->get_var( "SELECT COUNT(*) FROM {$this->wpdb->prefix}vms_elements_form_guard_whitelist_domains" ),
+			'disposable_count'      => (int) $this->wpdb->get_var( "SELECT COUNT(*) FROM {$this->wpdb->prefix}vms_elements_form_guard_disposable_domains" ),
 			'login_attempts'        => (int) $this->wpdb->get_var( "SELECT COUNT(*) FROM {$logs} WHERE type = 'login'" ),
 			'registration_attempts' => (int) $this->wpdb->get_var( "SELECT COUNT(*) FROM {$logs} WHERE type = 'registration'" ),
 			'spam_logs'             => $failed,
@@ -83,7 +83,7 @@ class Dashboard {
 	public function get_spam_logs( $limit = 20 ) {
 		return $this->wpdb->get_results(
 			$this->wpdb->prepare(
-				"SELECT * FROM {$this->wpdb->prefix}vms_span_checker_logs WHERE status = %s ORDER BY created_at DESC LIMIT %d",
+				"SELECT * FROM {$this->wpdb->prefix}vms_elements_form_guard_logs WHERE status = %s ORDER BY created_at DESC LIMIT %d",
 				'failed',
 				$limit
 			),
@@ -102,7 +102,7 @@ class Dashboard {
 	 * }
 	 */
 	public function get_analysis( $top_n = 5 ) {
-		$logs  = $this->wpdb->prefix . 'vms_span_checker_logs';
+		$logs  = $this->wpdb->prefix . 'vms_elements_form_guard_logs';
 		$top_n = max( 1, min( 20, (int) $top_n ) );
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name uses trusted prefix only.

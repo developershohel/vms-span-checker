@@ -2,13 +2,13 @@
 /**
  * Multi-provider AI completion: OpenAI, Anthropic, Gemini, DeepSeek, AWS Bedrock.
  *
- * @package VMS_Span_Checker
+ * @package VMS_Elements_Form_Guard
  */
 
-namespace VMS_Span_Checker\Services;
+namespace VMS_Elements_Form_Guard\Services;
 
 use WP_Error;
-use VMS_Span_Checker\AI_Span_Config;
+use VMS_Elements_Form_Guard\AI_Span_Config;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -27,7 +27,7 @@ class AI_Span_Completion {
 	public static function complete( string $system, string $user ) {
 		$c = AI_Span_Config::get();
 		if ( empty( $c['ai_enabled'] ) ) {
-			return new WP_Error( 'wsc_ai_off', __( 'AI VMS Span Checker is disabled.', 'vms-span-checker' ) );
+			return new WP_Error( 'vefg_ai_off', __( 'AI VMS Elements Form Guard is disabled.', 'vms-elements-form-guard' ) );
 		}
 
 		$provider = (string) ( $c['provider'] ?? 'openai' );
@@ -43,7 +43,7 @@ class AI_Span_Completion {
 			case 'bedrock':
 				return self::bedrock( $c, $system, $user );
 			default:
-				return new WP_Error( 'wsc_ai_provider', __( 'Unknown AI provider.', 'vms-span-checker' ) );
+				return new WP_Error( 'vefg_ai_provider', __( 'Unknown AI provider.', 'vms-elements-form-guard' ) );
 		}
 	}
 
@@ -60,19 +60,19 @@ class AI_Span_Completion {
 
 		$decoded = json_decode( $text, true );
 		if ( ! is_array( $decoded ) ) {
-			return new WP_Error( 'wsc_ai_json', __( 'AI did not return valid JSON.', 'vms-span-checker' ) );
+			return new WP_Error( 'vefg_ai_json', __( 'AI did not return valid JSON.', 'vms-elements-form-guard' ) );
 		}
 
 		$status  = isset( $decoded['status'] ) ? strtolower( sanitize_text_field( (string) $decoded['status'] ) ) : '';
 		$message = isset( $decoded['message'] ) ? sanitize_text_field( (string) $decoded['message'] ) : '';
 
 		if ( ! in_array( $status, array( 'ok', 'spam' ), true ) ) {
-			return new WP_Error( 'wsc_ai_status', __( 'AI JSON missing ok/spam status.', 'vms-span-checker' ) );
+			return new WP_Error( 'vefg_ai_status', __( 'AI JSON missing ok/spam status.', 'vms-elements-form-guard' ) );
 		}
 
 		return array(
 			'status'  => $status,
-			'message' => $message !== '' ? $message : ( 'spam' === $status ? __( 'Spam detected.', 'vms-span-checker' ) : 'ok' ),
+			'message' => $message !== '' ? $message : ( 'spam' === $status ? __( 'Spam detected.', 'vms-elements-form-guard' ) : 'ok' ),
 		);
 	}
 
@@ -82,7 +82,7 @@ class AI_Span_Completion {
 	private static function openai( array $c, string $system, string $user ) {
 		$key = $c['openai_api_key'] ?? '';
 		if ( $key === '' ) {
-			return new WP_Error( 'wsc_ai_key', __( 'OpenAI API key is missing.', 'vms-span-checker' ) );
+			return new WP_Error( 'vefg_ai_key', __( 'OpenAI API key is missing.', 'vms-elements-form-guard' ) );
 		}
 		$model = (string) ( $c['openai_model'] ?? 'gpt-4o-mini' );
 		if ( $model === '' ) {
@@ -105,7 +105,7 @@ class AI_Span_Completion {
 	private static function deepseek( array $c, string $system, string $user ) {
 		$key = $c['deepseek_api_key'] ?? '';
 		if ( $key === '' ) {
-			return new WP_Error( 'wsc_ai_key', __( 'DeepSeek API key is missing.', 'vms-span-checker' ) );
+			return new WP_Error( 'vefg_ai_key', __( 'DeepSeek API key is missing.', 'vms-elements-form-guard' ) );
 		}
 		$model = (string) ( $c['deepseek_model'] ?? 'deepseek-chat' );
 		if ( $model === '' ) {
@@ -128,8 +128,14 @@ class AI_Span_Completion {
 			array(
 				'model'             => $model,
 				'messages'          => array(
-					array( 'role' => 'system', 'content' => $system ),
-					array( 'role' => 'user', 'content' => $user ),
+					array(
+						'role' => 'system',
+						'content' => $system,
+					),
+					array(
+						'role' => 'user',
+						'content' => $user,
+					),
 				),
 				'temperature'       => 0.2,
 				'response_format'   => array( 'type' => 'json_object' ),
@@ -158,7 +164,7 @@ class AI_Span_Completion {
 			return trim( (string) $data['choices'][0]['message']['content'] );
 		}
 
-		return new WP_Error( 'wsc_ai_openai', __( 'Unexpected chat completion response.', 'vms-span-checker' ) );
+		return new WP_Error( 'vefg_ai_openai', __( 'Unexpected chat completion response.', 'vms-elements-form-guard' ) );
 	}
 
 	/**
@@ -167,7 +173,7 @@ class AI_Span_Completion {
 	private static function anthropic( array $c, string $system, string $user ) {
 		$key = $c['anthropic_api_key'] ?? '';
 		if ( $key === '' ) {
-			return new WP_Error( 'wsc_ai_key', __( 'Anthropic API key is missing.', 'vms-span-checker' ) );
+			return new WP_Error( 'vefg_ai_key', __( 'Anthropic API key is missing.', 'vms-elements-form-guard' ) );
 		}
 
 		$model = (string) ( $c['anthropic_model'] ?? 'claude-3-5-haiku-20241022' );
@@ -211,7 +217,7 @@ class AI_Span_Completion {
 			return trim( (string) $data['content'][0]['text'] );
 		}
 
-		return new WP_Error( 'wsc_ai_anthropic', __( 'Unexpected Anthropic response.', 'vms-span-checker' ) );
+		return new WP_Error( 'vefg_ai_anthropic', __( 'Unexpected Anthropic response.', 'vms-elements-form-guard' ) );
 	}
 
 	/**
@@ -220,7 +226,7 @@ class AI_Span_Completion {
 	private static function gemini( array $c, string $system, string $user ) {
 		$key = $c['gemini_api_key'] ?? '';
 		if ( $key === '' ) {
-			return new WP_Error( 'wsc_ai_key', __( 'Google Gemini API key is missing.', 'vms-span-checker' ) );
+			return new WP_Error( 'vefg_ai_key', __( 'Google Gemini API key is missing.', 'vms-elements-form-guard' ) );
 		}
 
 		$model = (string) ( $c['gemini_model'] ?? 'gemini-1.5-flash' );
@@ -270,7 +276,7 @@ class AI_Span_Completion {
 			return trim( (string) $data['candidates'][0]['content']['parts'][0]['text'] );
 		}
 
-		return new WP_Error( 'wsc_ai_gemini', __( 'Unexpected Gemini response.', 'vms-span-checker' ) );
+		return new WP_Error( 'vefg_ai_gemini', __( 'Unexpected Gemini response.', 'vms-elements-form-guard' ) );
 	}
 
 	/**
@@ -283,7 +289,7 @@ class AI_Span_Completion {
 		$model  = trim( (string) ( $c['bedrock_model'] ?? '' ) );
 
 		if ( $access === '' || $secret === '' || $model === '' ) {
-			return new WP_Error( 'wsc_ai_bedrock', __( 'AWS Bedrock access key, secret, and model ID are required.', 'vms-span-checker' ) );
+			return new WP_Error( 'vefg_ai_bedrock', __( 'AWS Bedrock access key, secret, and model ID are required.', 'vms-elements-form-guard' ) );
 		}
 
 		$built = self::bedrock_build_body( $model, $system, $user );
@@ -337,7 +343,10 @@ class AI_Span_Completion {
 					),
 				)
 			);
-			return array( 'body' => (string) $body, 'parser' => 'anthropic' );
+			return array(
+				'body' => (string) $body,
+				'parser' => 'anthropic',
+			);
 		}
 
 		if ( self::bedrock_model_is_meta( $model ) ) {
@@ -350,7 +359,10 @@ class AI_Span_Completion {
 					'top_p'       => 0.9,
 				)
 			);
-			return array( 'body' => (string) $body, 'parser' => 'meta' );
+			return array(
+				'body' => (string) $body,
+				'parser' => 'meta',
+			);
 		}
 
 		if ( self::bedrock_model_is_mistral( $model ) ) {
@@ -363,7 +375,10 @@ class AI_Span_Completion {
 					'top_p'       => 0.9,
 				)
 			);
-			return array( 'body' => (string) $body, 'parser' => 'mistral' );
+			return array(
+				'body' => (string) $body,
+				'parser' => 'mistral',
+			);
 		}
 
 		if ( self::bedrock_model_is_titan( $model ) ) {
@@ -378,12 +393,15 @@ class AI_Span_Completion {
 					),
 				)
 			);
-			return array( 'body' => (string) $body, 'parser' => 'titan' );
+			return array(
+				'body' => (string) $body,
+				'parser' => 'titan',
+			);
 		}
 
 		return new WP_Error(
-			'wsc_ai_bedrock_model',
-			__( 'Unrecognized Bedrock model ID. Use an Anthropic, Meta Llama, Mistral, or Amazon Titan text model ID from AWS.', 'vms-span-checker' )
+			'vefg_ai_bedrock_model',
+			__( 'Unrecognized Bedrock model ID. Use an Anthropic, Meta Llama, Mistral, or Amazon Titan text model ID from AWS.', 'vms-elements-form-guard' )
 		);
 	}
 
@@ -410,7 +428,7 @@ class AI_Span_Completion {
 	private static function bedrock_parse_response( string $raw, string $parser ) {
 		$data = json_decode( $raw, true );
 		if ( ! is_array( $data ) ) {
-			return new WP_Error( 'wsc_ai_bedrock_parse', __( 'Unexpected Bedrock response.', 'vms-span-checker' ) );
+			return new WP_Error( 'vefg_ai_bedrock_parse', __( 'Unexpected Bedrock response.', 'vms-elements-form-guard' ) );
 		}
 
 		if ( 'anthropic' === $parser && isset( $data['content'][0]['text'] ) ) {
@@ -426,7 +444,7 @@ class AI_Span_Completion {
 			return trim( (string) $data['results'][0]['outputText'] );
 		}
 
-		return new WP_Error( 'wsc_ai_bedrock_parse', __( 'Unexpected Bedrock response shape for this model family.', 'vms-span-checker' ) );
+		return new WP_Error( 'vefg_ai_bedrock_parse', __( 'Unexpected Bedrock response shape for this model family.', 'vms-elements-form-guard' ) );
 	}
 
 	/**
@@ -443,10 +461,10 @@ class AI_Span_Completion {
 		$body = wp_remote_retrieve_body( $response );
 		if ( $code < 200 || $code >= 300 ) {
 			return new WP_Error(
-				'wsc_ai_http',
+				'vefg_ai_http',
 				sprintf(
 					/* translators: 1: provider context, 2: HTTP code */
-					__( 'AI request failed (%1$s) HTTP %2$s.', 'vms-span-checker' ),
+					__( 'AI request failed (%1$s) HTTP %2$s.', 'vms-elements-form-guard' ),
 					$ctx,
 					(string) $code
 				)

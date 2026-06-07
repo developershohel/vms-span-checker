@@ -2,10 +2,10 @@
 /**
  * Front-end and admin assets.
  *
- * @package VMS_Span_Checker
+ * @package VMS_Elements_Form_Guard
  */
 
-namespace VMS_Span_Checker;
+namespace VMS_Elements_Form_Guard;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -17,23 +17,21 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Enqueue_Scripts {
 
 	/**
-	 * Regex examples for admin UI (translated labels).
+	 * Regex examples for admin UI (translated labels). Built lazily on first enqueue (WP 6.7+).
 	 *
-	 * @var array<int, array<string, string>>
+	 * @var array<int, array<string, string>>|null
 	 */
-	private $regex_list;
+	private $regex_list = null;
 
 	/**
 	 * Register hooks and data.
 	 */
 	public function __construct() {
-		$this->regex_list = $this->get_regex_list();
-
 		/* Priority 1: register assets before most plugins (default 10) so our JS runs first in footer. */
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ), 1 );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ), 5 );
 		add_filter( 'admin_body_class', array( $this, 'admin_body_class' ) );
-		
+
 		// Login page scripts
 		add_action( 'login_enqueue_scripts', array( $this, 'enqueue_login_scripts' ), 5 );
 	}
@@ -49,178 +47,188 @@ class Enqueue_Scripts {
 			return $classes;
 		}
 		$screen = get_current_screen();
-		if ( $screen && false !== strpos( $screen->id, 'vms-span-checker' ) ) {
-			$classes .= ' wsc-plugin-admin';
+		if ( $screen && false !== strpos( $screen->id, 'vms-elements-form-guard' ) ) {
+			$classes .= ' vefg-plugin-admin';
 		}
 		return $classes;
 	}
 
 	/**
-	 * Localized regex documentation rows.
+	 * Localized regex documentation rows (lazy — must not run before `init`).
 	 *
 	 * @return array<int, array<string, string>>
 	 */
-	private function get_regex_list() {
+	private function get_cached_regex_list(): array {
+		if ( null === $this->regex_list ) {
+			$this->regex_list = $this->build_regex_list();
+		}
+		return $this->regex_list;
+	}
+
+	/**
+	 * @return array<int, array<string, string>>
+	 */
+	private function build_regex_list() {
 		// Order: most-used contact / auth patterns first, niche formats later.
 		return array(
 			array(
 				'key'             => 'strict_email_address_only',
-				'name'            => __( 'Strict Email (addresses only)', 'vms-span-checker' ),
+				'name'            => __( 'Strict Email (addresses only)', 'vms-elements-form-guard' ),
 				'pattern'         => '/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/',
-				'desc'            => __( 'One email-shaped address only—not a display name, sentence, or multiple addresses.', 'vms-span-checker' ),
+				'desc'            => __( 'One email-shaped address only—not a display name, sentence, or multiple addresses.', 'vms-elements-form-guard' ),
 				'example'         => 'john.doe@gmail.com',
 				'valid_example'   => 'john.doe@gmail.com',
 				'invalid_example' => 'Jane Doe <jane@example.com>',
 			),
 			array(
 				'key'             => 'strict_email_tld_limit',
-				'name'            => __( 'Strict Email (TLD length limit)', 'vms-span-checker' ),
+				'name'            => __( 'Strict Email (TLD length limit)', 'vms-elements-form-guard' ),
 				'pattern'         => '/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,6}$/',
-				'desc'            => __( 'Email format with TLD between 2 and 6 letters.', 'vms-span-checker' ),
+				'desc'            => __( 'Email format with TLD between 2 and 6 letters.', 'vms-elements-form-guard' ),
 				'example'         => 'user@domain.co.uk',
 				'valid_example'   => 'user@domain.co.uk',
 				'invalid_example' => 'user@localhost',
 			),
 			array(
 				'key'             => 'simple_email',
-				'name'            => __( 'Simple Email (lenient)', 'vms-span-checker' ),
+				'name'            => __( 'Simple Email (lenient)', 'vms-elements-form-guard' ),
 				'pattern'         => '/^[^\s@]+@[^\s@]+\.[^\s@]+$/',
-				'desc'            => __( 'Very loose UX check—allows unusual formats.', 'vms-span-checker' ),
+				'desc'            => __( 'Very loose UX check—allows unusual formats.', 'vms-elements-form-guard' ),
 				'example'         => 'user@example.com',
 				'valid_example'   => 'user@example.com',
 				'invalid_example' => 'not-an-email',
 			),
 			array(
 				'key'             => 'username_wp',
-				'name'            => __( 'Username (3–16 characters)', 'vms-span-checker' ),
+				'name'            => __( 'Username (3–16 characters)', 'vms-elements-form-guard' ),
 				'pattern'         => '/^[a-zA-Z0-9._-]{3,16}$/',
-				'desc'            => __( 'Letters, numbers, dot, underscore, and hyphen.', 'vms-span-checker' ),
+				'desc'            => __( 'Letters, numbers, dot, underscore, and hyphen.', 'vms-elements-form-guard' ),
 				'example'         => 'john_doe',
 				'valid_example'   => 'john_doe',
 				'invalid_example' => 'ab',
 			),
 			array(
 				'key'             => 'password_strong',
-				'name'            => __( 'Strong Password (recommended)', 'vms-span-checker' ),
+				'name'            => __( 'Strong Password (recommended)', 'vms-elements-form-guard' ),
 				'pattern'         => '/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\w\s]).{8,}$/',
-				'desc'            => __( 'Minimum 8 characters with mixed case, number, and symbol.', 'vms-span-checker' ),
+				'desc'            => __( 'Minimum 8 characters with mixed case, number, and symbol.', 'vms-elements-form-guard' ),
 				'example'         => 'Str0ng!Pass',
 				'valid_example'   => 'Str0ng!Pass',
 				'invalid_example' => 'weak',
 			),
 			array(
 				'key'             => 'phone_e164',
-				'name'            => __( 'International Phone (E.164)', 'vms-span-checker' ),
+				'name'            => __( 'International Phone (E.164)', 'vms-elements-form-guard' ),
 				'pattern'         => '/^\+?[1-9]\d{1,14}$/',
-				'desc'            => __( 'E.164 international phone format.', 'vms-span-checker' ),
+				'desc'            => __( 'E.164 international phone format.', 'vms-elements-form-guard' ),
 				'example'         => '+14155552671',
 				'valid_example'   => '+14155552671',
 				'invalid_example' => '++4400',
 			),
 			array(
 				'key'             => 'phone_us',
-				'name'            => __( 'US Phone (common)', 'vms-span-checker' ),
+				'name'            => __( 'US Phone (common)', 'vms-elements-form-guard' ),
 				'pattern'         => '/^\(?([2-9][0-8][0-9])\)?[-.\s]?([2-9][0-9]{2})[-.\s]?([0-9]{4})$/',
-				'desc'            => __( 'US phone numbers with optional parentheses or dashes.', 'vms-span-checker' ),
+				'desc'            => __( 'US phone numbers with optional parentheses or dashes.', 'vms-elements-form-guard' ),
 				'example'         => '(415) 555-2671',
 				'valid_example'   => '(415) 555-2671',
 				'invalid_example' => '12345',
 			),
 			array(
 				'key'             => 'url_http',
-				'name'            => __( 'URL (http/https)', 'vms-span-checker' ),
+				'name'            => __( 'URL (http/https)', 'vms-elements-form-guard' ),
 				'pattern'         => '/^(https?:\/\/)?([\w-]+\.)+[\w-]+(\/[-\w@:%_+.~#?&\/=]*)?$/',
-				'desc'            => __( 'Checks basic HTTP/HTTPS URLs. Not fully RFC-compliant but practical.', 'vms-span-checker' ),
+				'desc'            => __( 'Checks basic HTTP/HTTPS URLs. Not fully RFC-compliant but practical.', 'vms-elements-form-guard' ),
 				'example'         => 'https://example.com/path?x=1',
 				'valid_example'   => 'https://example.com/path',
 				'invalid_example' => 'ht!tp://bad',
 			),
 			array(
 				'key'             => 'no_links_textarea',
-				'name'            => __( 'Plain text (no URLs)', 'vms-span-checker' ),
+				'name'            => __( 'Plain text (no URLs)', 'vms-elements-form-guard' ),
 				'pattern'         => '/^(?!.*https?:\/\/).+$/is',
-				'desc'            => __( 'Allows any text except strings that look like http(s) URLs.', 'vms-span-checker' ),
-				'example'         => __( 'Hello, thanks for your message.', 'vms-span-checker' ),
-				'valid_example'   => __( 'Hello, thanks for your message.', 'vms-span-checker' ),
+				'desc'            => __( 'Allows any text except strings that look like http(s) URLs.', 'vms-elements-form-guard' ),
+				'example'         => __( 'Hello, thanks for your message.', 'vms-elements-form-guard' ),
+				'valid_example'   => __( 'Hello, thanks for your message.', 'vms-elements-form-guard' ),
 				'invalid_example' => 'Visit https://spam.example',
 			),
 			array(
 				'key'             => 'alphanumeric_spaces',
-				'name'            => __( 'Letters and numbers (spaces OK)', 'vms-span-checker' ),
+				'name'            => __( 'Letters and numbers (spaces OK)', 'vms-elements-form-guard' ),
 				'pattern'         => '/^[a-zA-Z0-9\s]{1,200}$/',
-				'desc'            => __( 'Safe short labels without punctuation.', 'vms-span-checker' ),
+				'desc'            => __( 'Safe short labels without punctuation.', 'vms-elements-form-guard' ),
 				'example'         => 'Order 42 details',
 				'valid_example'   => 'Order 42 details',
 				'invalid_example' => 'hack<script>',
 			),
 			array(
 				'key'             => 'numeric_only',
-				'name'            => __( 'Digits only', 'vms-span-checker' ),
+				'name'            => __( 'Digits only', 'vms-elements-form-guard' ),
 				'pattern'         => '/^\d+$/',
-				'desc'            => __( 'Whole numbers with no spaces or symbols.', 'vms-span-checker' ),
+				'desc'            => __( 'Whole numbers with no spaces or symbols.', 'vms-elements-form-guard' ),
 				'example'         => '1024',
 				'valid_example'   => '1024',
 				'invalid_example' => '10a4',
 			),
 			array(
 				'key'             => 'slug_lower',
-				'name'            => __( 'Slug (lowercase, hyphen)', 'vms-span-checker' ),
+				'name'            => __( 'Slug (lowercase, hyphen)', 'vms-elements-form-guard' ),
 				'pattern'         => '/^[a-z0-9]+(?:-[a-z0-9]+)*$/',
-				'desc'            => __( 'URL slug with lowercase words separated by hyphens.', 'vms-span-checker' ),
+				'desc'            => __( 'URL slug with lowercase words separated by hyphens.', 'vms-elements-form-guard' ),
 				'example'         => 'my-blog-post-1',
 				'valid_example'   => 'my-blog-post-1',
 				'invalid_example' => 'CamelCase',
 			),
 			array(
 				'key'             => 'date_iso',
-				'name'            => __( 'Date YYYY-MM-DD', 'vms-span-checker' ),
+				'name'            => __( 'Date YYYY-MM-DD', 'vms-elements-form-guard' ),
 				'pattern'         => '/^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/',
-				'desc'            => __( 'Simple date format (does not validate leap years).', 'vms-span-checker' ),
+				'desc'            => __( 'Simple date format (does not validate leap years).', 'vms-elements-form-guard' ),
 				'example'         => '2026-09-21',
 				'valid_example'   => '2026-09-21',
 				'invalid_example' => '2026-13-40',
 			),
 			array(
 				'key'             => 'hostname',
-				'name'            => __( 'Domain (hostname)', 'vms-span-checker' ),
+				'name'            => __( 'Domain (hostname)', 'vms-elements-form-guard' ),
 				'pattern'         => '/^([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}$/i',
-				'desc'            => __( 'Hostname such as example.com or sub.example.net.', 'vms-span-checker' ),
+				'desc'            => __( 'Hostname such as example.com or sub.example.net.', 'vms-elements-form-guard' ),
 				'example'         => 'sub.example.com',
 				'valid_example'   => 'sub.example.com',
 				'invalid_example' => '-bad-.com',
 			),
 			array(
 				'key'             => 'ipv4',
-				'name'            => __( 'IPv4', 'vms-span-checker' ),
+				'name'            => __( 'IPv4', 'vms-elements-form-guard' ),
 				'pattern'         => '/^(25[0-5]|2[0-4]\d|1?\d?\d)(\.(25[0-5]|2[0-4]\d|1?\d?\d)){3}$/',
-				'desc'            => __( 'Validates IPv4 addresses.', 'vms-span-checker' ),
+				'desc'            => __( 'Validates IPv4 addresses.', 'vms-elements-form-guard' ),
 				'example'         => '192.168.0.1',
 				'valid_example'   => '192.168.0.1',
 				'invalid_example' => '999.0.0.1',
 			),
 			array(
 				'key'             => 'ipv6_basic',
-				'name'            => __( 'IPv6 (basic)', 'vms-span-checker' ),
+				'name'            => __( 'IPv6 (basic)', 'vms-elements-form-guard' ),
 				'pattern'         => '/^([0-9a-f]{1,4}:){7}[0-9a-f]{1,4}$/i',
-				'desc'            => __( 'Simple IPv6 validation (full form).', 'vms-span-checker' ),
+				'desc'            => __( 'Simple IPv6 validation (full form).', 'vms-elements-form-guard' ),
 				'example'         => '2001:0db8:85a3:0000:0000:8a2e:0370:7334',
 				'valid_example'   => '2001:0db8:85a3:0000:0000:8a2e:0370:7334',
 				'invalid_example' => 'gggg::1',
 			),
 			array(
 				'key'             => 'hex_color',
-				'name'            => __( 'Hex Color (#rgb or #rrggbb)', 'vms-span-checker' ),
+				'name'            => __( 'Hex Color (#rgb or #rrggbb)', 'vms-elements-form-guard' ),
 				'pattern'         => '/^#?([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/',
-				'desc'            => __( 'Hex color codes with or without a leading hash.', 'vms-span-checker' ),
+				'desc'            => __( 'Hex color codes with or without a leading hash.', 'vms-elements-form-guard' ),
 				'example'         => '#1a2b3c',
 				'valid_example'   => '#1a2b3c',
 				'invalid_example' => '#gg0000',
 			),
 			array(
 				'key'             => 'uuid_v4',
-				'name'            => __( 'UUID v4', 'vms-span-checker' ),
+				'name'            => __( 'UUID v4', 'vms-elements-form-guard' ),
 				'pattern'         => '/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i',
-				'desc'            => __( 'Validates UUID version 4.', 'vms-span-checker' ),
+				'desc'            => __( 'Validates UUID version 4.', 'vms-elements-form-guard' ),
 				'example'         => '550e8400-e29b-41d4-a716-446655440000',
 				'valid_example'   => '550e8400-e29b-41d4-a716-446655440000',
 				'invalid_example' => '550e8400-e29b-41d4-a716',
@@ -229,58 +237,56 @@ class Enqueue_Scripts {
 	}
 
 	/**
-	 * Enqueue admin scripts (only on VMS Span Checker screens).
+	 * Enqueue admin scripts (only on VMS Elements Form Guard screens).
 	 *
 	 * @param string $hook_suffix Current admin page hook.
 	 */
 	public function enqueue_admin_scripts( $hook_suffix = '' ) {
 		$hook_suffix = (string) $hook_suffix;
 		$is_plugin_page = (
-			false !== strpos( $hook_suffix, 'vms-span-checker' )
-			|| false !== strpos( $hook_suffix, 'wsc-' )
+			false !== strpos( $hook_suffix, 'vms-elements-form-guard' )
+			|| false !== strpos( $hook_suffix, 'vefg-' )
 		);
 		if ( ! $is_plugin_page ) {
 			return;
 		}
 
 		wp_enqueue_style(
-			'vms-span-checker-dashboard',
-			VMS_Span_Checker_ASSETS_URL . 'css/admin-dashboard.css',
+			'vms-elements-form-guard-dashboard',
+			VMS_ELEMENTS_FORM_GUARD_ASSETS_URL . 'css/admin-dashboard.css',
 			array(),
-			VMS_Span_Checker_VERSION
+			VMS_ELEMENTS_FORM_GUARD_VERSION
 		);
 
 		wp_enqueue_style(
-			'vms-span-checker-ui',
-			VMS_Span_Checker_ASSETS_URL . 'css/vms-span-checker.css',
-			array( 'vms-span-checker-dashboard' ),
-			VMS_Span_Checker_VERSION
+			'vms-elements-form-guard-ui',
+			VMS_ELEMENTS_FORM_GUARD_ASSETS_URL . 'css/vms-elements-form-guard.css',
+			array( 'vms-elements-form-guard-dashboard' ),
+			VMS_ELEMENTS_FORM_GUARD_VERSION
 		);
 
 		wp_enqueue_style(
-			'vms-span-checker-sweetalert',
-			VMS_Span_Checker_ASSETS_URL . 'plugins/sweetalert2/sweetalert2.min.css',
-			array( 'vms-span-checker-ui' ),
-			VMS_Span_Checker_VERSION
+			'vms-elements-form-guard-sweetalert',
+			VMS_ELEMENTS_FORM_GUARD_ASSETS_URL . 'plugins/sweetalert2/sweetalert2.min.css',
+			array( 'vms-elements-form-guard-ui' ),
+			VMS_ELEMENTS_FORM_GUARD_VERSION
 		);
 		wp_enqueue_script(
-			'vms-span-checker-sweetalert',
-			VMS_Span_Checker_ASSETS_URL . 'plugins/sweetalert2/sweetalert2.all.min.js',
+			'vms-elements-form-guard-sweetalert',
+			VMS_ELEMENTS_FORM_GUARD_ASSETS_URL . 'plugins/sweetalert2/sweetalert2.all.min.js',
 			array( 'jquery' ),
-			VMS_Span_Checker_VERSION,
+			VMS_ELEMENTS_FORM_GUARD_VERSION,
 			true
 		);
 		$this->enqueue_shared_toast();
 
 		wp_enqueue_script(
-			'wsc-admin-toast',
-			vms_span_checker_js_asset( 'admin-toast' ),
-			array( 'jquery', 'vms-span-checker-sweetalert' ),
-			VMS_Span_Checker_VERSION,
+			'vefg-admin-toast',
+			vms_elements_form_guard_js_asset( 'admin-toast' ),
+			array( 'jquery', 'vms-elements-form-guard-sweetalert' ),
+			VMS_ELEMENTS_FORM_GUARD_VERSION,
 			true
 		);
-
-		$this->maybe_enqueue_admin_license_heartbeat( $hook_suffix );
 
 		$needs_datatables = (
 			false !== strpos( $hook_suffix, 'whitelist' )
@@ -289,49 +295,49 @@ class Enqueue_Scripts {
 		);
 
 		$needs_ai_summary = (
-			false !== strpos( $hook_suffix, 'vms-span-checker-ai-summaries' )
-			|| false !== strpos( $hook_suffix, 'vms-span-checker-ai-product-summaries' )
+			false !== strpos( $hook_suffix, 'vms-elements-form-guard-ai-summaries' )
+			|| false !== strpos( $hook_suffix, 'vms-elements-form-guard-ai-product-summaries' )
 		);
 
 		if ( $needs_ai_summary ) {
 			wp_enqueue_script(
-				'wsc-ai-admin',
-				vms_span_checker_js_asset( 'ai-admin' ),
-				array( 'jquery', 'vms-span-checker-sweetalert' ),
-				VMS_Span_Checker_VERSION,
+				'vefg-ai-admin',
+				vms_elements_form_guard_js_asset( 'ai-admin' ),
+				array( 'jquery', 'vms-elements-form-guard-sweetalert' ),
+				VMS_ELEMENTS_FORM_GUARD_VERSION,
 				true
 			);
 			wp_localize_script(
-				'wsc-ai-admin',
-				'WSCAiAdmin',
+				'vefg-ai-admin',
+				'VEFGAiAdmin',
 				array(
 					'ajaxurl' => admin_url( 'admin-ajax.php' ),
-					'nonce'   => wp_create_nonce( 'vms_span_checker_nonce' ),
+					'nonce'   => wp_create_nonce( 'vms_elements_form_guard_nonce' ),
 					'i18n'    => array(
-						'error'   => __( 'Request failed.', 'vms-span-checker' ),
-						'success' => __( 'Summary saved. Refreshing…', 'vms-span-checker' ),
+						'error'   => __( 'Request failed.', 'vms-elements-form-guard' ),
+						'success' => __( 'Summary saved. Refreshing…', 'vms-elements-form-guard' ),
 					),
 				)
 			);
 		}
 
 		// Email templates page needs media uploader for logo selection.
-		$needs_media_uploader = ( false !== strpos( $hook_suffix, 'wsc-email-templates' ) );
+		$needs_media_uploader = ( false !== strpos( $hook_suffix, 'vefg-email-templates' ) );
 		if ( $needs_media_uploader ) {
 			wp_enqueue_media();
 		}
 
 		// Auth forms, email templates, and the Blocked Users page need a nonce + ajaxurl for AJAX.
 		$needs_nonce_only = (
-			false !== strpos( $hook_suffix, 'wsc-auth-forms' )
-			|| false !== strpos( $hook_suffix, 'wsc-email-templates' )
-			|| false !== strpos( $hook_suffix, 'vms-span-checker-comment-blocks' )
+			false !== strpos( $hook_suffix, 'vefg-auth-forms' )
+			|| false !== strpos( $hook_suffix, 'vefg-email-templates' )
+			|| false !== strpos( $hook_suffix, 'vms-elements-form-guard-comment-blocks' )
 		);
 		if ( $needs_nonce_only ) {
 			wp_localize_script(
-				'wsc-admin-toast',
-				'WPSpanChecker',
-				vms_span_checker_script_localize_data()
+				'vefg-admin-toast',
+				'VEFGChecker',
+				vms_elements_form_guard_script_localize_data()
 			);
 		}
 
@@ -339,26 +345,26 @@ class Enqueue_Scripts {
 			return;
 		}
 
-		wp_enqueue_style( 'vms-span-checker-datatable', VMS_Span_Checker_ASSETS_URL . 'plugins/DataTables/datatables.min.css', array( 'vms-span-checker-ui' ), VMS_Span_Checker_VERSION );
-		wp_enqueue_script( 'vms-span-checker-datatable', VMS_Span_Checker_ASSETS_URL . 'plugins/DataTables/datatables.min.js', array( 'jquery' ), VMS_Span_Checker_VERSION, true );
+		wp_enqueue_style( 'vms-elements-form-guard-datatable', VMS_ELEMENTS_FORM_GUARD_ASSETS_URL . 'plugins/DataTables/datatables.min.css', array( 'vms-elements-form-guard-ui' ), VMS_ELEMENTS_FORM_GUARD_VERSION );
+		wp_enqueue_script( 'vms-elements-form-guard-datatable', VMS_ELEMENTS_FORM_GUARD_ASSETS_URL . 'plugins/DataTables/datatables.min.js', array( 'jquery' ), VMS_ELEMENTS_FORM_GUARD_VERSION, true );
 
 		wp_enqueue_script(
-			'wp-span-domain-js',
-			vms_span_checker_js_asset( 'domains' ),
-			array( 'jquery', 'vms-span-checker-sweetalert', 'wsc-shared-toast' ),
-			VMS_Span_Checker_VERSION,
+			'vefg-domain-js',
+			vms_elements_form_guard_js_asset( 'domains' ),
+			array( 'jquery', 'vms-elements-form-guard-sweetalert', 'vefg-shared-toast' ),
+			VMS_ELEMENTS_FORM_GUARD_VERSION,
 			true
 		);
 
-		wp_set_script_translations( 'wp-span-domain-js', 'vms-span-checker', VMS_SPAN_CHECKER_DIR . 'languages' );
+		wp_set_script_translations( 'vefg-domain-js', 'vms-elements-form-guard', VMS_ELEMENTS_FORM_GUARD_DIR . 'languages' );
 
 		wp_localize_script(
-			'wp-span-domain-js',
-			'WPSpanChecker',
-			vms_span_checker_script_localize_data(
+			'vefg-domain-js',
+			'VEFGChecker',
+			vms_elements_form_guard_script_localize_data(
 				array(
-					'regexList'        => $this->regex_list,
-					'pageTargetLabels' => vms_span_checker_page_target_presets(),
+					'regexList'        => $this->get_cached_regex_list(),
+					'pageTargetLabels' => vms_elements_form_guard_page_target_presets(),
 				)
 			)
 		);
@@ -369,52 +375,11 @@ class Enqueue_Scripts {
 	 */
 	private function enqueue_shared_toast(): void {
 		wp_enqueue_script(
-			'wsc-shared-toast',
-			vms_span_checker_js_asset( 'wsc-shared-toast' ),
-			array( 'jquery', 'vms-span-checker-sweetalert' ),
-			VMS_Span_Checker_VERSION,
+			'vefg-shared-toast',
+			vms_elements_form_guard_js_asset( 'vefg-shared-toast' ),
+			array( 'jquery', 'vms-elements-form-guard-sweetalert' ),
+			VMS_ELEMENTS_FORM_GUARD_VERSION,
 			true
-		);
-	}
-
-	/**
-	 * Load the main script in wp-admin when a license is stored (heartbeat).
-	 *
-	 * @param string $hook_suffix Current admin page hook.
-	 */
-	private function maybe_enqueue_admin_license_heartbeat( string $hook_suffix ): void {
-		if ( ! class_exists( '\\VMS_Span_Checker\\Licensing\\License_Manager' ) ) {
-			return;
-		}
-		$manager = \VMS_Span_Checker\Licensing\License_Manager::instance();
-		if ( ! $manager->should_run_admin_heartbeat() ) {
-			return;
-		}
-
-		wp_enqueue_script(
-			'vms-span-checker-license-heartbeat',
-			vms_span_checker_js_asset( 'license-heartbeat' ),
-			array( 'jquery' ),
-			VMS_Span_Checker_VERSION,
-			true
-		);
-
-		wp_localize_script(
-			'vms-span-checker-license-heartbeat',
-			'WPSpanChecker',
-			vms_span_checker_script_localize_data(
-				array(
-					'license' => array(
-						'heartbeat'       => true,
-						'interval'        => \VMS_Span_Checker\Licensing\License_Base::REFRESH_INTERVAL,
-						'ajaxUrl'         => admin_url( 'admin-ajax.php' ),
-						'nonce'           => wp_create_nonce( 'vms_span_checker_nonce' ),
-						'licenseUrl'      => admin_url( 'admin.php?page=vms-span-checker-license' ),
-						'redirectDelayMs' => 1500,
-						'forceSelector'   => 'button[name="license_action"][value="verify"]',
-					),
-				)
-			)
 		);
 	}
 
@@ -427,8 +392,8 @@ class Enqueue_Scripts {
 		// enqueue / matching logic so the table can be read when Pro is on, but
 		// gracefully handles the table-missing / class-missing cases.
 		$all_rows = array();
-		if ( class_exists( '\\VMS_Span_Checker\\Form_Settings' ) ) {
-			$settings = new \VMS_Span_Checker\Form_Settings();
+		if ( class_exists( '\\VMS_Elements_Form_Guard\\Form_Settings' ) ) {
+			$settings = new \VMS_Elements_Form_Guard\Form_Settings();
 			$all_rows = $settings->get_settings() ?? array();
 		}
 		$filtered = array();
@@ -437,7 +402,7 @@ class Enqueue_Scripts {
 			if ( ! is_array( $row ) ) {
 				continue;
 			}
-			if ( vms_span_checker_row_matches_current_request( $row ) ) {
+			if ( vms_elements_form_guard_row_matches_current_request( $row ) ) {
 				$filtered[] = $row;
 			}
 		}
@@ -453,26 +418,26 @@ class Enqueue_Scripts {
 			return;
 		}
 
-		wp_enqueue_style( 'vms-span-checker-sweetalert', VMS_Span_Checker_ASSETS_URL . 'plugins/sweetalert2/sweetalert2.min.css', array(), VMS_Span_Checker_VERSION );
-		wp_enqueue_style( 'vms-span-checker-frontend', VMS_Span_Checker_ASSETS_URL . 'css/vms-span-checker.css', array( 'vms-span-checker-sweetalert' ), VMS_Span_Checker_VERSION );
-		wp_enqueue_script( 'vms-span-checker-sweetalert', VMS_Span_Checker_ASSETS_URL . 'plugins/sweetalert2/sweetalert2.all.min.js', array( 'jquery' ), VMS_Span_Checker_VERSION, true );
+		wp_enqueue_style( 'vms-elements-form-guard-sweetalert', VMS_ELEMENTS_FORM_GUARD_ASSETS_URL . 'plugins/sweetalert2/sweetalert2.min.css', array(), VMS_ELEMENTS_FORM_GUARD_VERSION );
+		wp_enqueue_style( 'vms-elements-form-guard-frontend', VMS_ELEMENTS_FORM_GUARD_ASSETS_URL . 'css/vms-elements-form-guard.css', array( 'vms-elements-form-guard-sweetalert' ), VMS_ELEMENTS_FORM_GUARD_VERSION );
+		wp_enqueue_script( 'vms-elements-form-guard-sweetalert', VMS_ELEMENTS_FORM_GUARD_ASSETS_URL . 'plugins/sweetalert2/sweetalert2.all.min.js', array( 'jquery' ), VMS_ELEMENTS_FORM_GUARD_VERSION, true );
 		$this->enqueue_shared_toast();
 		wp_enqueue_script(
-			'vms-span-checker',
-			vms_span_checker_js_asset( 'vms-span-checker' ),
+			'vms-elements-form-guard',
+			vms_elements_form_guard_js_asset( 'vms-elements-form-guard' ),
 			array(
 				'jquery',
-				'vms-span-checker-sweetalert',
-				'wsc-shared-toast',
+				'vms-elements-form-guard-sweetalert',
+				'vefg-shared-toast',
 			),
-			VMS_Span_Checker_VERSION,
+			VMS_ELEMENTS_FORM_GUARD_VERSION,
 			true
 		);
 
-		wp_set_script_translations( 'vms-span-checker', 'vms-span-checker', VMS_SPAN_CHECKER_DIR . 'languages' );
+		wp_set_script_translations( 'vms-elements-form-guard', 'vms-elements-form-guard', VMS_ELEMENTS_FORM_GUARD_DIR . 'languages' );
 
 		// Get reCAPTCHA config
-		$recaptcha_config = get_option( 'wsc-recaptcha-config', array() );
+		$recaptcha_config = get_option( 'vefg-recaptcha-config', array() );
 		$recaptcha_data   = array(
 			'enabled'  => false,
 			'siteKey'  => '',
@@ -484,16 +449,16 @@ class Enqueue_Scripts {
 		}
 
 		wp_localize_script(
-			'vms-span-checker',
-			'WPSpanChecker',
-			vms_span_checker_script_localize_data(
+			'vms-elements-form-guard',
+			'VEFGChecker',
+			vms_elements_form_guard_script_localize_data(
 				array(
 					'pageID'        => $page_id,
-					'pageType'      => vms_span_checker_get_current_page_type(),
-					'bodyClasses'   => vms_span_checker_get_current_body_classes(),
-					'presetClasses' => vms_span_checker_preset_body_classes(),
+					'pageType'      => vms_elements_form_guard_get_current_page_type(),
+					'bodyClasses'   => vms_elements_form_guard_get_current_body_classes(),
+					'presetClasses' => vms_elements_form_guard_preset_body_classes(),
 					'settings'      => $filtered,
-					'regexList'     => $this->regex_list,
+					'regexList'     => $this->get_cached_regex_list(),
 					'recaptcha'     => $recaptcha_data,
 				)
 			)
@@ -564,40 +529,40 @@ class Enqueue_Scripts {
 	 */
 	private function enqueue_subscribe_guard(): void {
 		$cfg            = AI_Span_Config::get();
-		$recaptcha_cfg  = get_option( 'wsc-recaptcha-config', array() );
-		$recaptcha_enabled = ! empty( $cfg['subscribe_guard_recaptcha'] ) 
-			&& ! empty( $recaptcha_cfg['site_key'] ) 
+		$recaptcha_cfg  = get_option( 'vefg-recaptcha-config', array() );
+		$recaptcha_enabled = ! empty( $cfg['subscribe_guard_recaptcha'] )
+			&& ! empty( $recaptcha_cfg['site_key'] )
 			&& ! empty( $recaptcha_cfg['secret_key'] );
 
 		wp_enqueue_script(
-			'wp-span-subscribe-guard',
-			vms_span_checker_js_asset( 'subscribe-guard' ),
-			array( 'jquery', 'vms-span-checker-sweetalert', 'vms-span-checker' ),
-			VMS_Span_Checker_VERSION,
+			'vefg-subscribe-guard',
+			vms_elements_form_guard_js_asset( 'subscribe-guard' ),
+			array( 'jquery', 'vms-elements-form-guard-sweetalert', 'vms-elements-form-guard' ),
+			VMS_ELEMENTS_FORM_GUARD_VERSION,
 			true
 		);
 
 		wp_localize_script(
-			'wp-span-subscribe-guard',
-			'WPSpanSubscribeGuard',
+			'vefg-subscribe-guard',
+			'VEFGSubscribeGuard',
 			array(
 				'ajaxUrl'          => admin_url( 'admin-ajax.php' ),
-				'nonce'            => wp_create_nonce( 'vms_span_checker_nonce' ),
+				'nonce'            => wp_create_nonce( 'vms_elements_form_guard_nonce' ),
 				'formSelector'     => $cfg['subscribe_guard_form_selector'] ?? '',
 				'submitSelector'   => $cfg['subscribe_guard_submit_selector'] ?? '',
 				'recaptchaEnabled' => $recaptcha_enabled,
 				'recaptchaSiteKey' => $recaptcha_enabled ? $recaptcha_cfg['site_key'] : '',
 				'recaptchaVersion' => $recaptcha_cfg['version'] ?? 'v2',
 				'i18n'             => array(
-					'validating'        => __( 'Validating...', 'vms-span-checker' ),
-					'submit'            => __( 'Subscribe', 'vms-span-checker' ),
-					'emailRequired'     => __( 'Email address is required.', 'vms-span-checker' ),
-					'emailInvalid'      => __( 'Please enter a valid email address.', 'vms-span-checker' ),
-					'validationFailed'  => __( 'Validation failed.', 'vms-span-checker' ),
-					'serverError'       => __( 'Server error. Please try again.', 'vms-span-checker' ),
-					'recaptchaRequired' => __( 'Please complete the reCAPTCHA verification.', 'vms-span-checker' ),
-					'userBlocked'       => __( 'You have been blocked due to repeated violations.', 'vms-span-checker' ),
-					'blocked'           => __( 'Blocked', 'vms-span-checker' ),
+					'validating'        => __( 'Validating...', 'vms-elements-form-guard' ),
+					'submit'            => __( 'Subscribe', 'vms-elements-form-guard' ),
+					'emailRequired'     => __( 'Email address is required.', 'vms-elements-form-guard' ),
+					'emailInvalid'      => __( 'Please enter a valid email address.', 'vms-elements-form-guard' ),
+					'validationFailed'  => __( 'Validation failed.', 'vms-elements-form-guard' ),
+					'serverError'       => __( 'Server error. Please try again.', 'vms-elements-form-guard' ),
+					'recaptchaRequired' => __( 'Please complete the reCAPTCHA verification.', 'vms-elements-form-guard' ),
+					'userBlocked'       => __( 'You have been blocked due to repeated violations.', 'vms-elements-form-guard' ),
+					'blocked'           => __( 'Blocked', 'vms-elements-form-guard' ),
 				),
 			)
 		);
@@ -611,7 +576,7 @@ class Enqueue_Scripts {
 	 */
 	private function should_load_login_guard_frontend( int $page_id ): bool {
 		$cfg           = AI_Span_Config::get();
-		$recaptcha_cfg = get_option( 'wsc-recaptcha-config', array() );
+		$recaptcha_cfg = get_option( 'vefg-recaptcha-config', array() );
 		$has_recaptcha = ! empty( $recaptcha_cfg['site_key'] ) && ! empty( $recaptcha_cfg['secret_key'] );
 
 		if ( empty( $cfg['login_guard_enabled'] ) || empty( $cfg['login_guard_recaptcha'] ) || ! $has_recaptcha ) {
@@ -645,7 +610,7 @@ class Enqueue_Scripts {
 	 */
 	private function should_load_registration_guard_frontend( int $page_id ): bool {
 		$cfg           = AI_Span_Config::get();
-		$recaptcha_cfg = get_option( 'wsc-recaptcha-config', array() );
+		$recaptcha_cfg = get_option( 'vefg-recaptcha-config', array() );
 		$has_recaptcha = ! empty( $recaptcha_cfg['site_key'] ) && ! empty( $recaptcha_cfg['secret_key'] );
 
 		$reg_frontend_enabled  = ! empty( $cfg['registration_guard_frontend'] );
@@ -712,43 +677,43 @@ class Enqueue_Scripts {
 	 */
 	private function enqueue_contact_guard(): void {
 		$cfg            = AI_Span_Config::get();
-		$recaptcha_cfg  = get_option( 'wsc-recaptcha-config', array() );
-		$recaptcha_enabled = ! empty( $cfg['contact_guard_recaptcha'] ) 
-			&& ! empty( $recaptcha_cfg['site_key'] ) 
+		$recaptcha_cfg  = get_option( 'vefg-recaptcha-config', array() );
+		$recaptcha_enabled = ! empty( $cfg['contact_guard_recaptcha'] )
+			&& ! empty( $recaptcha_cfg['site_key'] )
 			&& ! empty( $recaptcha_cfg['secret_key'] );
 
 		wp_enqueue_script(
-			'wp-span-contact-guard',
-			vms_span_checker_js_asset( 'contact-guard' ),
-			array( 'jquery', 'vms-span-checker-sweetalert', 'vms-span-checker' ),
-			VMS_Span_Checker_VERSION,
+			'vefg-contact-guard',
+			vms_elements_form_guard_js_asset( 'contact-guard' ),
+			array( 'jquery', 'vms-elements-form-guard-sweetalert', 'vms-elements-form-guard' ),
+			VMS_ELEMENTS_FORM_GUARD_VERSION,
 			true
 		);
 
 		wp_localize_script(
-			'wp-span-contact-guard',
-			'WPSpanContactGuard',
+			'vefg-contact-guard',
+			'VEFGContactGuard',
 			array(
 				'ajaxUrl'          => admin_url( 'admin-ajax.php' ),
-				'nonce'            => wp_create_nonce( 'vms_span_checker_nonce' ),
+				'nonce'            => wp_create_nonce( 'vms_elements_form_guard_nonce' ),
 				'formSelector'     => $cfg['contact_guard_form_selector'] ?? '',
 				'submitSelector'   => $cfg['contact_guard_submit_selector'] ?? '',
 				'recaptchaEnabled' => $recaptcha_enabled,
 				'recaptchaSiteKey' => $recaptcha_enabled ? $recaptcha_cfg['site_key'] : '',
 				'recaptchaVersion' => $recaptcha_cfg['version'] ?? 'v2',
 				'i18n'             => array(
-					'validating'        => __( 'Validating...', 'vms-span-checker' ),
-					'submit'            => __( 'Submit', 'vms-span-checker' ),
-					'emailRequired'     => __( 'Email address is required.', 'vms-span-checker' ),
-					'emailInvalid'      => __( 'Please enter a valid email address.', 'vms-span-checker' ),
-					'validationFailed'  => __( 'Validation failed.', 'vms-span-checker' ),
-					'serverError'       => __( 'Server error. Please try again.', 'vms-span-checker' ),
-					'spamDetected'      => __( 'Your message appears to be spam.', 'vms-span-checker' ),
-					'recaptchaRequired' => __( 'Please complete the reCAPTCHA verification.', 'vms-span-checker' ),
-					'userBlocked'       => __( 'You have been blocked due to repeated violations.', 'vms-span-checker' ),
-					'blocked'           => __( 'Blocked', 'vms-span-checker' ),
-					'fieldRequired'     => __( 'This field is required.', 'vms-span-checker' ),
-					'checkFields'       => __( 'Please fill in all required fields.', 'vms-span-checker' ),
+					'validating'        => __( 'Validating...', 'vms-elements-form-guard' ),
+					'submit'            => __( 'Submit', 'vms-elements-form-guard' ),
+					'emailRequired'     => __( 'Email address is required.', 'vms-elements-form-guard' ),
+					'emailInvalid'      => __( 'Please enter a valid email address.', 'vms-elements-form-guard' ),
+					'validationFailed'  => __( 'Validation failed.', 'vms-elements-form-guard' ),
+					'serverError'       => __( 'Server error. Please try again.', 'vms-elements-form-guard' ),
+					'spamDetected'      => __( 'Your message appears to be spam.', 'vms-elements-form-guard' ),
+					'recaptchaRequired' => __( 'Please complete the reCAPTCHA verification.', 'vms-elements-form-guard' ),
+					'userBlocked'       => __( 'You have been blocked due to repeated violations.', 'vms-elements-form-guard' ),
+					'blocked'           => __( 'Blocked', 'vms-elements-form-guard' ),
+					'fieldRequired'     => __( 'This field is required.', 'vms-elements-form-guard' ),
+					'checkFields'       => __( 'Please fill in all required fields.', 'vms-elements-form-guard' ),
 				),
 			)
 		);
@@ -759,26 +724,26 @@ class Enqueue_Scripts {
 	 */
 	private function enqueue_login_guard_frontend(): void {
 		$cfg           = AI_Span_Config::get();
-		$recaptcha_cfg = get_option( 'wsc-recaptcha-config', array() );
+		$recaptcha_cfg = get_option( 'vefg-recaptcha-config', array() );
 
 		wp_enqueue_script(
-			'wp-span-login-guard',
-			vms_span_checker_js_asset( 'login-guard' ),
-			array( 'jquery', 'vms-span-checker' ),
-			VMS_Span_Checker_VERSION,
+			'vefg-login-guard',
+			vms_elements_form_guard_js_asset( 'login-guard' ),
+			array( 'jquery', 'vms-elements-form-guard' ),
+			VMS_ELEMENTS_FORM_GUARD_VERSION,
 			true
 		);
 
 		wp_localize_script(
-			'wp-span-login-guard',
-			'WPSpanLoginGuard',
+			'vefg-login-guard',
+			'VEFGLoginGuard',
 			array(
 				'recaptchaEnabled' => true,
 				'recaptchaSiteKey' => $recaptcha_cfg['site_key'],
 				'recaptchaVersion' => $recaptcha_cfg['version'] ?? 'v2',
 				'formSelector'     => $cfg['login_guard_form_selector'] ?? '',
 				'i18n'             => array(
-					'recaptchaRequired' => __( 'Please complete the reCAPTCHA verification.', 'vms-span-checker' ),
+					'recaptchaRequired' => __( 'Please complete the reCAPTCHA verification.', 'vms-elements-form-guard' ),
 				),
 			)
 		);
@@ -789,39 +754,39 @@ class Enqueue_Scripts {
 	 */
 	private function enqueue_registration_guard_frontend(): void {
 		$cfg           = AI_Span_Config::get();
-		$recaptcha_cfg = get_option( 'wsc-recaptcha-config', array() );
+		$recaptcha_cfg = get_option( 'vefg-recaptcha-config', array() );
 		$has_recaptcha = ! empty( $recaptcha_cfg['site_key'] ) && ! empty( $recaptcha_cfg['secret_key'] );
 
 		$reg_frontend_enabled  = ! empty( $cfg['registration_guard_frontend'] );
 		$reg_recaptcha_enabled = ! empty( $cfg['registration_guard_recaptcha'] ) && $has_recaptcha;
 
 		wp_enqueue_script(
-			'wp-span-registration-guard',
-			vms_span_checker_js_asset( 'registration-guard' ),
-			array( 'jquery', 'vms-span-checker-sweetalert', 'vms-span-checker' ),
-			VMS_Span_Checker_VERSION,
+			'vefg-registration-guard',
+			vms_elements_form_guard_js_asset( 'registration-guard' ),
+			array( 'jquery', 'vms-elements-form-guard-sweetalert', 'vms-elements-form-guard' ),
+			VMS_ELEMENTS_FORM_GUARD_VERSION,
 			true
 		);
 
 		wp_localize_script(
-			'wp-span-registration-guard',
-			'WPSpanRegistrationGuard',
+			'vefg-registration-guard',
+			'VEFGRegistrationGuard',
 			array(
 				'ajaxUrl'          => admin_url( 'admin-ajax.php' ),
-				'nonce'            => wp_create_nonce( 'vms_span_checker_nonce' ),
+				'nonce'            => wp_create_nonce( 'vms_elements_form_guard_nonce' ),
 				'frontendEnabled'  => $reg_frontend_enabled,
 				'recaptchaEnabled' => $reg_recaptcha_enabled,
 				'recaptchaSiteKey' => $has_recaptcha ? $recaptcha_cfg['site_key'] : '',
 				'recaptchaVersion' => $recaptcha_cfg['version'] ?? 'v2',
 				'formSelector'     => $cfg['registration_guard_form_selector'] ?? '',
 				'i18n'             => array(
-					'validating'        => __( 'Validating...', 'vms-span-checker' ),
-					'register'          => __( 'Register', 'vms-span-checker' ),
-					'emailRequired'     => __( 'Email address is required.', 'vms-span-checker' ),
-					'emailInvalid'      => __( 'Please enter a valid email address.', 'vms-span-checker' ),
-					'validationFailed'  => __( 'Validation failed.', 'vms-span-checker' ),
-					'serverError'       => __( 'Server error. Please try again.', 'vms-span-checker' ),
-					'recaptchaRequired' => __( 'Please complete the reCAPTCHA verification.', 'vms-span-checker' ),
+					'validating'        => __( 'Validating...', 'vms-elements-form-guard' ),
+					'register'          => __( 'Register', 'vms-elements-form-guard' ),
+					'emailRequired'     => __( 'Email address is required.', 'vms-elements-form-guard' ),
+					'emailInvalid'      => __( 'Please enter a valid email address.', 'vms-elements-form-guard' ),
+					'validationFailed'  => __( 'Validation failed.', 'vms-elements-form-guard' ),
+					'serverError'       => __( 'Server error. Please try again.', 'vms-elements-form-guard' ),
+					'recaptchaRequired' => __( 'Please complete the reCAPTCHA verification.', 'vms-elements-form-guard' ),
 				),
 			)
 		);
@@ -832,13 +797,13 @@ class Enqueue_Scripts {
 	 */
 	public function enqueue_login_scripts(): void {
 		$cfg           = AI_Span_Config::get();
-		$recaptcha_cfg = get_option( 'wsc-recaptcha-config', array() );
+		$recaptcha_cfg = get_option( 'vefg-recaptcha-config', array() );
 		$has_recaptcha = ! empty( $recaptcha_cfg['site_key'] ) && ! empty( $recaptcha_cfg['secret_key'] );
 
 		// Check if Login Guard should be active (scope check - default wp-login.php only)
 		$login_guard_enabled = ! empty( $cfg['login_guard_enabled'] ) && ! empty( $cfg['login_guard_recaptcha'] ) && $has_recaptcha;
 		$login_guard_scope   = $cfg['login_guard_scope'] ?? 'default';
-		
+
 		// For wp-login.php, only load if scope is 'default'
 		if ( $login_guard_enabled && 'specific' === $login_guard_scope ) {
 			$login_guard_enabled = false; // Will be loaded on frontend pages instead
@@ -848,7 +813,7 @@ class Enqueue_Scripts {
 		$reg_frontend_enabled  = ! empty( $cfg['registration_guard_frontend'] );
 		$reg_recaptcha_enabled = ! empty( $cfg['registration_guard_recaptcha'] ) && $has_recaptcha;
 		$reg_guard_scope       = $cfg['registration_guard_scope'] ?? 'default';
-		
+
 		// For wp-login.php?action=register, only load if scope is 'default'
 		if ( ( $reg_frontend_enabled || $reg_recaptcha_enabled ) && 'specific' === $reg_guard_scope ) {
 			$reg_frontend_enabled  = false;
@@ -865,23 +830,23 @@ class Enqueue_Scripts {
 		// Enqueue Login Guard
 		if ( $login_guard_enabled && $is_login ) {
 			wp_enqueue_script(
-				'wp-span-login-guard',
-				vms_span_checker_js_asset( 'login-guard' ),
+				'vefg-login-guard',
+				vms_elements_form_guard_js_asset( 'login-guard' ),
 				array( 'jquery' ),
-				VMS_Span_Checker_VERSION,
+				VMS_ELEMENTS_FORM_GUARD_VERSION,
 				true
 			);
 
 			wp_localize_script(
-				'wp-span-login-guard',
-				'WPSpanLoginGuard',
+				'vefg-login-guard',
+				'VEFGLoginGuard',
 				array(
 					'recaptchaEnabled' => true,
 					'recaptchaSiteKey' => $recaptcha_cfg['site_key'],
 					'recaptchaVersion' => $recaptcha_cfg['version'] ?? 'v2',
 					'formSelector'     => '', // Default wp-login.php uses built-in selectors
 					'i18n'             => array(
-						'recaptchaRequired' => __( 'Please complete the reCAPTCHA verification.', 'vms-span-checker' ),
+						'recaptchaRequired' => __( 'Please complete the reCAPTCHA verification.', 'vms-elements-form-guard' ),
 					),
 				)
 			);
@@ -889,36 +854,36 @@ class Enqueue_Scripts {
 
 		// Enqueue Registration Guard
 		if ( ( $reg_frontend_enabled || $reg_recaptcha_enabled ) && $is_register ) {
-			wp_enqueue_style( 'vms-span-checker-sweetalert', VMS_Span_Checker_ASSETS_URL . 'plugins/sweetalert2/sweetalert2.min.css', array(), VMS_Span_Checker_VERSION );
-			wp_enqueue_script( 'vms-span-checker-sweetalert', VMS_Span_Checker_ASSETS_URL . 'plugins/sweetalert2/sweetalert2.all.min.js', array( 'jquery' ), VMS_Span_Checker_VERSION, true );
+			wp_enqueue_style( 'vms-elements-form-guard-sweetalert', VMS_ELEMENTS_FORM_GUARD_ASSETS_URL . 'plugins/sweetalert2/sweetalert2.min.css', array(), VMS_ELEMENTS_FORM_GUARD_VERSION );
+			wp_enqueue_script( 'vms-elements-form-guard-sweetalert', VMS_ELEMENTS_FORM_GUARD_ASSETS_URL . 'plugins/sweetalert2/sweetalert2.all.min.js', array( 'jquery' ), VMS_ELEMENTS_FORM_GUARD_VERSION, true );
 
 			wp_enqueue_script(
-				'wp-span-registration-guard',
-				vms_span_checker_js_asset( 'registration-guard' ),
-				array( 'jquery', 'vms-span-checker-sweetalert' ),
-				VMS_Span_Checker_VERSION,
+				'vefg-registration-guard',
+				vms_elements_form_guard_js_asset( 'registration-guard' ),
+				array( 'jquery', 'vms-elements-form-guard-sweetalert' ),
+				VMS_ELEMENTS_FORM_GUARD_VERSION,
 				true
 			);
 
 			wp_localize_script(
-				'wp-span-registration-guard',
-				'WPSpanRegistrationGuard',
+				'vefg-registration-guard',
+				'VEFGRegistrationGuard',
 				array(
 					'ajaxUrl'          => admin_url( 'admin-ajax.php' ),
-					'nonce'            => wp_create_nonce( 'vms_span_checker_nonce' ),
+					'nonce'            => wp_create_nonce( 'vms_elements_form_guard_nonce' ),
 					'frontendEnabled'  => $reg_frontend_enabled,
 					'recaptchaEnabled' => $reg_recaptcha_enabled,
 					'recaptchaSiteKey' => $has_recaptcha ? $recaptcha_cfg['site_key'] : '',
 					'recaptchaVersion' => $recaptcha_cfg['version'] ?? 'v2',
 					'formSelector'     => '', // Default wp-login.php uses built-in selectors
 					'i18n'             => array(
-						'validating'        => __( 'Validating...', 'vms-span-checker' ),
-						'register'          => __( 'Register', 'vms-span-checker' ),
-						'emailRequired'     => __( 'Email address is required.', 'vms-span-checker' ),
-						'emailInvalid'      => __( 'Please enter a valid email address.', 'vms-span-checker' ),
-						'validationFailed'  => __( 'Validation failed.', 'vms-span-checker' ),
-						'serverError'       => __( 'Server error. Please try again.', 'vms-span-checker' ),
-						'recaptchaRequired' => __( 'Please complete the reCAPTCHA verification.', 'vms-span-checker' ),
+						'validating'        => __( 'Validating...', 'vms-elements-form-guard' ),
+						'register'          => __( 'Register', 'vms-elements-form-guard' ),
+						'emailRequired'     => __( 'Email address is required.', 'vms-elements-form-guard' ),
+						'emailInvalid'      => __( 'Please enter a valid email address.', 'vms-elements-form-guard' ),
+						'validationFailed'  => __( 'Validation failed.', 'vms-elements-form-guard' ),
+						'serverError'       => __( 'Server error. Please try again.', 'vms-elements-form-guard' ),
+						'recaptchaRequired' => __( 'Please complete the reCAPTCHA verification.', 'vms-elements-form-guard' ),
 					),
 				)
 			);
@@ -939,12 +904,12 @@ class Enqueue_Scripts {
 
 		// Check for auth form shortcodes
 		$shortcodes = array(
-			'wsc_login_form',
-			'wsc_register_form',
-			'wsc_forgot_password_form',
-			'wsc_reset_password_form',
-			'wsc_otp_verify_form',
-			'wsc_activation_form',
+			'vefg_login_form',
+			'vefg_register_form',
+			'vefg_forgot_password_form',
+			'vefg_reset_password_form',
+			'vefg_otp_verify_form',
+			'vefg_activation_form',
 		);
 
 		foreach ( $shortcodes as $shortcode ) {
@@ -954,7 +919,7 @@ class Enqueue_Scripts {
 		}
 
 		// Check for page meta
-		$form_type = get_post_meta( $post->ID, '_wsc_auth_form_type', true );
+		$form_type = get_post_meta( $post->ID, '_vefg_auth_form_type', true );
 		if ( ! empty( $form_type ) ) {
 			return true;
 		}
@@ -966,38 +931,58 @@ class Enqueue_Scripts {
 	 * Enqueue Auth Forms scripts and styles.
 	 */
 	private function enqueue_auth_forms(): void {
-		$recaptcha_cfg = get_option( 'wsc-recaptcha-config', array() );
+		$recaptcha_cfg = get_option( 'vefg-recaptcha-config', array() );
 		$has_recaptcha = ! empty( $recaptcha_cfg['site_key'] ) && ! empty( $recaptcha_cfg['secret_key'] );
 		$settings      = Auth_Forms::get_settings();
 
 		wp_enqueue_style( 'dashicons' );
 		wp_enqueue_style(
-			'wsc-auth-forms',
-			VMS_Span_Checker_ASSETS_URL . 'css/auth-forms.css',
+			'vefg-auth-forms',
+			VMS_ELEMENTS_FORM_GUARD_ASSETS_URL . 'css/auth-forms.css',
 			array(),
-			VMS_Span_Checker_VERSION
+			VMS_ELEMENTS_FORM_GUARD_VERSION
 		);
 
+		// Inject the per-site CSS custom properties as a properly enqueued inline style
+		// (instead of a raw <style> tag echoed inside the shortcode output).
+		$auth_css = sprintf(
+			'.vefg-auth-form-wrap{--vefg-primary:%1$s;--vefg-secondary:%2$s;--vefg-text:%3$s;--vefg-bg:%4$s;--vefg-border:%5$s;--vefg-border-hover:%6$s;--vefg-border-focus:%7$s;--vefg-input-bg:%8$s;--vefg-input-focus-bg:%9$s;--vefg-error:%10$s;--vefg-success:%11$s;--vefg-radius:%12$spx;--vefg-width:%13$spx;}',
+			esc_attr( $settings['primary_color'] ),
+			esc_attr( $settings['secondary_color'] ),
+			esc_attr( $settings['text_color'] ),
+			esc_attr( $settings['background_color'] ),
+			esc_attr( $settings['border_color'] ?? '#d1d5db' ),
+			esc_attr( $settings['border_hover_color'] ?? '#9ca3af' ),
+			esc_attr( $settings['border_focus_color'] ?? '#2563eb' ),
+			esc_attr( $settings['input_bg_color'] ?? '#ffffff' ),
+			esc_attr( $settings['input_focus_bg'] ?? '#f9fafb' ),
+			esc_attr( $settings['error_color'] ?? '#dc2626' ),
+			esc_attr( $settings['success_color'] ?? '#16a34a' ),
+			esc_attr( $settings['border_radius'] ),
+			esc_attr( $settings['form_width'] )
+		);
+		wp_add_inline_style( 'vefg-auth-forms', $auth_css );
+
 		wp_enqueue_script(
-			'wsc-auth-forms',
-			vms_span_checker_js_asset( 'auth-forms' ),
+			'vefg-auth-forms',
+			vms_elements_form_guard_js_asset( 'auth-forms' ),
 			array( 'jquery' ),
-			VMS_Span_Checker_VERSION,
+			VMS_ELEMENTS_FORM_GUARD_VERSION,
 			true
 		);
 
 		wp_localize_script(
-			'wsc-auth-forms',
-			'WSCAuthForms',
+			'vefg-auth-forms',
+			'VEFGAuthForms',
 			array(
 				'ajaxUrl'          => admin_url( 'admin-ajax.php' ),
 				'recaptchaSiteKey' => $has_recaptcha ? $recaptcha_cfg['site_key'] : '',
 				'recaptchaVersion' => $recaptcha_cfg['version'] ?? 'v2',
 				'i18n'             => array(
-					'completeRecaptcha'  => __( 'Please complete the reCAPTCHA.', 'vms-span-checker' ),
-					'networkError'       => __( 'Network error. Please try again.', 'vms-span-checker' ),
-					'passwordsMismatch'  => __( 'Passwords do not match.', 'vms-span-checker' ),
-					'passwordTooShort'   => __( 'Password must be at least 8 characters.', 'vms-span-checker' ),
+					'completeRecaptcha'  => __( 'Please complete the reCAPTCHA.', 'vms-elements-form-guard' ),
+					'networkError'       => __( 'Network error. Please try again.', 'vms-elements-form-guard' ),
+					'passwordsMismatch'  => __( 'Passwords do not match.', 'vms-elements-form-guard' ),
+					'passwordTooShort'   => __( 'Password must be at least 8 characters.', 'vms-elements-form-guard' ),
 				),
 			)
 		);

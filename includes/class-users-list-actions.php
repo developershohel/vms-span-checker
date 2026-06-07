@@ -5,10 +5,10 @@
  * the wp-admin/users.php screen.
  *
  * Direct `$wpdb` queries below target the plugin-owned
- * `{$wpdb->prefix}vms_span_checker_comment_enforcement` custom table; identifiers
+ * `{$wpdb->prefix}vms_elements_form_guard_comment_enforcement` custom table; identifiers
  * are hardcoded and values pass through `$wpdb->prepare()`.
  *
- * @package VMS_Span_Checker
+ * @package VMS_Elements_Form_Guard
  *
  * phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
  * phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -16,7 +16,7 @@
  * phpcs:disable PluginCheck.Security.DirectDB.UnescapedDBParameter
  */
 
-namespace VMS_Span_Checker;
+namespace VMS_Elements_Form_Guard;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -30,7 +30,7 @@ class Users_List_Actions {
 	/**
 	 * Column slug.
 	 */
-	const COLUMN_KEY = 'vms_span_checker_block_status';
+	const COLUMN_KEY = 'vms_elements_form_guard_block_status';
 
 	/**
 	 * Cached scope-by-user-id map for the rows being rendered on the current request.
@@ -67,12 +67,12 @@ class Users_List_Actions {
 		$new = array();
 		foreach ( $columns as $key => $label ) {
 			if ( 'posts' === $key ) {
-				$new[ self::COLUMN_KEY ] = __( 'Block Status', 'vms-span-checker' );
+				$new[ self::COLUMN_KEY ] = __( 'Block Status', 'vms-elements-form-guard' );
 			}
 			$new[ $key ] = $label;
 		}
 		if ( ! isset( $new[ self::COLUMN_KEY ] ) ) {
-			$new[ self::COLUMN_KEY ] = __( 'Block Status', 'vms-span-checker' );
+			$new[ self::COLUMN_KEY ] = __( 'Block Status', 'vms-elements-form-guard' );
 		}
 		return $new;
 	}
@@ -98,26 +98,26 @@ class Users_List_Actions {
 
 		$pills = '';
 		if ( $row['form'] ) {
-			$pills .= '<span class="wsc-scope-pill" style="display:inline-block;padding:1px 8px;border-radius:10px;background:#fcf0f1;color:#a02b30;font-size:11px;margin:0 4px 2px 0;">'
+			$pills .= '<span class="vefg-scope-pill" style="display:inline-block;padding:1px 8px;border-radius:10px;background:#fcf0f1;color:#a02b30;font-size:11px;margin:0 4px 2px 0;">'
 				. '<span class="dashicons dashicons-format-chat" style="font-size:13px;vertical-align:middle;"></span> '
-				. esc_html__( 'Form', 'vms-span-checker' ) . '</span>';
+				. esc_html__( 'Form', 'vms-elements-form-guard' ) . '</span>';
 		}
 		if ( $row['login'] ) {
-			$pills .= '<span class="wsc-scope-pill" style="display:inline-block;padding:1px 8px;border-radius:10px;background:#fff8e5;color:#996800;font-size:11px;margin:0 4px 2px 0;">'
+			$pills .= '<span class="vefg-scope-pill" style="display:inline-block;padding:1px 8px;border-radius:10px;background:#fff8e5;color:#996800;font-size:11px;margin:0 4px 2px 0;">'
 				. '<span class="dashicons dashicons-lock" style="font-size:13px;vertical-align:middle;"></span> '
-				. esc_html__( 'Login', 'vms-span-checker' ) . '</span>';
+				. esc_html__( 'Login', 'vms-elements-form-guard' ) . '</span>';
 		}
 		if ( $row['site'] ) {
-			$pills .= '<span class="wsc-scope-pill" style="display:inline-block;padding:1px 8px;border-radius:10px;background:#fcebec;color:#7e1c20;font-size:11px;margin:0 4px 2px 0;">'
+			$pills .= '<span class="vefg-scope-pill" style="display:inline-block;padding:1px 8px;border-radius:10px;background:#fcebec;color:#7e1c20;font-size:11px;margin:0 4px 2px 0;">'
 				. '<span class="dashicons dashicons-shield" style="font-size:13px;vertical-align:middle;"></span> '
-				. esc_html__( 'Site', 'vms-span-checker' ) . '</span>';
+				. esc_html__( 'Site', 'vms-elements-form-guard' ) . '</span>';
 		}
 
 		if ( '' === $pills && $row['strikes'] > 0 ) {
 			$pills .= '<span class="description" style="color:#996800;">'
 				. sprintf(
 					/* translators: %d: strike count */
-					esc_html__( '%d strike(s)', 'vms-span-checker' ),
+					esc_html__( '%d strike(s)', 'vms-elements-form-guard' ),
 					(int) $row['strikes']
 				)
 				. '</span>';
@@ -151,27 +151,27 @@ class Users_List_Actions {
 		$label = $user->display_name . ' (' . $user->user_login . ')';
 
 		if ( $is_blocked ) {
-			$actions['vms_span_checker_block'] = sprintf(
-				'<a href="#" class="vms-span-checker-user-block-trigger" data-user-id="%1$d" data-user-label="%2$s" data-form="%3$s" data-login="%4$s" data-site="%5$s" data-mode="edit" style="color:#0073aa;">%6$s</a>',
+			$actions['vms_elements_form_guard_block'] = sprintf(
+				'<a href="#" class="vms-elements-form-guard-user-block-trigger" data-user-id="%1$d" data-user-label="%2$s" data-form="%3$s" data-login="%4$s" data-site="%5$s" data-mode="edit" style="color:#0073aa;">%6$s</a>',
 				(int) $user->ID,
 				esc_attr( $label ),
-				esc_attr( $row['form']  ? '1' : '0' ),
+				esc_attr( $row['form'] ? '1' : '0' ),
 				esc_attr( $row['login'] ? '1' : '0' ),
-				esc_attr( $row['site']  ? '1' : '0' ),
-				esc_html__( 'Edit Block', 'vms-span-checker' )
+				esc_attr( $row['site'] ? '1' : '0' ),
+				esc_html__( 'Edit Block', 'vms-elements-form-guard' )
 			);
-			$actions['vms_span_checker_unblock'] = sprintf(
-				'<a href="#" class="vms-span-checker-user-unblock-trigger" data-user-id="%1$d" data-user-label="%2$s" style="color:#a02b30;">%3$s</a>',
+			$actions['vms_elements_form_guard_unblock'] = sprintf(
+				'<a href="#" class="vms-elements-form-guard-user-unblock-trigger" data-user-id="%1$d" data-user-label="%2$s" style="color:#a02b30;">%3$s</a>',
 				(int) $user->ID,
 				esc_attr( $label ),
-				esc_html__( 'Unblock', 'vms-span-checker' )
+				esc_html__( 'Unblock', 'vms-elements-form-guard' )
 			);
 		} else {
-			$actions['vms_span_checker_block'] = sprintf(
-				'<a href="#" class="vms-span-checker-user-block-trigger" data-user-id="%1$d" data-user-label="%2$s" data-mode="block" style="color:#a02b30;">%3$s</a>',
+			$actions['vms_elements_form_guard_block'] = sprintf(
+				'<a href="#" class="vms-elements-form-guard-user-block-trigger" data-user-id="%1$d" data-user-label="%2$s" data-mode="block" style="color:#a02b30;">%3$s</a>',
 				(int) $user->ID,
 				esc_attr( $label ),
-				esc_html__( 'Block', 'vms-span-checker' )
+				esc_html__( 'Block', 'vms-elements-form-guard' )
 			);
 		}
 
@@ -188,24 +188,24 @@ class Users_List_Actions {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			return $actions;
 		}
-		$actions['vms_span_checker_block_users']   = __( 'Block (VMS Span Checker)', 'vms-span-checker' );
-		$actions['vms_span_checker_unblock_users'] = __( 'Unblock (VMS Span Checker)', 'vms-span-checker' );
+		$actions['vms_elements_form_guard_block_users']   = __( 'Block (VMS Elements Form Guard)', 'vms-elements-form-guard' );
+		$actions['vms_elements_form_guard_unblock_users'] = __( 'Unblock (VMS Elements Form Guard)', 'vms-elements-form-guard' );
 		return $actions;
 	}
 
 	/**
 	 * Handle the bulk Block / Unblock actions.
 	 *
-	 * @param string       $redirect_to Default redirect.
-	 * @param string       $action      Selected bulk action.
-	 * @param array<int>   $user_ids    Selected user IDs.
+	 * @param string     $redirect_to Default redirect.
+	 * @param string     $action      Selected bulk action.
+	 * @param array<int> $user_ids    Selected user IDs.
 	 * @return string
 	 */
 	public function handle_bulk_actions( $redirect_to, $action, $user_ids ) {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			return $redirect_to;
 		}
-		if ( 'vms_span_checker_block_users' !== $action && 'vms_span_checker_unblock_users' !== $action ) {
+		if ( 'vms_elements_form_guard_block_users' !== $action && 'vms_elements_form_guard_unblock_users' !== $action ) {
 			return $redirect_to;
 		}
 		if ( empty( $user_ids ) || ! is_array( $user_ids ) ) {
@@ -225,12 +225,12 @@ class Users_List_Actions {
 				continue;
 			}
 
-			if ( 'vms_span_checker_block_users' === $action ) {
+			if ( 'vms_elements_form_guard_block_users' === $action ) {
 				$result = AI_Span_Comments::admin_manual_block(
 					$uid,
 					array(
 						'scope'  => array( 'form' ),
-						'reason' => __( 'Bulk block from Users list.', 'vms-span-checker' ),
+						'reason' => __( 'Bulk block from Users list.', 'vms-elements-form-guard' ),
 					)
 				);
 				if ( ! empty( $result['success'] ) ) {
@@ -248,14 +248,14 @@ class Users_List_Actions {
 			}
 		}
 
-		$key = 'vms_span_checker_block_users' === $action
-			? 'vms_span_checker_bulk_blocked'
-			: 'vms_span_checker_bulk_unblocked';
+		$key = 'vms_elements_form_guard_block_users' === $action
+			? 'vms_elements_form_guard_bulk_blocked'
+			: 'vms_elements_form_guard_bulk_unblocked';
 
 		$redirect_to = add_query_arg(
 			array(
 				$key                                  => $processed,
-				'vms_span_checker_bulk_skipped'        => $skipped,
+				'vms_elements_form_guard_bulk_skipped'        => $skipped,
 			),
 			$redirect_to
 		);
@@ -274,9 +274,9 @@ class Users_List_Actions {
 			return;
 		}
 		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- Display-only notice from server redirect.
-		$blocked   = isset( $_GET['vms_span_checker_bulk_blocked'] ) ? absint( wp_unslash( $_GET['vms_span_checker_bulk_blocked'] ) ) : 0;
-		$unblocked = isset( $_GET['vms_span_checker_bulk_unblocked'] ) ? absint( wp_unslash( $_GET['vms_span_checker_bulk_unblocked'] ) ) : 0;
-		$skipped   = isset( $_GET['vms_span_checker_bulk_skipped'] ) ? absint( wp_unslash( $_GET['vms_span_checker_bulk_skipped'] ) ) : 0;
+		$blocked   = isset( $_GET['vms_elements_form_guard_bulk_blocked'] ) ? absint( wp_unslash( $_GET['vms_elements_form_guard_bulk_blocked'] ) ) : 0;
+		$unblocked = isset( $_GET['vms_elements_form_guard_bulk_unblocked'] ) ? absint( wp_unslash( $_GET['vms_elements_form_guard_bulk_unblocked'] ) ) : 0;
+		$skipped   = isset( $_GET['vms_elements_form_guard_bulk_skipped'] ) ? absint( wp_unslash( $_GET['vms_elements_form_guard_bulk_skipped'] ) ) : 0;
 		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 		if ( $blocked <= 0 && $unblocked <= 0 && $skipped <= 0 ) {
@@ -287,7 +287,7 @@ class Users_List_Actions {
 		if ( $blocked > 0 ) {
 			printf(
 				/* translators: %d: number of users blocked */
-				esc_html( _n( '%d user blocked.', '%d users blocked.', $blocked, 'vms-span-checker' ) ),
+				esc_html( _n( '%d user blocked.', '%d users blocked.', $blocked, 'vms-elements-form-guard' ) ),
 				(int) $blocked
 			);
 			echo ' ';
@@ -295,7 +295,7 @@ class Users_List_Actions {
 		if ( $unblocked > 0 ) {
 			printf(
 				/* translators: %d: number of users unblocked */
-				esc_html( _n( '%d user unblocked.', '%d users unblocked.', $unblocked, 'vms-span-checker' ) ),
+				esc_html( _n( '%d user unblocked.', '%d users unblocked.', $unblocked, 'vms-elements-form-guard' ) ),
 				(int) $unblocked
 			);
 			echo ' ';
@@ -303,7 +303,7 @@ class Users_List_Actions {
 		if ( $skipped > 0 ) {
 			printf(
 				/* translators: %d: number of users skipped */
-				esc_html( _n( '%d user skipped (yourself or an exempt admin).', '%d users skipped (yourself or exempt admins).', $skipped, 'vms-span-checker' ) ),
+				esc_html( _n( '%d user skipped (yourself or an exempt admin).', '%d users skipped (yourself or exempt admins).', $skipped, 'vms-elements-form-guard' ) ),
 				(int) $skipped
 			);
 		}
@@ -324,55 +324,55 @@ class Users_List_Actions {
 		}
 
 		wp_enqueue_style(
-			'vms-span-checker-sweetalert',
-			VMS_Span_Checker_ASSETS_URL . 'plugins/sweetalert2/sweetalert2.min.css',
+			'vms-elements-form-guard-sweetalert',
+			VMS_ELEMENTS_FORM_GUARD_ASSETS_URL . 'plugins/sweetalert2/sweetalert2.min.css',
 			array(),
-			VMS_Span_Checker_VERSION
+			VMS_ELEMENTS_FORM_GUARD_VERSION
 		);
 		wp_enqueue_script(
-			'vms-span-checker-sweetalert',
-			VMS_Span_Checker_ASSETS_URL . 'plugins/sweetalert2/sweetalert2.all.min.js',
+			'vms-elements-form-guard-sweetalert',
+			VMS_ELEMENTS_FORM_GUARD_ASSETS_URL . 'plugins/sweetalert2/sweetalert2.all.min.js',
 			array( 'jquery' ),
-			VMS_Span_Checker_VERSION,
+			VMS_ELEMENTS_FORM_GUARD_VERSION,
 			true
 		);
 
 		wp_register_script(
-			'vms-span-checker-users-actions',
+			'vms-elements-form-guard-users-actions',
 			'',
-			array( 'jquery', 'vms-span-checker-sweetalert' ),
-			VMS_Span_Checker_VERSION,
+			array( 'jquery', 'vms-elements-form-guard-sweetalert' ),
+			VMS_ELEMENTS_FORM_GUARD_VERSION,
 			true
 		);
-		wp_enqueue_script( 'vms-span-checker-users-actions' );
+		wp_enqueue_script( 'vms-elements-form-guard-users-actions' );
 
 		$labels = array(
-			'block_title'     => __( 'Block user', 'vms-span-checker' ),
-			'edit_title'      => __( 'Edit block scope', 'vms-span-checker' ),
-			'unblock_title'   => __( 'Unblock user', 'vms-span-checker' ),
-			'scope_form'      => __( 'Form / Comments', 'vms-span-checker' ),
-			'scope_login'     => __( 'Login', 'vms-span-checker' ),
-			'scope_site'      => __( 'Site-wide ban', 'vms-span-checker' ),
-			'reason'          => __( 'Reason (optional)', 'vms-span-checker' ),
-			'expiry'          => __( 'Auto-expire after (days, 0 = permanent)', 'vms-span-checker' ),
-			'confirm_block'   => __( 'Block this user', 'vms-span-checker' ),
-			'confirm_save'    => __( 'Save', 'vms-span-checker' ),
-			'confirm_unblock' => __( 'Yes, unblock', 'vms-span-checker' ),
-			'cancel'          => __( 'Cancel', 'vms-span-checker' ),
-			'pick_scope'      => __( 'Pick at least one block scope.', 'vms-span-checker' ),
-			'unblock_confirm' => __( 'This will clear all strikes and block flags for', 'vms-span-checker' ),
-			'request_failed'  => __( 'Request failed. Try again.', 'vms-span-checker' ),
-			'success'         => __( 'Done.', 'vms-span-checker' ),
+			'block_title'     => __( 'Block user', 'vms-elements-form-guard' ),
+			'edit_title'      => __( 'Edit block scope', 'vms-elements-form-guard' ),
+			'unblock_title'   => __( 'Unblock user', 'vms-elements-form-guard' ),
+			'scope_form'      => __( 'Form / Comments', 'vms-elements-form-guard' ),
+			'scope_login'     => __( 'Login', 'vms-elements-form-guard' ),
+			'scope_site'      => __( 'Site-wide ban', 'vms-elements-form-guard' ),
+			'reason'          => __( 'Reason (optional)', 'vms-elements-form-guard' ),
+			'expiry'          => __( 'Auto-expire after (days, 0 = permanent)', 'vms-elements-form-guard' ),
+			'confirm_block'   => __( 'Block this user', 'vms-elements-form-guard' ),
+			'confirm_save'    => __( 'Save', 'vms-elements-form-guard' ),
+			'confirm_unblock' => __( 'Yes, unblock', 'vms-elements-form-guard' ),
+			'cancel'          => __( 'Cancel', 'vms-elements-form-guard' ),
+			'pick_scope'      => __( 'Pick at least one block scope.', 'vms-elements-form-guard' ),
+			'unblock_confirm' => __( 'This will clear all strikes and block flags for', 'vms-elements-form-guard' ),
+			'request_failed'  => __( 'Request failed. Try again.', 'vms-elements-form-guard' ),
+			'success'         => __( 'Done.', 'vms-elements-form-guard' ),
 		);
 
 		$boot = array(
 			'ajaxurl' => admin_url( 'admin-ajax.php' ),
-			'nonce'   => wp_create_nonce( 'vms_span_checker_nonce' ),
+			'nonce'   => wp_create_nonce( 'vms_elements_form_guard_nonce' ),
 			'i18n'    => $labels,
 		);
 
-		$inline_js = 'window.VMSSpanCheckerUsers = ' . wp_json_encode( $boot ) . ';' . "\n" . $this->get_users_inline_script();
-		wp_add_inline_script( 'vms-span-checker-users-actions', $inline_js );
+		wp_localize_script( 'vms-elements-form-guard-users-actions', 'VEFGUsers', $boot );
+		wp_add_inline_script( 'vms-elements-form-guard-users-actions', $this->get_users_inline_script() );
 	}
 
 	/**
@@ -384,8 +384,8 @@ class Users_List_Actions {
 		return <<<'JS'
 (function($){
 	'use strict';
-	if (typeof window.VMSSpanCheckerUsers === 'undefined') { return; }
-	var cfg = window.VMSSpanCheckerUsers;
+	if (typeof window.VEFGUsers === 'undefined') { return; }
+	var cfg = window.VEFGUsers;
 
 	function toast(opts) {
 		if (typeof Swal !== 'undefined') {
@@ -410,16 +410,16 @@ class Users_List_Actions {
 		var html =
 			'<div style="text-align:left;">'
 			+ '<p style="margin:0 0 12px;"><strong>' + opts.label + '</strong></p>'
-			+ '<label style="display:block;margin:6px 0;"><input type="checkbox" id="vms-span-block-form" ' + (checked.form ? 'checked' : '') + '> <strong>' + cfg.i18n.scope_form + '</strong></label>'
-			+ '<label style="display:block;margin:6px 0;"><input type="checkbox" id="vms-span-block-login" ' + (checked.login ? 'checked' : '') + '> <strong>' + cfg.i18n.scope_login + '</strong></label>'
-			+ '<label style="display:block;margin:6px 0;"><input type="checkbox" id="vms-span-block-site" ' + (checked.site ? 'checked' : '') + '> <strong>' + cfg.i18n.scope_site + '</strong></label>';
+			+ '<label style="display:block;margin:6px 0;"><input type="checkbox" id="vefg-block-form" ' + (checked.form ? 'checked' : '') + '> <strong>' + cfg.i18n.scope_form + '</strong></label>'
+			+ '<label style="display:block;margin:6px 0;"><input type="checkbox" id="vefg-block-login" ' + (checked.login ? 'checked' : '') + '> <strong>' + cfg.i18n.scope_login + '</strong></label>'
+			+ '<label style="display:block;margin:6px 0;"><input type="checkbox" id="vefg-block-site" ' + (checked.site ? 'checked' : '') + '> <strong>' + cfg.i18n.scope_site + '</strong></label>';
 
 		if (!isEdit) {
 			html +=
 				'<label style="display:block;margin:12px 0 6px;font-weight:600;">' + cfg.i18n.reason + '</label>'
-				+ '<textarea id="vms-span-block-reason" class="swal2-textarea" style="margin:0;width:100%;min-height:64px;"></textarea>'
+				+ '<textarea id="vefg-block-reason" class="swal2-textarea" style="margin:0;width:100%;min-height:64px;"></textarea>'
 				+ '<label style="display:block;margin:12px 0 6px;font-weight:600;">' + cfg.i18n.expiry + '</label>'
-				+ '<input type="number" id="vms-span-block-expiry" class="swal2-input" style="margin:0;width:100%;" value="0" min="0" step="1">';
+				+ '<input type="number" id="vefg-block-expiry" class="swal2-input" style="margin:0;width:100%;" value="0" min="0" step="1">';
 		}
 
 		html += '</div>';
@@ -433,17 +433,17 @@ class Users_List_Actions {
 			focusConfirm: false,
 			preConfirm: function(){
 				var scope = [];
-				if (document.getElementById('vms-span-block-form').checked)  { scope.push('form'); }
-				if (document.getElementById('vms-span-block-login').checked) { scope.push('login'); }
-				if (document.getElementById('vms-span-block-site').checked)  { scope.push('site'); }
+				if (document.getElementById('vefg-block-form').checked)  { scope.push('form'); }
+				if (document.getElementById('vefg-block-login').checked) { scope.push('login'); }
+				if (document.getElementById('vefg-block-site').checked)  { scope.push('site'); }
 				if (scope.length === 0) {
 					Swal.showValidationMessage(cfg.i18n.pick_scope);
 					return false;
 				}
 				var payload = { scope: scope };
 				if (!isEdit) {
-					var r = document.getElementById('vms-span-block-reason');
-					var e = document.getElementById('vms-span-block-expiry');
+					var r = document.getElementById('vefg-block-reason');
+					var e = document.getElementById('vefg-block-expiry');
 					payload.reason = r ? r.value : '';
 					payload.expiry_days = e ? parseInt(e.value, 10) || 0 : 0;
 				}
@@ -455,11 +455,11 @@ class Users_List_Actions {
 				nonce: cfg.nonce
 			};
 			if (isEdit) {
-				data.action    = 'wsc_edit_block_scope';
+				data.action    = 'vefg_edit_block_scope';
 				data.actor_key = 'u:' + opts.userId;
 				data.scope     = result.value.scope;
 			} else {
-				data.action      = 'wsc_manual_block_user';
+				data.action      = 'vefg_manual_block_user';
 				data.user_id     = opts.userId;
 				data.scope       = result.value.scope;
 				data.reason      = result.value.reason;
@@ -490,7 +490,7 @@ class Users_List_Actions {
 		}).then(function(result){
 			if (!result.isConfirmed) { return; }
 			$.post(cfg.ajaxurl, {
-				action: 'wsc_unblock_user',
+				action: 'vefg_unblock_user',
 				nonce: cfg.nonce,
 				user_id: opts.userId
 			}).done(function(res){
@@ -506,7 +506,7 @@ class Users_List_Actions {
 		});
 	}
 
-	$(document).on('click', '.vms-span-checker-user-block-trigger', function(e){
+	$(document).on('click', '.vms-elements-form-guard-user-block-trigger', function(e){
 		e.preventDefault();
 		var $a = $(this);
 		openBlockDialog({
@@ -519,7 +519,7 @@ class Users_List_Actions {
 		});
 	});
 
-	$(document).on('click', '.vms-span-checker-user-unblock-trigger', function(e){
+	$(document).on('click', '.vms-elements-form-guard-user-unblock-trigger', function(e){
 		e.preventDefault();
 		var $a = $(this);
 		openUnblockDialog({
@@ -545,7 +545,7 @@ JS;
 		}
 
 		global $wpdb;
-		$table = $wpdb->prefix . 'vms_span_checker_comment_enforcement';
+		$table = $wpdb->prefix . 'vms_elements_form_guard_comment_enforcement';
 		$row   = $wpdb->get_row(
 			$wpdb->prepare(
 				"SELECT blocked, login_blocked, site_banned, strikes, last_reason FROM {$table} WHERE actor_key = %s",

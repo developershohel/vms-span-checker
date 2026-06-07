@@ -1,15 +1,15 @@
 /**
- * VMS Span Checker - Contact Guard
+ * VMS Elements Form Guard - Contact Guard
  * Validates contact forms with email and message fields using a validation button approach.
  */
 (function($) {
     'use strict';
 
-    if (typeof WPSpanContactGuard === 'undefined') {
+    if (typeof VEFGContactGuard === 'undefined') {
         return;
     }
 
-    var config = WPSpanContactGuard;
+    var config = VEFGContactGuard;
     var ajaxUrl = config.ajaxUrl || '';
     var nonce = config.nonce || '';
     var formSelector = config.formSelector || '';
@@ -62,25 +62,25 @@
 
         // Form selector is required - only use provided selector
         if (!formSelector || formSelector.trim() === '') {
-            console.log('[VMS Span Checker] Contact Guard: No form selector configured. Form selector is required.');
+            console.log('[VMS Elements Form Guard] Contact Guard: No form selector configured. Form selector is required.');
             return [];
         }
 
         var matches = $(formSelector);
-        console.log('[VMS Span Checker] Contact Guard: Checking selector:', formSelector, 'found:', matches.length, 'elements');
+        console.log('[VMS Elements Form Guard] Contact Guard: Checking selector:', formSelector, 'found:', matches.length, 'elements');
         for (var i = 0; i < matches.length; i++) {
             var formEl = resolveFormElement(matches[i]);
             if (!formEl) {
                 continue;
             }
             var $form = $(formEl);
-            if ($form.data('wsc-contact-guard')) {
-                console.log('[VMS Span Checker] Contact Guard: Form already has contact guard');
+            if ($form.data('vefg-contact-guard')) {
+                console.log('[VMS Elements Form Guard] Contact Guard: Form already has contact guard');
                 continue;
             }
             // Check if form is already protected by another guard (Form Guard, Subscribe Guard, etc.)
-            if ($form.data('wsc-guard-protected')) {
-                console.log('[VMS Span Checker] Contact Guard: Form already protected by another guard');
+            if ($form.data('vefg-guard-protected')) {
+                console.log('[VMS Elements Form Guard] Contact Guard: Form already protected by another guard');
                 continue;
             }
             if (formEl.id === 'adminbarsearch' || $form.closest('#wpadminbar').length > 0) {
@@ -164,7 +164,7 @@
         if (submitSelector && submitSelector.trim() !== '') {
             var $btn = findVisibleSubmit($form, submitSelector);
             if ($btn.length) {
-                console.log('[VMS Span Checker] Contact Guard: Found submit via custom selector:', submitSelector);
+                console.log('[VMS Elements Form Guard] Contact Guard: Found submit via custom selector:', submitSelector);
                 return $btn;
             }
         }
@@ -214,7 +214,7 @@
     function validateContact(email, message, recaptchaToken) {
         return new Promise(function(resolve, reject) {
             var data = {
-                action: 'wsc_validate_contact',
+                action: 'vefg_validate_contact',
                 nonce: nonce,
                 email: email,
                 message: message
@@ -245,20 +245,20 @@
 
     function showFieldError($field, message) {
         clearFieldError($field);
-        $field.addClass('wsc-field-invalid');
-        var $error = $('<span class="wsc-field-error wsc-contact-error">' + message + '</span>');
+        $field.addClass('vefg-field-invalid');
+        var $error = $('<span class="vefg-field-error vefg-contact-error">' + message + '</span>');
         $field.after($error);
     }
 
     function clearFieldError($field) {
-        $field.removeClass('wsc-field-invalid');
-        $field.siblings('.wsc-contact-error').remove();
-        $field.parent().find('.wsc-contact-error').remove();
+        $field.removeClass('vefg-field-invalid');
+        $field.siblings('.vefg-contact-error').remove();
+        $field.parent().find('.vefg-contact-error').remove();
     }
 
     function clearAllErrors($form) {
-        $form.find('.wsc-field-invalid').removeClass('wsc-field-invalid');
-        $form.find('.wsc-contact-error').remove();
+        $form.find('.vefg-field-invalid').removeClass('vefg-field-invalid');
+        $form.find('.vefg-contact-error').remove();
     }
 
     function copyButtonStyles($source, $target) {
@@ -346,8 +346,8 @@
         }
 
         if (recaptchaVersion === 'v2') {
-            var uniqueId = 'wsc-recaptcha-' + Math.random().toString(36).substr(2, 9);
-            var recaptchaContainer = $('<div id="' + uniqueId + '" class="wsc-recaptcha-container" style="margin: 10px 0;"></div>');
+            var uniqueId = 'vefg-recaptcha-' + Math.random().toString(36).substr(2, 9);
+            var recaptchaContainer = $('<div id="' + uniqueId + '" class="vefg-recaptcha-container" style="margin: 10px 0;"></div>');
             $actionsWrap.prepend(recaptchaContainer);
             
             $validationBtn.prop('disabled', true).css('opacity', '0.6');
@@ -378,13 +378,13 @@
     function setupGuard(form) {
         var $form = $(form);
         
-        if ($form.data('wsc-contact-guard')) {
+        if ($form.data('vefg-contact-guard')) {
             return;
         }
 
         // Check if form is already protected by another guard (Form Guard, Subscribe Guard, etc.)
-        if ($form.data('wsc-guard-protected')) {
-            console.log('[VMS Span Checker] Contact Guard: Form already protected by another guard, skipping');
+        if ($form.data('vefg-guard-protected')) {
+            console.log('[VMS Elements Form Guard] Contact Guard: Form already protected by another guard, skipping');
             return;
         }
 
@@ -395,22 +395,22 @@
             return;
         }
 
-        $form.data('wsc-contact-guard', true);
-        $form.data('wsc-guard-protected', true); // Mark as protected
+        $form.data('vefg-contact-guard', true);
+        $form.data('vefg-guard-protected', true); // Mark as protected
         contactGuardAttached = true;
-        console.log('[VMS Span Checker] Contact Guard attached to form:', form);
+        console.log('[VMS Elements Form Guard] Contact Guard attached to form:', form);
 
         var $originalSubmit = findSubmitButton($form);
         if (!$originalSubmit.length) {
-            console.log('[VMS Span Checker] Contact Guard: No submit button found');
+            console.log('[VMS Elements Form Guard] Contact Guard: No submit button found');
             return;
         }
 
-        var $actionsWrap = $('<div class="wsc-guard-actions"></div>');
+        var $actionsWrap = $('<div class="vefg-guard-actions"></div>');
         $originalSubmit.after($actionsWrap);
 
         var submitText = $originalSubmit.val() || $originalSubmit.text() || t('submit', 'Submit');
-        var $validationBtn = $('<input type="button" class="wsc-validation-btn wsc-contact-validation-btn">');
+        var $validationBtn = $('<input type="button" class="vefg-validation-btn vefg-contact-validation-btn">');
         $validationBtn.val(submitText);
         
         copyButtonStyles($originalSubmit, $validationBtn);
@@ -489,7 +489,7 @@
                     }
 
                     if (result.status) {
-                        console.log('[VMS Span Checker] Contact Guard: Validation passed, submitting form');
+                        console.log('[VMS Elements Form Guard] Contact Guard: Validation passed, submitting form');
                         
                         $originalSubmit.css({
                             'display': '',
@@ -532,7 +532,7 @@
                 .catch(function(err) {
                     isValidating = false;
                     $validationBtn.val(submitText).prop('disabled', recaptchaEnabled && recaptchaVersion === 'v2');
-                    console.error('[VMS Span Checker] Contact Guard error:', err);
+                    console.error('[VMS Elements Form Guard] Contact Guard error:', err);
                     showToast('error', err.message || t('serverError', 'Validation error. Please try again.'));
                 });
         });
@@ -566,12 +566,12 @@
     }
 
     function init() {
-        console.log('[VMS Span Checker] Contact Guard initializing...');
+        console.log('[VMS Elements Form Guard] Contact Guard initializing...');
         
         loadRecaptchaScript();
         
         var forms = detectContactForms();
-        console.log('[VMS Span Checker] Contact Guard found', forms.length, 'form(s)');
+        console.log('[VMS Elements Form Guard] Contact Guard found', forms.length, 'form(s)');
         
         forms.forEach(function(form) {
             setupGuard(form);
@@ -590,7 +590,7 @@
                             }
                             var newForms = detectContactForms();
                             newForms.forEach(function(form) {
-                                if (!$(form).data('wsc-contact-guard')) {
+                                if (!$(form).data('vefg-contact-guard')) {
                                     setupGuard(form);
                                 }
                             });
